@@ -204,8 +204,8 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
                 }`}
               >
                 <span
-                  className={`h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
-                    dark ? "translate-x-5" : "translate-x-0"
+                  className={`h-5 w-5 rounded-full shadow-sm transition-transform ${
+                    dark ? "translate-x-5 bg-[var(--zelo-btn-ink)]" : "translate-x-0 bg-white"
                   }`}
                 />
               </span>
@@ -238,8 +238,8 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
                 }`}
               >
                 <span
-                  className={`h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
-                    pushAtivo ? "translate-x-5" : "translate-x-0"
+                  className={`h-5 w-5 rounded-full shadow-sm transition-transform ${
+                    pushAtivo ? "translate-x-5 bg-[var(--zelo-btn-ink)]" : "translate-x-0 bg-white"
                   }`}
                 />
               </span>
@@ -268,8 +268,8 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
                 }`}
               >
                 <span
-                  className={`h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
-                    emailAtivo ? "translate-x-5" : "translate-x-0"
+                  className={`h-5 w-5 rounded-full shadow-sm transition-transform ${
+                    emailAtivo ? "translate-x-5 bg-[var(--zelo-btn-ink)]" : "translate-x-0 bg-white"
                   }`}
                 />
               </span>
