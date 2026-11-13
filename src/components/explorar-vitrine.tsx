@@ -9,6 +9,7 @@ import {
   Compass,
   MapPin,
   Search,
+  Star,
   Store,
   UserCircle2,
 } from "lucide-react";
@@ -30,10 +31,6 @@ const NICHO_LABEL: Record<string, string> = {
   estetica: "Estética & Lash",
   outro: "Espaço",
 };
-
-function formatPriceShort(centavos: number) {
-  return `R$ ${(centavos / 100).toFixed(0)}`;
-}
 
 function getInitials(nome: string) {
   const parts = nome.trim().split(/\s+/).filter(Boolean);
@@ -212,11 +209,10 @@ export function ExplorarVitrine({ lojas }: { lojas: VitrineLojaCard[] }) {
                       </div>
                     </div>
 
-                    {loja.preco_inicial_centavos !== null && (
-                      <div className="shrink-0 rounded-lg bg-[var(--zelo-soft)] px-2.5 py-1 font-mono-num text-xs font-bold text-[var(--zelo-ink)]">
-                        {formatPriceShort(loja.preco_inicial_centavos)}+
-                      </div>
-                    )}
+                    <div className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-[var(--zelo-soft)] px-2.5 py-1 font-mono-num text-xs font-semibold text-[var(--zelo-ink)]">
+                      <Star className="h-3.5 w-3.5 fill-[#F59E0B] text-[#F59E0B]" />
+                      <span>Novo</span>
+                    </div>
                   </div>
 
                   <div className="flex items-center justify-between gap-2 pt-0.5">
