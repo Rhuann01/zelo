@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -34,15 +34,22 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
   const [pushAtivo, setPushAtivo] = useState(ctx.perfil.notificacoes_push);
   const [emailAtivo, setEmailAtivo] = useState(ctx.perfil.notificacoes_email);
   const [pausada, setPausada] = useState(ctx.lojaAtual.pausada);
-  const [dark, setDark] = useState(() =>
-    typeof document !== "undefined" ? document.documentElement.classList.contains("dark") : false
-  );
+  const [dark, setDark] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    setDark(document.documentElement.classList.contains("dark"));
+  }, []);
 
   function toggleDarkMode() {
     const next = !dark;
     setDark(next);
     document.documentElement.classList.toggle("dark", next);
+    try {
+      localStorage.setItem("zelo_theme", next ? "dark" : "light");
+    } catch {
+      // ignore storage errors
+    }
   }
 
   function handleExportLgpd() {

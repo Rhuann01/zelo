@@ -43,8 +43,16 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
+      suppressHydrationWarning
       className={`${plusJakarta.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable}`}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{if(localStorage.getItem('zelo_theme')==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className="min-h-screen antialiased">{children}</body>
     </html>
   );
