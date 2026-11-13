@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
   Calendar,
   ChevronDown,
   Compass,
+  Heart,
   MapPin,
   Search,
   Star,
@@ -15,6 +16,9 @@ import {
 } from "lucide-react";
 import { getAccentInk, type VitrineLojaCard } from "@/lib/public/get-loja-publica";
 import { useViewerPerfil } from "@/lib/supabase/use-viewer-perfil";
+import { ZeloToastViewport } from "@/components/zelo-toast";
+import { ExplorarMeusHorarios } from "@/components/explorar-meus-horarios";
+import { ExplorarPerfilForm } from "@/components/explorar-perfil-form";
 
 const NICHOS = [
   { key: "todos", label: "Todas" },
@@ -42,11 +46,36 @@ function getInitials(nome: string) {
 }
 
 export function ExplorarVitrine({ lojas }: { lojas: VitrineLojaCard[] }) {
+  const [tab, setTab] = useState<"explorar" | "favoritos" | "horarios" | "perfil">("explorar");
   const [busca, setBusca] = useState("");
   const [nicho, setNicho] = useState<string>("todos");
   const [cidade, setCidade] = useState<string>("todas");
-  const searchRef = useRef<HTMLInputElement>(null);
-  const viewer = useViewerPerfil();
+  const [favoritos, setFavoritos] = useState<string[]>([]);
+  const { viewer, loaded, refreshViewer } = useViewerPerfil();
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("zelo_favoritos");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) setFavoritos(parsed.filter((id) => typeof id === "string"));
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, []);
+
+  function toggleFavorito(lojaId: string) {
+    setFavoritos((prev) => {
+      const next = prev.includes(lojaId) ? prev.filter((id) => id !== lojaId) : [...prev, lojaId];
+      try {
+        localStorage.setItem("zelo_favoritos", JSON.stringify(next));
+      } catch {
+        // ignore storage errors
+      }
+      return next;
+    });
+  }
 
   const cidades = useMemo(() => {
     const set = new Set<string>();
@@ -59,6 +88,7 @@ export function ExplorarVitrine({ lojas }: { lojas: VitrineLojaCard[] }) {
   const filtradas = useMemo(() => {
     const q = busca.trim().toLowerCase();
     return lojas.filter((l) => {
+      if (tab === "favoritos" && !favoritos.includes(l.id)) return false;
       if (nicho !== "todos" && l.nicho !== nicho) return false;
       if (cidade !== "todas" && l.cidade.trim() !== cidade) return false;
       if (!q) return true;
@@ -68,11 +98,56 @@ export function ExplorarVitrine({ lojas }: { lojas: VitrineLojaCard[] }) {
         l.cidade.toLowerCase().includes(q)
       );
     });
-  }, [lojas, busca, nicho, cidade]);
+  }, [lojas, tab, favoritos, busca, nicho, cidade]);
 
   return (
     <>
+      <ZeloToastViewport />
       <div className="mx-auto flex w-full max-w-[480px] flex-col px-4 pb-28">
+        {tab === "horarios" && (
+          <div className="flex flex-col gap-4 pt-2">
+            <div>
+              <h1 className="text-xl font-bold tight-heading text-[var(--zelo-ink)]">
+                Meus Horários
+              </h1>
+              <p className="mt-0.5 text-xs text-[var(--zelo-muted)]">
+                Agendamentos realizados com sua conta.
+              </p>
+            </div>
+            <ExplorarMeusHorarios
+              viewer={viewer}
+              loaded={loaded}
+              onGoExplorar={() => setTab("explorar")}
+            />
+          </div>
+        )}
+
+        {tab === "perfil" && viewer && (
+          <div className="flex flex-col gap-4 pt-2">
+            <div>
+              <h1 className="text-xl font-bold tight-heading text-[var(--zelo-ink)]">
+                Meu Perfil
+              </h1>
+              <p className="mt-0.5 text-xs text-[var(--zelo-muted)]">
+                Edite seus dados de contato e preferências.
+              </p>
+            </div>
+            <ExplorarPerfilForm viewer={viewer} onSaved={refreshViewer} />
+          </div>
+        )}
+
+        {(tab === "explorar" || tab === "favoritos") && (
+          <>
+        {tab === "favoritos" && (
+          <div className="pt-2 pb-1">
+            <h1 className="text-xl font-bold tight-heading text-[var(--zelo-ink)]">
+              Lojas Favoritas
+            </h1>
+            <p className="mt-0.5 text-xs text-[var(--zelo-muted)]">
+              Seus estabelecimentos salvos para agendar rápido.
+            </p>
+          </div>
+        )}
         {/* Location Selector Bar & Live Availability Pill */}
         <div className="flex items-center justify-between gap-2 pt-2 pb-1">
           <div className="relative inline-flex items-center rounded-full bg-[var(--zelo-soft)] px-3 py-1.5 shadow-xs">
@@ -109,7 +184,6 @@ export function ExplorarVitrine({ lojas }: { lojas: VitrineLojaCard[] }) {
         <div className="relative mt-2.5 flex w-full items-center">
           <Search className="pointer-events-none absolute left-3.5 h-[18px] w-[18px] text-[var(--zelo-muted)]" />
           <input
-            ref={searchRef}
             type="search"
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
@@ -144,24 +218,38 @@ export function ExplorarVitrine({ lojas }: { lojas: VitrineLojaCard[] }) {
           {filtradas.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-2xl bg-[var(--zelo-card)] px-6 py-12 text-center shadow-sm">
               <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--zelo-soft)] text-[var(--zelo-muted)]">
-                <Store className="h-5 w-5" />
+                {tab === "favoritos" ? <Heart className="h-5 w-5" /> : <Store className="h-5 w-5" />}
               </div>
-              <h2 className="text-base font-bold">Nenhum espaço encontrado</h2>
+              <h2 className="text-base font-bold">
+                {tab === "favoritos" ? "Nenhuma loja favoritada ainda" : "Nenhum espaço encontrado"}
+              </h2>
               <p className="mt-1 max-w-xs text-xs leading-relaxed text-[var(--zelo-muted)]">
-                Tente buscar por outro bairro ou limpe os filtros para ver os espaços ativos.
+                {tab === "favoritos"
+                  ? "Toque no coração em qualquer estabelecimento para salvá-lo aqui."
+                  : "Tente buscar por outro bairro ou limpe os filtros para ver os espaços ativos."}
               </p>
-              {(busca || nicho !== "todos" || cidade !== "todas") && (
+              {tab === "favoritos" ? (
                 <button
                   type="button"
-                  onClick={() => {
-                    setBusca("");
-                    setNicho("todos");
-                    setCidade("todas");
-                  }}
+                  onClick={() => setTab("explorar")}
                   className="mt-4 rounded-xl bg-[var(--zelo-btn-bg)] px-4 py-2 text-xs font-semibold text-[var(--zelo-btn-ink)]"
                 >
-                  Limpar filtros
+                  Explorar lojas
                 </button>
+              ) : (
+                (busca || nicho !== "todos" || cidade !== "todas") && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBusca("");
+                      setNicho("todos");
+                      setCidade("todas");
+                    }}
+                    className="mt-4 rounded-xl bg-[var(--zelo-btn-bg)] px-4 py-2 text-xs font-semibold text-[var(--zelo-btn-ink)]"
+                  >
+                    Limpar filtros
+                  </button>
+                )
               )}
             </div>
           ) : (
@@ -211,10 +299,34 @@ export function ExplorarVitrine({ lojas }: { lojas: VitrineLojaCard[] }) {
                       </div>
                     </div>
 
-                    <div className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[var(--zelo-soft)] px-2.5 py-1 font-mono-num text-xs">
-                      <Star className="h-3.5 w-3.5 fill-[#F59E0B] text-[#F59E0B]" />
-                      <span className="font-bold text-[var(--zelo-ink)]">5.0</span>
-                      <span className="text-[var(--zelo-muted)]">(0)</span>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <div className="inline-flex items-center gap-1 rounded-full bg-[var(--zelo-soft)] px-2.5 py-1 font-mono-num text-xs">
+                        <Star className="h-3.5 w-3.5 fill-[#F59E0B] text-[#F59E0B]" />
+                        <span className="font-bold text-[var(--zelo-ink)]">5.0</span>
+                        <span className="text-[var(--zelo-muted)]">(0)</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          toggleFavorito(loja.id);
+                        }}
+                        aria-label={
+                          favoritos.includes(loja.id)
+                            ? `Remover ${loja.nome} dos favoritos`
+                            : `Favoritar ${loja.nome}`
+                        }
+                        className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--zelo-soft)] transition-transform active:scale-90"
+                      >
+                        <Heart
+                          className={`h-4 w-4 transition-colors ${
+                            favoritos.includes(loja.id)
+                              ? "fill-red-500 text-red-500"
+                              : "text-[var(--zelo-muted)]"
+                          }`}
+                        />
+                      </button>
                     </div>
                   </div>
 
@@ -257,53 +369,83 @@ export function ExplorarVitrine({ lojas }: { lojas: VitrineLojaCard[] }) {
             <ArrowRight className="h-5 w-5" />
           </span>
         </Link>
+          </>
+        )}
       </div>
 
-      {/* Fixed Bottom Navigation (Stitch) */}
+      {/* Fixed Bottom Navigation */}
       <nav className="fixed bottom-0 z-50 w-full bg-[var(--zelo-bg)]/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(0,0,0,0.03)]">
         <div className="mx-auto flex h-16 max-w-[480px] items-center justify-around px-2">
-          <Link
-            href="/explorar"
-            aria-current="page"
-            className="flex h-12 w-16 flex-col items-center justify-center gap-1 font-semibold text-[var(--zelo-ink)]"
+          <button
+            type="button"
+            onClick={() => setTab("explorar")}
+            className={`flex h-12 w-16 flex-col items-center justify-center gap-1 transition-colors ${
+              tab === "explorar"
+                ? "font-semibold text-[var(--zelo-ink)]"
+                : "text-[var(--zelo-muted)] hover:text-[var(--zelo-ink)]"
+            }`}
           >
             <Compass className="h-5 w-5" />
             <span className="text-[11px] tracking-tight">Explorar</span>
-          </Link>
+          </button>
+
           <button
             type="button"
-            onClick={() => {
-              window.scrollTo({ top: 0, behavior: "smooth" });
-              searchRef.current?.focus();
-            }}
-            className="flex h-12 w-16 flex-col items-center justify-center gap-1 text-[var(--zelo-muted)] transition-colors hover:text-[var(--zelo-ink)]"
+            onClick={() => setTab("favoritos")}
+            className={`flex h-12 w-16 flex-col items-center justify-center gap-1 transition-colors ${
+              tab === "favoritos"
+                ? "font-semibold text-[var(--zelo-ink)]"
+                : "text-[var(--zelo-muted)] hover:text-[var(--zelo-ink)]"
+            }`}
           >
-            <Search className="h-5 w-5" />
-            <span className="text-[11px] tracking-tight">Buscar</span>
+            <Heart className={`h-5 w-5 ${tab === "favoritos" ? "fill-current" : ""}`} />
+            <span className="text-[11px] tracking-tight">Favoritos</span>
           </button>
-          <Link
-            href={viewer ? "/painel" : "/entrar?next=/painel"}
-            className="flex h-12 w-16 flex-col items-center justify-center gap-1 text-[var(--zelo-muted)] transition-colors hover:text-[var(--zelo-ink)]"
+
+          <button
+            type="button"
+            onClick={() => setTab("horarios")}
+            className={`flex h-12 w-16 flex-col items-center justify-center gap-1 transition-colors ${
+              tab === "horarios"
+                ? "font-semibold text-[var(--zelo-ink)]"
+                : "text-[var(--zelo-muted)] hover:text-[var(--zelo-ink)]"
+            }`}
           >
             <Calendar className="h-5 w-5" />
             <span className="text-[11px] tracking-tight">Horários</span>
-          </Link>
-          <Link
-            href={viewer ? "/painel/configuracoes" : "/entrar"}
-            className="flex h-12 w-16 flex-col items-center justify-center gap-1 text-[var(--zelo-muted)] transition-colors hover:text-[var(--zelo-ink)]"
-          >
-            {viewer?.avatar_url ? (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={viewer.avatar_url}
-                alt={viewer.nome}
-                className="h-5 w-5 rounded-full object-cover"
-              />
-            ) : (
+          </button>
+
+          {viewer ? (
+            <button
+              type="button"
+              onClick={() => setTab("perfil")}
+              className={`flex h-12 w-16 flex-col items-center justify-center gap-1 transition-colors ${
+                tab === "perfil"
+                  ? "font-semibold text-[var(--zelo-ink)]"
+                  : "text-[var(--zelo-muted)] hover:text-[var(--zelo-ink)]"
+              }`}
+            >
+              {viewer.avatar_url ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={viewer.avatar_url}
+                  alt={viewer.nome}
+                  className="h-5 w-5 rounded-full object-cover"
+                />
+              ) : (
+                <UserCircle2 className="h-5 w-5" />
+              )}
+              <span className="text-[11px] tracking-tight">Perfil</span>
+            </button>
+          ) : (
+            <Link
+              href="/entrar?next=/explorar"
+              className="flex h-12 w-16 flex-col items-center justify-center gap-1 text-[var(--zelo-muted)] transition-colors hover:text-[var(--zelo-ink)]"
+            >
               <UserCircle2 className="h-5 w-5" />
-            )}
-            <span className="text-[11px] tracking-tight">{viewer ? "Perfil" : "Entrar"}</span>
-          </Link>
+              <span className="text-[11px] tracking-tight">Entrar</span>
+            </Link>
+          )}
         </div>
       </nav>
     </>

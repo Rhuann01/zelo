@@ -5,7 +5,7 @@ import { User } from "lucide-react";
 import { useViewerPerfil } from "@/lib/supabase/use-viewer-perfil";
 
 export function ExplorarHeaderAvatar() {
-  const viewer = useViewerPerfil();
+  const { viewer } = useViewerPerfil();
 
   if (!viewer) {
     return (
