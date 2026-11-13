@@ -19,6 +19,8 @@ interface PainelShellProps {
   lojas: LojaResumo[];
   lojaAtual: LojaResumo;
   isOwner: boolean;
+  avatarUrl?: string | null;
+  perfilNome?: string;
   children: React.ReactNode;
 }
 
@@ -30,7 +32,14 @@ const NAV_ITEMS = [
   { href: "/painel/configuracoes", label: "Config", icon: Settings },
 ];
 
-export function PainelShell({ lojas, lojaAtual, isOwner, children }: PainelShellProps) {
+export function PainelShell({
+  lojas,
+  lojaAtual,
+  isOwner,
+  avatarUrl,
+  perfilNome,
+  children,
+}: PainelShellProps) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -81,11 +90,20 @@ export function PainelShell({ lojas, lojaAtual, isOwner, children }: PainelShell
             </Link>
             <Link
               href="/painel/configuracoes"
-              className="ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)]"
+              className="ml-1 flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)]"
               title={isOwner ? "Dono" : "Equipe"}
               aria-label="Meu Perfil"
             >
-              <User className="h-[18px] w-[18px]" />
+              {avatarUrl ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={avatarUrl}
+                  alt={perfilNome || "Meu perfil"}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <User className="h-[18px] w-[18px]" />
+              )}
             </Link>
           </div>
         </div>

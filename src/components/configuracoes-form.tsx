@@ -200,7 +200,7 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
             >
               <span
                 className={`flex h-7 w-12 items-center rounded-full p-1 transition-colors ${
-                  dark ? "bg-[var(--zelo-btn-bg)]" : "bg-[var(--zelo-soft)]"
+                  dark ? "bg-[var(--zelo-btn-bg)]" : "bg-[#D4D4D8] dark:bg-[#3F3F46]"
                 }`}
               >
                 <span
@@ -234,7 +234,7 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
             >
               <span
                 className={`flex h-7 w-12 items-center rounded-full p-1 transition-colors ${
-                  pushAtivo ? "bg-[var(--zelo-btn-bg)]" : "bg-[var(--zelo-soft)]"
+                  pushAtivo ? "bg-[var(--zelo-btn-bg)]" : "bg-[#D4D4D8] dark:bg-[#3F3F46]"
                 }`}
               >
                 <span
@@ -264,7 +264,7 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
             >
               <span
                 className={`flex h-7 w-12 items-center rounded-full p-1 transition-colors ${
-                  emailAtivo ? "bg-[var(--zelo-btn-bg)]" : "bg-[var(--zelo-soft)]"
+                  emailAtivo ? "bg-[var(--zelo-btn-bg)]" : "bg-[#D4D4D8] dark:bg-[#3F3F46]"
                 }`}
               >
                 <span
@@ -307,7 +307,7 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
               >
                 <span
                   className={`flex h-7 w-12 items-center rounded-full p-1 transition-colors ${
-                    pausada ? "bg-[#F59E0B]" : "bg-[var(--zelo-soft)]"
+                    pausada ? "bg-[#F59E0B]" : "bg-[#D4D4D8] dark:bg-[#3F3F46]"
                   }`}
                 >
                   <span

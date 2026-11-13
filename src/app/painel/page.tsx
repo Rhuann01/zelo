@@ -18,7 +18,13 @@ export default async function PainelPage() {
   const primeiroNome = ctx.perfil.nome.split(" ")[0] || "Gestor";
 
   return (
-    <PainelShell lojas={ctx.lojas} lojaAtual={ctx.lojaAtual} isOwner={ctx.isOwner}>
+    <PainelShell
+      lojas={ctx.lojas}
+      lojaAtual={ctx.lojaAtual}
+      isOwner={ctx.isOwner}
+      avatarUrl={ctx.perfil.avatar_url}
+      perfilNome={ctx.perfil.nome}
+    >
       <div className="space-y-4">
         {/* Status & Greeting Card */}
         <section className="rounded-2xl bg-[var(--zelo-card)] p-4 shadow-sm space-y-4">

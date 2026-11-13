@@ -241,11 +241,7 @@ export function GestaoTabs({
                 return (
                   <div
                     key={key}
-                    className={`flex min-h-[54px] items-center justify-between gap-2 rounded-xl px-3 py-2 transition-colors ${
-                      dia.ativo
-                        ? "bg-[var(--zelo-soft)]"
-                        : "bg-[var(--zelo-soft)]/50 opacity-75"
-                    }`}
+                    className="flex min-h-[54px] items-center justify-between gap-2 rounded-xl bg-[var(--zelo-soft)] px-3 py-2 transition-colors"
                   >
                     <div className="flex shrink-0 items-center gap-2.5">
                       <button
@@ -263,16 +259,24 @@ export function GestaoTabs({
                         className={`relative h-6 w-11 shrink-0 rounded-full p-0.5 transition-colors disabled:opacity-60 ${
                           dia.ativo
                             ? "bg-[var(--zelo-btn-bg)]"
-                            : "bg-black/15 dark:bg-white/15"
+                            : "bg-[#D4D4D8] dark:bg-[#3F3F46]"
                         }`}
                       >
                         <span
-                          className={`block h-5 w-5 rounded-full bg-[var(--zelo-btn-ink)] shadow-xs transition-transform ${
-                            dia.ativo ? "translate-x-5" : "translate-x-0 bg-white"
+                          className={`block h-5 w-5 rounded-full shadow-sm transition-transform ${
+                            dia.ativo
+                              ? "translate-x-5 bg-[var(--zelo-btn-ink)]"
+                              : "translate-x-0 bg-white"
                           }`}
                         />
                       </button>
-                      <span className="w-8 text-xs font-bold">{label}</span>
+                      <span
+                        className={`w-8 text-xs font-bold ${
+                          dia.ativo ? "text-[var(--zelo-ink)]" : "text-[var(--zelo-muted)]"
+                        }`}
+                      >
+                        {label}
+                      </span>
                     </div>
 
                     {dia.ativo ? (
@@ -338,7 +342,7 @@ export function GestaoTabs({
                 className={`relative h-6 w-11 shrink-0 rounded-full p-0.5 transition-colors disabled:opacity-60 ${
                   almocoAtivo
                     ? "bg-[#F59E0B]"
-                    : "bg-black/15 dark:bg-white/15"
+                    : "bg-[#D4D4D8] dark:bg-[#3F3F46]"
                 }`}
               >
                 <span
@@ -506,7 +510,7 @@ export function GestaoTabs({
               >
                 <span
                   className={`flex h-7 w-12 items-center rounded-full p-0.5 transition ${
-                    donoProf.ativo ? "bg-[#10B981]" : "bg-black/15 dark:bg-white/15"
+                    donoProf.ativo ? "bg-[#10B981]" : "bg-[#D4D4D8] dark:bg-[#3F3F46]"
                   }`}
                 >
                   <span

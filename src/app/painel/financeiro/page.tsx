@@ -6,7 +6,13 @@ export default async function FinanceiroPage() {
   const ctx = await getPainelContext("/painel/financeiro");
 
   return (
-    <PainelShell lojas={ctx.lojas} lojaAtual={ctx.lojaAtual} isOwner={ctx.isOwner}>
+    <PainelShell
+      lojas={ctx.lojas}
+      lojaAtual={ctx.lojaAtual}
+      isOwner={ctx.isOwner}
+      avatarUrl={ctx.perfil.avatar_url}
+      perfilNome={ctx.perfil.nome}
+    >
       <section className="rounded-2xl bg-[var(--zelo-card)] p-5 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

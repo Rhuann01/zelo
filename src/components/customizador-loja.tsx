@@ -68,7 +68,6 @@ const TEMAS = [
 
 const SWATCHES = [
   { color: "#F59E0B", label: "Âmbar" },
-  { color: "#10B981", label: "Esmeralda" },
   { color: "#BE185D", label: "Rosé" },
   { color: "#2563EB", label: "Cobalto" },
   { color: "#A3E635", label: "Lima" },
@@ -373,6 +372,29 @@ export function CustomizadorLoja({
                 </button>
               );
             })}
+            <label
+              title="Escolher cor personalizada"
+              aria-label="Escolher cor personalizada"
+              className={`relative flex h-11 w-11 cursor-pointer items-center justify-center rounded-full shadow-sm transition-transform active:scale-90 ${
+                !isOwner ? "pointer-events-none opacity-60" : ""
+              } ${!activeSwatch ? "ring-2 ring-[var(--zelo-ink)] ring-offset-2 ring-offset-[var(--zelo-card)]" : ""}`}
+              style={{
+                background:
+                  "conic-gradient(from 0deg, #EF4444, #F59E0B, #EAB308, #10B981, #3B82F6, #8B5CF6, #EC4899, #EF4444)",
+              }}
+            >
+              <input
+                type="color"
+                disabled={!isOwner}
+                value={cor}
+                onChange={(e) => setCor(e.target.value.toUpperCase())}
+                className="sr-only"
+              />
+              <span
+                className="h-4 w-4 rounded-full border-2 border-white shadow-xs"
+                style={{ backgroundColor: !activeSwatch ? cor : "#FFFFFF" }}
+              />
+            </label>
           </div>
         </div>
 

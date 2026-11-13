@@ -27,7 +27,13 @@ export default async function GestaoPage() {
   ]);
 
   return (
-    <PainelShell lojas={ctx.lojas} lojaAtual={ctx.lojaAtual} isOwner={ctx.isOwner}>
+    <PainelShell
+      lojas={ctx.lojas}
+      lojaAtual={ctx.lojaAtual}
+      isOwner={ctx.isOwner}
+      avatarUrl={ctx.perfil.avatar_url}
+      perfilNome={ctx.perfil.nome}
+    >
       <GestaoTabs
         lojaId={ctx.lojaAtual.id}
         plano={ctx.lojaAtual.plano}

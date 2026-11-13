@@ -6,7 +6,13 @@ export default async function PersonalizarPage() {
   const ctx = await getPainelContext("/painel/personalizar");
 
   return (
-    <PainelShell lojas={ctx.lojas} lojaAtual={ctx.lojaAtual} isOwner={ctx.isOwner}>
+    <PainelShell
+      lojas={ctx.lojas}
+      lojaAtual={ctx.lojaAtual}
+      isOwner={ctx.isOwner}
+      avatarUrl={ctx.perfil.avatar_url}
+      perfilNome={ctx.perfil.nome}
+    >
       <CustomizadorLoja loja={ctx.lojaAtual} isOwner={ctx.isOwner} />
     </PainelShell>
   );
