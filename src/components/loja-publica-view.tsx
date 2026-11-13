@@ -16,9 +16,9 @@ import {
   Share2,
   ShieldCheck,
   Users,
-  X,
   Zap,
 } from "lucide-react";
+import { ReservaDrawer } from "@/components/reserva-drawer";
 import {
   getAccentInk,
   type LojaPublica,
@@ -599,94 +599,21 @@ export function LojaPublicaView({
         </div>
       )}
 
-      {/* Etapa 3 -> Etapa 4 Handoff Sheet */}
-      {drawerOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-xs sm:items-center sm:p-4">
-          <div
-            className="w-full max-w-[480px] space-y-4 p-5"
-            style={{
-              ...cardSurfaceStyle,
-              borderBottomLeftRadius: 0,
-              borderBottomRightRadius: 0,
-            }}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-base font-bold">Resumo da Reserva</h2>
-                <p className="font-mono-num text-xs" style={{ color: "var(--t-muted)" }}>
-                  {totalDuracao} min • {formatPrice(totalCentavos)}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setDrawerOpen(false)}
-                aria-label="Fechar"
-                className="flex h-11 w-11 items-center justify-center rounded-full"
-                style={{ backgroundColor: "var(--t-inner)" }}
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            {profissionais.length > 0 && (
-              <div className="space-y-2">
-                <span className="text-xs font-semibold" style={{ color: "var(--t-muted)" }}>
-                  Profissional
-                </span>
-                <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-1">
-                  {profissionais.map((p) => {
-                    const active = selectedProfId === p.id;
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => setSelectedProfId(p.id)}
-                        className="inline-flex h-11 shrink-0 items-center gap-2 whitespace-nowrap px-3.5 text-xs font-semibold transition-all"
-                        style={{
-                          borderRadius: "calc(var(--t-radius) * 0.7)",
-                          backgroundColor: active ? "var(--t-accent)" : "var(--t-inner)",
-                          color: active ? "var(--t-accent-ink)" : "var(--t-ink)",
-                        }}
-                      >
-                        <span>{p.nome}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            <div
-              className="p-3.5 text-xs leading-relaxed"
-              style={{
-                backgroundColor: "var(--t-inner)",
-                borderRadius: "calc(var(--t-radius) * 0.75)",
-                color: "var(--t-muted)",
-              }}
-            >
-              A grade de horários livres em tempo real e a reserva blindada com 1 clique entram na{" "}
-              <strong style={{ color: "var(--t-ink)" }}>Etapa 4</strong>.
-            </div>
-
-            {whatsappHref && (
-              <a
-                href={whatsappHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex min-h-[46px] w-full items-center justify-center gap-2 text-sm font-bold transition-opacity hover:opacity-90"
-                style={{
-                  borderRadius: "calc(var(--t-radius) * 0.78)",
-                  backgroundColor: "var(--t-accent)",
-                  color: "var(--t-accent-ink)",
-                }}
-              >
-                <MessageCircle className="h-4 w-4" />
-                <span>Combinar horário no WhatsApp</span>
-              </a>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Drawer Real de Disponibilidade e Reserva Blindada */}
+      <ReservaDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        loja={loja}
+        selecionados={selecionados}
+        totalDuracao={totalDuracao}
+        totalCentavos={totalCentavos}
+        profissionais={profissionais}
+        selectedProfId={selectedProfId}
+        onSelectProf={setSelectedProfId}
+        isBrutal={isBrutal}
+        cardSurfaceStyle={cardSurfaceStyle}
+        whatsappFallbackHref={whatsappHref}
+      />
     </div>
   );
 }
