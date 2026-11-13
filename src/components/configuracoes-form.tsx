@@ -199,7 +199,7 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
               aria-label="Alternar tema escuro"
             >
               <span
-                className={`flex h-7 w-12 items-center rounded-full p-1 transition-colors ${
+                className={`flex h-6 w-11 items-center rounded-full p-0.5 transition-colors ${
                   dark ? "bg-[var(--zelo-btn-bg)]" : "bg-[#D4D4D8] dark:bg-[#3F3F46]"
                 }`}
               >
@@ -233,7 +233,7 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
               aria-label="Alternar Web Push"
             >
               <span
-                className={`flex h-7 w-12 items-center rounded-full p-1 transition-colors ${
+                className={`flex h-6 w-11 items-center rounded-full p-0.5 transition-colors ${
                   pushAtivo ? "bg-[var(--zelo-btn-bg)]" : "bg-[#D4D4D8] dark:bg-[#3F3F46]"
                 }`}
               >
@@ -263,7 +263,7 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
               aria-label="Alternar lembretes por e-mail"
             >
               <span
-                className={`flex h-7 w-12 items-center rounded-full p-1 transition-colors ${
+                className={`flex h-6 w-11 items-center rounded-full p-0.5 transition-colors ${
                   emailAtivo ? "bg-[var(--zelo-btn-bg)]" : "bg-[#D4D4D8] dark:bg-[#3F3F46]"
                 }`}
               >
@@ -306,7 +306,7 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
                 aria-label="Pausar loja temporariamente"
               >
                 <span
-                  className={`flex h-7 w-12 items-center rounded-full p-1 transition-colors ${
+                  className={`flex h-6 w-11 items-center rounded-full p-0.5 transition-colors ${
                     pausada ? "bg-[#F59E0B]" : "bg-[#D4D4D8] dark:bg-[#3F3F46]"
                   }`}
                 >

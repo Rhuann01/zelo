@@ -60,42 +60,42 @@ export default async function PainelPage() {
           <div className="grid grid-cols-3 gap-2">
             <Link
               href="/painel/gestao"
-              className="flex min-h-[88px] flex-col items-start justify-between rounded-xl bg-[var(--zelo-soft)] p-3 transition hover:opacity-90 active:scale-[0.98]"
+              className="flex flex-col items-start justify-start gap-2.5 rounded-xl bg-[var(--zelo-soft)] p-3 transition hover:opacity-90 active:scale-[0.98]"
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F59E0B]/15 text-[#D97706]">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#F59E0B]/15 text-[#D97706]">
                 <LayoutGrid className="h-4 w-4" />
               </div>
-              <div>
-                <span className="block text-xs font-bold">Gestão</span>
-                <span className="block text-[10px] text-[var(--zelo-muted)]">
-                  Horários & Equipe
+              <div className="w-full min-w-0">
+                <span className="block truncate text-xs font-bold">Gestão</span>
+                <span className="block truncate text-[11px] text-[var(--zelo-muted)]">
+                  Equipe & Dias
                 </span>
               </div>
             </Link>
             <Link
               href="/painel/personalizar"
-              className="flex min-h-[88px] flex-col items-start justify-between rounded-xl bg-[var(--zelo-soft)] p-3 transition hover:opacity-90 active:scale-[0.98]"
+              className="flex flex-col items-start justify-start gap-2.5 rounded-xl bg-[var(--zelo-soft)] p-3 transition hover:opacity-90 active:scale-[0.98]"
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#10B981]/15 text-[#10B981]">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#10B981]/15 text-[#10B981]">
                 <Palette className="h-4 w-4" />
               </div>
-              <div>
-                <span className="block text-xs font-bold">Tema</span>
-                <span className="block text-[10px] capitalize text-[var(--zelo-muted)]">
+              <div className="w-full min-w-0">
+                <span className="block truncate text-xs font-bold">Tema</span>
+                <span className="block truncate text-[11px] capitalize text-[var(--zelo-muted)]">
                   {ctx.lojaAtual.tema}
                 </span>
               </div>
             </Link>
             <Link
               href="/painel/configuracoes"
-              className="flex min-h-[88px] flex-col items-start justify-between rounded-xl bg-[var(--zelo-soft)] p-3 transition hover:opacity-90 active:scale-[0.98]"
+              className="flex flex-col items-start justify-start gap-2.5 rounded-xl bg-[var(--zelo-soft)] p-3 transition hover:opacity-90 active:scale-[0.98]"
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--zelo-card)] text-[var(--zelo-ink)] shadow-xs">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--zelo-card)] text-[var(--zelo-ink)] shadow-xs">
                 <Settings className="h-4 w-4" />
               </div>
-              <div>
-                <span className="block text-xs font-bold">Config</span>
-                <span className="block text-[10px] text-[var(--zelo-muted)]">
+              <div className="w-full min-w-0">
+                <span className="block truncate text-xs font-bold">Config</span>
+                <span className="block truncate text-[11px] text-[var(--zelo-muted)]">
                   Foto & Conta
                 </span>
               </div>

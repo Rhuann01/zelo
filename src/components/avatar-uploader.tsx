@@ -120,9 +120,9 @@ export function AvatarUploader({
           onClick={() => inputRef.current?.click()}
           disabled={loading}
           aria-label="Alterar foto de perfil"
-          className="absolute -bottom-1.5 -right-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)] shadow-sm"
+          className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)] ring-2 ring-[var(--zelo-card)] shadow-sm"
         >
-          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+          {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Camera className="h-3 w-3" />}
         </button>
         <input
           ref={inputRef}

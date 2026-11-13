@@ -486,13 +486,13 @@ export function GestaoTabs({
         <div className="space-y-4">
           {donoProf && (
             <section className="rounded-2xl bg-[var(--zelo-card)] p-4 shadow-sm flex items-center justify-between gap-3">
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#10B981]/15 text-[#10B981]">
-                  <Store className="h-4 w-4" />
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#10B981]/15 text-[#10B981]">
+                  <Store className="h-[18px] w-[18px]" />
                 </div>
-                <div className="space-y-0.5">
-                  <div className="text-sm font-bold">Também atendo clientes</div>
-                  <p className="text-xs leading-relaxed text-[var(--zelo-muted)]">
+                <div className="min-w-0 space-y-0.5">
+                  <div className="text-sm font-bold leading-snug">Também atendo clientes</div>
+                  <p className="text-xs leading-snug text-[var(--zelo-muted)]">
                     Exibe ou oculta você na vitrine pública sem perder seu histórico.
                   </p>
                 </div>
@@ -505,16 +505,16 @@ export function GestaoTabs({
                 onClick={() =>
                   runAction(() => toggleDonoAtendeAction(lojaId, donoProf.id, !donoProf.ativo))
                 }
-                className="inline-flex min-h-[44px] shrink-0 items-center px-1"
+                className="inline-flex min-h-[44px] shrink-0 items-center"
                 aria-label="Alternar atendimento do proprietário"
               >
                 <span
-                  className={`flex h-7 w-12 items-center rounded-full p-0.5 transition ${
+                  className={`flex h-6 w-11 items-center rounded-full p-0.5 transition-colors ${
                     donoProf.ativo ? "bg-[#10B981]" : "bg-[#D4D4D8] dark:bg-[#3F3F46]"
                   }`}
                 >
                   <span
-                    className={`block h-6 w-6 rounded-full bg-white shadow-xs transition-transform ${
+                    className={`block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
                       donoProf.ativo ? "translate-x-5" : "translate-x-0"
                     }`}
                   />
