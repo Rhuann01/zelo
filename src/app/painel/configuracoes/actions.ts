@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { perfilConfigSchema } from "@/lib/schemas/painel";
@@ -40,12 +40,17 @@ export async function saveConfiguracoesAction(raw: unknown) {
       .update({ pausada: input.pausada, updated_at: new Date().toISOString() })
       .eq("id", input.loja_id)
       .eq("owner_id", user.id)
-      .select("id")
+      .select("id, slug")
       .maybeSingle();
 
     if (lojaErr || !lojaAtualizada) {
       return { error: "Apenas o proprietário pode pausar ou reativar a loja." };
     }
+
+    revalidateTag(`loja-${lojaAtualizada.slug}`);
+    revalidateTag("vitrine-explorar");
+    revalidatePath(`/${lojaAtualizada.slug}`);
+    revalidatePath("/explorar");
   }
 
   revalidatePath("/painel/configuracoes");

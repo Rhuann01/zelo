@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -63,6 +63,8 @@ export async function saveServicoAction(raw: unknown): Promise<ActionResult> {
   }
 
   revalidatePath("/painel/gestao");
+  revalidateTag("vitrine-explorar");
+  revalidatePath("/explorar");
   return { ok: true };
 }
 
@@ -90,6 +92,8 @@ export async function deleteServicoAction(servicoId: string, lojaId: string): Pr
     return { error: "Não foi possível excluir o serviço." };
   }
   revalidatePath("/painel/gestao");
+  revalidateTag("vitrine-explorar");
+  revalidatePath("/explorar");
   return { ok: true };
 }
 
@@ -114,6 +118,8 @@ export async function saveHorariosAction(raw: unknown): Promise<ActionResult> {
   }
 
   revalidatePath("/painel/gestao");
+  revalidateTag("vitrine-explorar");
+  revalidatePath("/explorar");
   return { ok: true, message: "Grade semanal salva." };
 }
 
@@ -146,6 +152,8 @@ export async function createBloqueioAction(raw: unknown): Promise<ActionResult> 
   }
 
   revalidatePath("/painel/gestao");
+  revalidateTag("vitrine-explorar");
+  revalidatePath("/explorar");
   return { ok: true };
 }
 
@@ -181,6 +189,8 @@ export async function toggleDonoAtendeAction(
   }
 
   revalidatePath("/painel/gestao");
+  revalidateTag("vitrine-explorar");
+  revalidatePath("/explorar");
   return { ok: true };
 }
 
@@ -230,6 +240,8 @@ export async function convidarProfissionalAction(raw: unknown): Promise<ActionRe
   }
 
   revalidatePath("/painel/gestao");
+  revalidateTag("vitrine-explorar");
+  revalidatePath("/explorar");
   return { ok: true };
 }
 
@@ -263,5 +275,7 @@ export async function desligarProfissionalAction(
   }
 
   revalidatePath("/painel/gestao");
+  revalidateTag("vitrine-explorar");
+  revalidatePath("/explorar");
   return { ok: true };
 }

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { customizacaoLojaSchema } from "@/lib/schemas/painel";
 
@@ -37,7 +37,10 @@ export async function saveCustomizacaoAction(raw: unknown) {
     return { error: "Apenas o proprietário pode personalizar o tema da loja." };
   }
 
+  revalidateTag(`loja-${data.slug}`);
+  revalidateTag("vitrine-explorar");
   revalidatePath("/painel/personalizar");
   revalidatePath(`/${data.slug}`);
+  revalidatePath("/explorar");
   return { ok: true, message: "Tema e PIX salvos com sucesso." };
 }

@@ -114,3 +114,12 @@ body {
   --t-shadow: none;
   --t-border-w: 1px;
 }
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
