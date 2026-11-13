@@ -1,15 +1,27 @@
 import Link from "next/link";
-import { Calendar, LayoutGrid, Palette, Plus, Settings, Sparkles } from "lucide-react";
+import {
+  Calendar,
+  ChevronRight,
+  Clock,
+  LayoutGrid,
+  Palette,
+  Plus,
+  Settings,
+  Sparkles,
+  Utensils,
+} from "lucide-react";
 import { getPainelContext } from "@/lib/painel/get-painel-context";
 import { PainelShell } from "@/components/painel-shell";
 
 export default async function PainelPage() {
   const ctx = await getPainelContext("/painel");
+  const primeiroNome = ctx.perfil.nome.split(" ")[0] || "Gestor";
 
   return (
     <PainelShell lojas={ctx.lojas} lojaAtual={ctx.lojaAtual} isOwner={ctx.isOwner}>
       <div className="space-y-4">
-        <section className="rounded-2xl bg-[var(--zelo-card)] p-4 space-y-3">
+        {/* Status & Greeting Card */}
+        <section className="rounded-2xl bg-[var(--zelo-card)] p-4 shadow-sm space-y-4">
           <div className="flex items-start justify-between gap-2">
             <div>
               <span
@@ -19,72 +31,123 @@ export default async function PainelPage() {
                     : "bg-[#10B981]/15 text-[#10B981]"
                 }`}
               >
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${
+                    ctx.lojaAtual.pausada ? "bg-[#F59E0B]" : "bg-[#10B981]"
+                  }`}
+                />
                 {ctx.lojaAtual.pausada ? "Loja Pausada" : "Loja Ativa"}
               </span>
-              <h1 className="mt-1.5 text-xl font-bold tight-heading">
-                Olá, {ctx.perfil.nome.split(" ")[0]}
+              <h1 className="mt-2 text-xl font-bold tracking-tight">
+                Olá, {primeiroNome}
               </h1>
               <p className="font-mono-num text-xs text-[var(--zelo-muted)]">
                 zelo.app/{ctx.lojaAtual.slug}
               </p>
             </div>
-            <span className="rounded-full bg-[var(--zelo-soft)] px-2.5 py-1 font-mono-num text-[11px] font-semibold text-[var(--zelo-muted)]">
-              {ctx.lojaAtual.plano.toUpperCase()}
+            <span className="rounded-full bg-[var(--zelo-soft)] px-2.5 py-1 font-mono-num text-[11px] font-bold uppercase tracking-wider text-[var(--zelo-muted)]">
+              {ctx.lojaAtual.plano}
             </span>
           </div>
 
+          {/* 3-Card Bento Quick Actions */}
           <div className="grid grid-cols-3 gap-2">
             <Link
               href="/painel/gestao"
-              className="flex min-h-[84px] flex-col items-start justify-center gap-1.5 rounded-xl bg-[var(--zelo-soft)] p-3 transition hover:opacity-90"
+              className="flex min-h-[88px] flex-col items-start justify-between rounded-xl bg-[var(--zelo-soft)] p-3 transition hover:opacity-90 active:scale-[0.98]"
             >
-              <LayoutGrid className="h-4 w-4 text-[#F59E0B]" />
-              <span className="text-xs font-bold">Gestão</span>
-              <span className="text-[10px] text-[var(--zelo-muted)]">Serviços & Equipe</span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F59E0B]/15 text-[#D97706]">
+                <LayoutGrid className="h-4 w-4" />
+              </div>
+              <div>
+                <span className="block text-xs font-bold">Gestão</span>
+                <span className="block text-[10px] text-[var(--zelo-muted)]">
+                  Horários & Equipe
+                </span>
+              </div>
             </Link>
             <Link
               href="/painel/personalizar"
-              className="flex min-h-[84px] flex-col items-start justify-center gap-1.5 rounded-xl bg-[var(--zelo-soft)] p-3 transition hover:opacity-90"
+              className="flex min-h-[88px] flex-col items-start justify-between rounded-xl bg-[var(--zelo-soft)] p-3 transition hover:opacity-90 active:scale-[0.98]"
             >
-              <Palette className="h-4 w-4 text-[#10B981]" />
-              <span className="text-xs font-bold">Tema</span>
-              <span className="text-[10px] text-[var(--zelo-muted)] capitalize">
-                {ctx.lojaAtual.tema}
-              </span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#10B981]/15 text-[#10B981]">
+                <Palette className="h-4 w-4" />
+              </div>
+              <div>
+                <span className="block text-xs font-bold">Tema</span>
+                <span className="block text-[10px] capitalize text-[var(--zelo-muted)]">
+                  {ctx.lojaAtual.tema}
+                </span>
+              </div>
             </Link>
             <Link
               href="/painel/configuracoes"
-              className="flex min-h-[84px] flex-col items-start justify-center gap-1.5 rounded-xl bg-[var(--zelo-soft)] p-3 transition hover:opacity-90"
+              className="flex min-h-[88px] flex-col items-start justify-between rounded-xl bg-[var(--zelo-soft)] p-3 transition hover:opacity-90 active:scale-[0.98]"
             >
-              <Settings className="h-4 w-4 text-[var(--zelo-ink)]" />
-              <span className="text-xs font-bold">Perfil</span>
-              <span className="text-[10px] text-[var(--zelo-muted)]">Foto & Conta</span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--zelo-card)] text-[var(--zelo-ink)] shadow-xs">
+                <Settings className="h-4 w-4" />
+              </div>
+              <div>
+                <span className="block text-xs font-bold">Config</span>
+                <span className="block text-[10px] text-[var(--zelo-muted)]">
+                  Foto & Conta
+                </span>
+              </div>
             </Link>
           </div>
         </section>
 
-        <section className="rounded-2xl bg-[var(--zelo-card)] p-4 space-y-3">
-          <div className="flex items-center justify-between">
+        {/* Agenda Visual Preview (Etapa 5) */}
+        <section className="rounded-2xl bg-[var(--zelo-card)] p-4 shadow-sm space-y-3">
+          <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-[#F59E0B]" />
-              <h2 className="text-sm font-bold">Agenda Visual (Schedule-X)</h2>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F59E0B]/15 text-[#D97706]">
+                <Calendar className="h-4 w-4" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold">Agenda do Dia</h2>
+                <p className="text-[11px] text-[var(--zelo-muted)]">
+                  Schedule-X • Linha do tempo
+                </p>
+              </div>
             </div>
             <span className="rounded-full bg-[#F59E0B]/15 px-2.5 py-0.5 text-[11px] font-semibold text-[#D97706]">
               Etapa 5
             </span>
           </div>
-          <p className="text-xs leading-relaxed text-[var(--zelo-muted)]">
-            A linha do tempo interativa com encaixe manual em 3s, baixa de atendimentos e alertas Web Push entra na Etapa 5, após o motor de disponibilidade e reservas.
-          </p>
+
+          <div className="space-y-2 rounded-xl bg-[var(--zelo-soft)] p-3">
+            <div className="flex items-center gap-2.5 text-xs text-[var(--zelo-muted)]">
+              <Clock className="h-3.5 w-3.5 shrink-0" />
+              <span>
+                A grade interativa com encaixe manual em 3s, baixa de atendimentos e alertas Web Push entra na Etapa 5.
+              </span>
+            </div>
+            <div className="flex items-center justify-between rounded-lg bg-[var(--zelo-card)] px-3 py-2 text-[11px]">
+              <div className="flex items-center gap-2 font-medium">
+                <Utensils className="h-3.5 w-3.5 text-[#F59E0B]" />
+                <span>Pausa padrão configurada</span>
+              </div>
+              <Link
+                href="/painel/gestao"
+                className="inline-flex items-center gap-0.5 font-semibold text-[var(--zelo-ink)] hover:underline"
+              >
+                Ajustar
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </div>
         </section>
 
         {ctx.isOwner && (
           <Link
             href="/onboarding"
-            className="flex min-h-[68px] items-center justify-between rounded-2xl bg-[var(--zelo-soft)] p-4 transition hover:opacity-90"
+            className="flex min-h-[68px] items-center justify-between rounded-2xl bg-[var(--zelo-card)] p-4 shadow-sm transition hover:opacity-95 active:scale-[0.99]"
           >
-            <div className="flex items-center gap-2.5">
-              <Sparkles className="h-4 w-4 text-[#F59E0B]" />
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F59E0B]/15 text-[#D97706]">
+                <Sparkles className="h-4 w-4" />
+              </div>
               <div>
                 <p className="text-sm font-bold">Criar nova unidade / loja</p>
                 <p className="text-xs text-[var(--zelo-muted)]">
@@ -92,7 +155,7 @@ export default async function PainelPage() {
                 </p>
               </div>
             </div>
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)]">
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)]">
               <Plus className="h-4 w-4" />
             </span>
           </Link>

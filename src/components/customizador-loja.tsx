@@ -1,7 +1,19 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, ImagePlus, Loader2, MapPin, QrCode, Scissors } from "lucide-react";
+import {
+  ArrowRight,
+  BadgeCheck,
+  Check,
+  CheckCircle2,
+  Circle,
+  Copy,
+  Eye,
+  ImagePlus,
+  Loader2,
+  RefreshCw,
+  Wallet,
+} from "lucide-react";
 import { saveCustomizacaoAction } from "@/app/painel/personalizar/actions";
 import { createClient } from "@/lib/supabase/client";
 import { compressImageToWebP, STORE_MEDIA_COMPRESS_CONFIG } from "@/lib/image/compress-webp";
@@ -11,54 +23,46 @@ const TEMAS = [
   {
     key: "urban",
     label: "Urban Noir",
-    desc: "Escuro",
-    bg: "#0F0F12",
-    surface: "#18181D",
-    inner: "#222229",
-    ink: "#F4F4F5",
-    muted: "#71717A",
-    border: "1px solid #2C2C35",
-    shadow: "none",
-    radius: "8px",
+    desc: "Dark premium",
+    barBg: "#111111",
+    dot: "#F59E0B",
+    tag: "Dark",
+    tagColor: "#FFFFFF",
+    defaultCor: "#F59E0B",
+    defaultRaio: 8,
   },
   {
     key: "glam",
     label: "Clean Glam",
-    desc: "Suave",
-    bg: "#FDF8F6",
-    surface: "#FFFFFF",
-    inner: "#FBF1EE",
-    ink: "#2A1D1D",
-    muted: "#C4A9A2",
-    border: "1px solid #EFE0DA",
-    shadow: "0 2px 10px rgba(190, 24, 93, 0.05)",
-    radius: "10px",
+    desc: "Estética & Spa",
+    barBg: "#FCE7F3",
+    dot: "#BE185D",
+    tag: "Rosé",
+    tagColor: "#831843",
+    defaultCor: "#BE185D",
+    defaultRaio: 16,
   },
   {
     key: "brutal",
-    label: "Neo-Brutal",
-    desc: "Marcante",
-    bg: "#FFFDF4",
-    surface: "#FFFFFF",
-    inner: "#F7F5EA",
-    ink: "#000000",
-    muted: "#71717A",
-    border: "2px solid #000000",
-    shadow: "3px 3px 0px #000000",
-    radius: "3px",
+    label: "Neo-Brutalist",
+    desc: "Visual bold e pop",
+    barBg: "#ECFCCB",
+    dot: "#4D7C0F",
+    tag: "Lima Pop",
+    tagColor: "#365314",
+    defaultCor: "#A3E635",
+    defaultRaio: 4,
   },
   {
     key: "slate",
     label: "Minimalist Slate",
-    desc: "Clínico",
-    bg: "#FFFFFF",
-    surface: "#F8FAFC",
-    inner: "#F1F5F9",
-    ink: "#0F172A",
-    muted: "#94A3B8",
-    border: "1px solid #CBD5E1",
-    shadow: "none",
-    radius: "8px",
+    desc: "Clínica moderna",
+    barBg: "#DBEAFE",
+    dot: "#2563EB",
+    tag: "Cobalto",
+    tagColor: "#1E40AF",
+    defaultCor: "#2563EB",
+    defaultRaio: 12,
   },
 ] as const;
 
@@ -85,6 +89,7 @@ export function CustomizadorLoja({
     (loja.sinal_centavos / 100).toFixed(2).replace(".", ",")
   );
   const [logoUrl, setLogoUrl] = useState(loja.logo_url);
+  const [refreshing, setRefreshing] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -92,6 +97,7 @@ export function CustomizadorLoja({
   const accentInk =
     cor.toUpperCase() === "#F59E0B" || cor.toUpperCase() === "#A3E635" ? "#111111" : "#FFFFFF";
   const isBrutal = tema === "brutal";
+  const activeSwatch = SWATCHES.find((s) => s.color.toUpperCase() === cor.toUpperCase());
 
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -119,12 +125,18 @@ export function CustomizadorLoja({
       if (dbErr) throw dbErr;
 
       setLogoUrl(url);
-      setFeedback("Logo atualizada.");
+      setFeedback("Logo atualizada com sucesso.");
     } catch (err) {
-      setFeedback(err instanceof Error ? err.message : "Não foi possível enviar a logo.");
+      setFeedback(err instanceof Error ? err.message : "Erro ao enviar logo.");
     } finally {
       setUploading(false);
     }
+  }
+
+  function handlePreset(preset: (typeof TEMAS)[number]) {
+    setTema(preset.key);
+    setCor(preset.defaultCor);
+    setRaio(preset.defaultRaio);
   }
 
   function handleSave() {
@@ -143,113 +155,155 @@ export function CustomizadorLoja({
         chave_pix: chavePix.trim() || null,
         sinal_centavos: sinalCentavos,
       });
-      setFeedback(res.error ?? (res.ok ? "Alterações salvas." : null));
+      setFeedback(res.error ?? res.message ?? null);
     });
   }
 
   return (
-    <div className="space-y-6">
-      <div
-        className={`store-view-base theme-${tema} p-4`}
-        style={{
-          borderRadius: `${raio}px`,
-          border: isBrutal ? "2px solid #000000" : "1px solid var(--t-border)",
-          boxShadow: isBrutal ? "4px 4px 0px #000000" : "var(--t-shadow)",
-        }}
-      >
-        <div
-          className="space-y-3 p-3.5"
-          style={{
-            backgroundColor: "var(--t-surface)",
-            borderRadius: `${Math.max(2, Math.round(raio * 0.85))}px`,
-            border: isBrutal ? "2px solid #000000" : undefined,
-          }}
-        >
-          <div className="flex items-center gap-3">
-            {logoUrl ? (
-              <img
-                src={logoUrl}
-                alt={loja.nome}
-                className="h-10 w-10 shrink-0 object-cover"
-                style={{ borderRadius: `${Math.max(2, Math.round(raio * 0.78))}px` }}
-              />
-            ) : (
-              <div
-                className="flex h-10 w-10 shrink-0 items-center justify-center text-xs font-bold"
-                style={{
-                  backgroundColor: cor,
-                  color: accentInk,
-                  borderRadius: `${Math.max(2, Math.round(raio * 0.78))}px`,
-                  border: isBrutal ? "2px solid #000000" : undefined,
-                }}
-              >
-                {loja.nome.slice(0, 2).toUpperCase()}
-              </div>
-            )}
-            <div className="min-w-0">
-              <p className="truncate text-sm font-bold leading-tight" style={{ color: "var(--t-ink)" }}>
-                {loja.nome}
-              </p>
-              <p
-                className="mt-0.5 flex items-center gap-1 truncate text-[11px]"
-                style={{ color: "var(--t-muted)" }}
-              >
-                <MapPin className="h-3 w-3 shrink-0" />
-                <span>
-                  {loja.bairro || "Centro"}, {loja.cidade || "Cidade"}
-                </span>
-              </p>
-            </div>
+    <div className="flex flex-col gap-5 pb-6">
+      {/* Interactive Storefront Mini Preview */}
+      <section>
+        <div className="mb-2 flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <Eye className="h-[18px] w-[18px] text-[var(--zelo-muted)]" />
+            <span className="text-base font-semibold text-[var(--zelo-ink)]">Preview da Loja</span>
           </div>
-
-          <div
-            className="flex items-center justify-between gap-2 p-3"
-            style={{
-              backgroundColor: "var(--t-inner)",
-              borderRadius: `${Math.max(2, Math.round(raio * 0.8))}px`,
-              border: isBrutal ? "1.5px solid #000000" : undefined,
-            }}
-          >
-            <div className="flex min-w-0 items-center gap-2.5">
-              <Scissors className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--t-muted)" }} />
-              <div className="min-w-0">
-                <p className="truncate text-xs font-semibold" style={{ color: "var(--t-ink)" }}>
-                  Corte Degradê
-                </p>
-                <p className="font-mono-num text-[11px]" style={{ color: "var(--t-muted)" }}>
-                  35 min • Hoje 14:30
-                </p>
-              </div>
-            </div>
-            <span className="shrink-0 font-mono-num text-xs font-bold" style={{ color: "var(--t-ink)" }}>
-              R$ 45,00
+          <div className="flex items-center gap-1.5 rounded-full bg-[var(--zelo-soft)] px-2.5 py-1">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#10B981]" />
+            <span className="font-mono-num text-[10px] font-medium text-[var(--zelo-muted)]">
+              Ao Vivo
             </span>
           </div>
+        </div>
 
+        <div className="w-full rounded-xl bg-[var(--zelo-soft)] p-3 shadow-sm">
           <div
-            className="flex h-10 items-center justify-center text-xs font-bold"
+            className={`store-view-base theme-${tema} flex w-full flex-col gap-2.5 p-3 transition-all duration-200 ${
+              refreshing ? "opacity-50" : "opacity-100"
+            }`}
             style={{
-              backgroundColor: cor,
-              color: accentInk,
-              borderRadius: `${Math.max(2, Math.round(raio * 0.78))}px`,
+              backgroundColor: "var(--t-surface)",
+              borderRadius: `${raio}px`,
               border: isBrutal ? "2px solid #000000" : undefined,
-              boxShadow: isBrutal ? "2px 2px 0px #000000" : undefined,
+              boxShadow: isBrutal ? "3px 3px 0px #000000" : "var(--t-shadow)",
             }}
           >
-            Confirmar horário
+            {/* Brand Header inside Preview */}
+            <div className="flex items-center gap-2.5">
+              {logoUrl ? (
+                <img
+                  src={logoUrl}
+                  alt={loja.nome}
+                  className="h-10 w-10 shrink-0 object-cover"
+                  style={{ borderRadius: `${Math.max(4, raio - 2)}px` }}
+                />
+              ) : (
+                <div
+                  className="flex h-10 w-10 shrink-0 items-center justify-center text-xs font-bold"
+                  style={{
+                    backgroundColor: cor,
+                    color: accentInk,
+                    borderRadius: `${Math.max(4, raio - 2)}px`,
+                    border: isBrutal ? "2px solid #000000" : undefined,
+                  }}
+                >
+                  {loja.nome.slice(0, 2).toUpperCase()}
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1">
+                  <h4
+                    className="truncate text-[13px] font-semibold leading-tight"
+                    style={{ color: "var(--t-ink)" }}
+                  >
+                    {loja.nome}
+                  </h4>
+                  <BadgeCheck className="h-3.5 w-3.5 shrink-0" style={{ color: cor }} />
+                </div>
+                <p className="truncate text-[11px]" style={{ color: "var(--t-muted)" }}>
+                  {loja.bairro || "Centro"} • {loja.cidade || "Cidade"}
+                </p>
+              </div>
+              <span
+                className="shrink-0 rounded px-2 py-1 font-mono-num text-[10px] font-medium"
+                style={{ backgroundColor: "var(--t-inner)", color: "var(--t-ink)" }}
+              >
+                5.0
+              </span>
+            </div>
+
+            {/* Dynamic Mock Booking Pill */}
+            <div
+              className="flex items-center justify-between p-2.5 transition-all"
+              style={{
+                backgroundColor: "var(--t-inner)",
+                borderRadius: `${Math.max(4, raio - 4)}px`,
+                border: isBrutal ? "1.5px solid #000000" : undefined,
+              }}
+            >
+              <div className="flex flex-col">
+                <span className="text-[12px] font-semibold" style={{ color: "var(--t-ink)" }}>
+                  Corte Clássico & Barba
+                </span>
+                <span className="font-mono-num text-[11px]" style={{ color: "var(--t-muted)" }}>
+                  45 min • Quarta, 14:30
+                </span>
+              </div>
+              <div className="text-right">
+                <span className="block font-mono-num text-[13px] font-bold" style={{ color: cor }}>
+                  R$ 75,00
+                </span>
+                <span className="font-mono-num text-[10px]" style={{ color: "var(--t-muted)" }}>
+                  {sinalReais && sinalReais !== "0,00" ? `Sinal R$ ${sinalReais}` : "Sem sinal"}
+                </span>
+              </div>
+            </div>
+
+            {/* Micro CTA */}
+            <div
+              className="flex w-full items-center justify-center gap-1.5 py-2 text-[12px] font-semibold shadow-sm"
+              style={{
+                backgroundColor: cor,
+                color: accentInk,
+                borderRadius: `${Math.max(4, raio - 2)}px`,
+                border: isBrutal ? "2px solid #000000" : undefined,
+              }}
+            >
+              <span>Agendar Horário</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </div>
+          </div>
+
+          <div className="mt-2 flex items-center justify-between text-[var(--zelo-muted)]">
+            <span className="font-mono-num text-[10px]">zelo.app/{loja.slug}</span>
+            <button
+              type="button"
+              onClick={() => {
+                setRefreshing(true);
+                setTimeout(() => setRefreshing(false), 250);
+              }}
+              className="flex items-center gap-1 text-[11px] font-medium text-[var(--zelo-ink)] transition-colors hover:text-[var(--zelo-muted)]"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              <span>Recarregar</span>
+            </button>
           </div>
         </div>
-      </div>
+      </section>
 
       {!isOwner && (
-        <p className="rounded-xl bg-[#F59E0B]/15 px-3.5 py-2.5 text-xs font-medium text-[#D97706]">
-          Apenas o proprietário pode alterar a aparência e a chave PIX da loja.
-        </p>
+        <div className="rounded-xl bg-[#F59E0B]/15 px-3.5 py-2.5 text-xs font-medium text-[#D97706]">
+          Apenas o proprietário pode alterar o tema e a chave PIX da loja.
+        </div>
       )}
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold">Estilo da página</h2>
-        <div className="grid grid-cols-2 gap-3">
+      {/* Theme Preset Selector */}
+      <section>
+        <div className="mb-2 flex items-center justify-between">
+          <h3 className="text-base font-semibold text-[var(--zelo-ink)]">Temas Pré-definidos</h3>
+          <span className="font-mono-num text-xs text-[var(--zelo-muted)]">4 estilos</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
           {TEMAS.map((t) => {
             const active = tema === t.key;
             return (
@@ -257,58 +311,34 @@ export function CustomizadorLoja({
                 key={t.key}
                 type="button"
                 disabled={!isOwner}
-                onClick={() => setTema(t.key)}
-                className={`flex flex-col gap-2 rounded-2xl bg-[var(--zelo-card)] p-2.5 text-left transition ${
-                  active ? "ring-1 ring-[var(--zelo-ink)]" : "opacity-85 hover:opacity-100"
-                }`}
+                onClick={() => handlePreset(t)}
+                className="relative overflow-hidden rounded-xl bg-[var(--zelo-card)] p-3 text-left shadow-sm transition-all"
               >
                 <div
-                  className="w-full p-2"
-                  style={{
-                    backgroundColor: t.bg,
-                    borderRadius: t.radius,
-                    border: t.border,
-                    boxShadow: t.shadow,
-                  }}
+                  className="mb-2 flex h-8 w-full items-center justify-between rounded px-2"
+                  style={{ backgroundColor: t.barBg }}
                 >
-                  <div
-                    className="space-y-1.5 p-2"
-                    style={{
-                      backgroundColor: t.surface,
-                      borderRadius: t.radius,
-                      border: t.key === "brutal" ? "1.5px solid #000000" : undefined,
-                    }}
+                  <span
+                    className="h-2.5 w-2.5 rounded-full"
+                    style={{ backgroundColor: t.dot }}
+                  />
+                  <span
+                    className="font-mono-num text-[9px] font-semibold uppercase tracking-widest"
+                    style={{ color: t.tagColor }}
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="h-1.5 w-10 rounded-full" style={{ backgroundColor: t.ink }} />
-                      <span
-                        className="h-2.5 w-2.5 rounded-full"
-                        style={{ backgroundColor: active ? "#10B981" : t.muted }}
-                      />
-                    </div>
-                    <div
-                      className="h-4 w-full"
-                      style={{
-                        backgroundColor: t.inner,
-                        borderRadius: t.key === "brutal" ? "2px" : "6px",
-                      }}
-                    />
-                    <div
-                      className="h-3 w-full"
-                      style={{
-                        backgroundColor: cor,
-                        borderRadius: t.key === "brutal" ? "2px" : "9999px",
-                      }}
-                    />
-                  </div>
+                    {t.tag}
+                  </span>
                 </div>
-
-                <div className="flex items-center justify-between px-1">
+                <div className="flex items-start justify-between gap-1">
                   <div>
-                    <p className="text-xs font-semibold leading-tight">{t.label}</p>
+                    <p className="text-[13px] font-semibold text-[var(--zelo-ink)]">{t.label}</p>
                     <p className="text-[11px] text-[var(--zelo-muted)]">{t.desc}</p>
                   </div>
-                  {active && <Check className="h-3.5 w-3.5 shrink-0 text-[#10B981]" />}
+                  {active ? (
+                    <CheckCircle2 className="h-[18px] w-[18px] shrink-0 text-[var(--zelo-ink)]" />
+                  ) : (
+                    <Circle className="h-[18px] w-[18px] shrink-0 text-[var(--zelo-border)]" />
+                  )}
                 </div>
               </button>
             );
@@ -316,122 +346,134 @@ export function CustomizadorLoja({
         </div>
       </section>
 
-      <div className="h-px bg-[var(--zelo-border)]" />
-
-      <section className="space-y-5">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold">Cor principal</span>
-            <span className="font-mono-num text-xs text-[var(--zelo-muted)]">{cor}</span>
+      {/* Accent Color & Radius Customization Panel */}
+      <section className="flex flex-col gap-5 rounded-xl bg-[var(--zelo-card)] p-4 shadow-sm">
+        <div>
+          <div className="mb-3 flex items-center justify-between">
+            <span className="text-sm font-semibold text-[var(--zelo-ink)]">Cor de Acento</span>
+            <span className="font-mono-num text-xs text-[var(--zelo-muted)]">
+              {activeSwatch ? `${activeSwatch.label} (${cor})` : cor}
+            </span>
           </div>
-          <div className="flex items-center justify-between rounded-2xl bg-[var(--zelo-card)] px-2 py-1">
+          <div className="flex items-center justify-between gap-2">
             {SWATCHES.map((s) => {
               const selected = cor.toUpperCase() === s.color;
+              const checkColor = s.color === "#A3E635" || s.color === "#F59E0B" ? "#111111" : "#FFFFFF";
               return (
                 <button
                   key={s.color}
                   type="button"
                   disabled={!isOwner}
                   onClick={() => setCor(s.color)}
-                  title={s.label}
                   aria-label={`Cor ${s.label}`}
-                  className="flex h-11 w-11 items-center justify-center rounded-xl transition hover:bg-[var(--zelo-soft)]"
+                  className="relative flex h-11 w-11 items-center justify-center rounded-full shadow-sm transition-transform active:scale-90"
+                  style={{ backgroundColor: s.color }}
                 >
-                  <span
-                    className={`h-5 w-5 rounded-full transition ${
-                      selected
-                        ? "scale-110 ring-2 ring-[var(--zelo-ink)] ring-offset-2 ring-offset-[var(--zelo-card)]"
-                        : ""
-                    }`}
-                    style={{ backgroundColor: s.color }}
-                  />
+                  {selected && <Check className="h-[18px] w-[18px]" style={{ color: checkColor }} />}
                 </button>
               );
             })}
           </div>
         </div>
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold">Arredondamento</span>
-            <span className="font-mono-num text-xs text-[var(--zelo-muted)]">{raio}px</span>
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-sm font-semibold text-[var(--zelo-ink)]">Raio de Borda</span>
+            <span className="rounded bg-[var(--zelo-soft)] px-2 py-0.5 font-mono-num text-xs font-medium text-[var(--zelo-ink)]">
+              {raio}px
+            </span>
           </div>
           <input
             type="range"
             min={2}
             max={24}
+            step={2}
             disabled={!isOwner}
             value={raio}
             onChange={(e) => setRaio(Number(e.target.value))}
-            className="w-full accent-[var(--zelo-ink)]"
-            aria-label="Arredondamento dos cantos"
+            className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-[var(--zelo-soft)] accent-[var(--zelo-ink)]"
+            aria-label="Raio de Borda"
           />
+          <div className="mt-1.5 flex items-center justify-between font-mono-num text-[10px] text-[var(--zelo-muted)]">
+            <span>Reto (2px)</span>
+            <span>Equilibrado (12px)</span>
+            <span>Pílula (24px)</span>
+          </div>
         </div>
 
         {isOwner && (
-          <label className="flex h-11 cursor-pointer items-center justify-between rounded-xl bg-[var(--zelo-card)] px-3.5 text-xs font-medium text-[var(--zelo-ink)] transition hover:bg-[var(--zelo-soft)]">
-            <span className="inline-flex items-center gap-2">
-              {uploading ? (
-                <Loader2 className="h-4 w-4 animate-spin text-[var(--zelo-muted)]" />
-              ) : (
-                <ImagePlus className="h-4 w-4 text-[var(--zelo-muted)]" />
-              )}
-              <span>{uploading ? "Enviando logo..." : "Logo da loja"}</span>
-            </span>
-            <span className="text-[11px] text-[var(--zelo-muted)]">
-              {logoUrl ? "Alterar" : "Enviar"}
-            </span>
+          <label className="flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg bg-[var(--zelo-soft)] text-xs font-semibold text-[var(--zelo-ink)] transition-colors hover:bg-[var(--zelo-border)]">
+            {uploading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ImagePlus className="h-4 w-4 text-[#F59E0B]" />
+            )}
+            <span>{uploading ? "Enviando logo..." : logoUrl ? "Alterar Logo da Loja" : "Enviar Logo da Loja"}</span>
             <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
           </label>
         )}
       </section>
 
-      <div className="h-px bg-[var(--zelo-border)]" />
-
-      <section className="space-y-3">
-        <div className="space-y-0.5">
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            <QrCode className="h-4 w-4 text-[#10B981]" />
-            Recebimento por PIX
+      {/* Store PIX Key Configuration */}
+      <section className="rounded-xl bg-[var(--zelo-card)] p-4 shadow-sm space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5">
+            <Wallet className="h-[18px] w-[18px] text-[var(--zelo-ink)]" />
+            <h3 className="text-sm font-semibold text-[var(--zelo-ink)]">Chave PIX da Loja</h3>
           </div>
-          <p className="text-xs text-[var(--zelo-muted)]">
-            O sinal vai direto para sua conta, sem intermediação.
-          </p>
+          {chavePix.trim().length > 3 && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#10B981]/15 px-2 py-0.5 font-mono-num text-[11px] font-medium text-[#10B981]">
+              <CheckCircle2 className="h-3 w-3" />
+              Chave Validada
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-[var(--zelo-muted)]">
+          Recebimento do sinal (depósito caução) cai diretamente na conta da loja, sem taxa de intermediação.
+        </p>
+
+        <div className="flex min-h-[48px] items-center justify-between gap-2 rounded-lg bg-[var(--zelo-soft)] px-3.5">
+          <input
+            type="text"
+            disabled={!isOwner}
+            value={chavePix}
+            onChange={(e) => setChavePix(e.target.value)}
+            placeholder="CPF, CNPJ, e-mail ou chave aleatória"
+            className="w-full bg-transparent font-mono-num text-sm text-[var(--zelo-ink)] outline-none"
+          />
+          {chavePix && (
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard?.writeText(chavePix);
+                setFeedback("Chave PIX copiada!");
+              }}
+              className="rounded-md p-1.5 text-[var(--zelo-muted)] transition-colors hover:bg-[var(--zelo-border)]"
+              title="Copiar chave"
+              aria-label="Copiar chave PIX"
+            >
+              <Copy className="h-[18px] w-[18px]" />
+            </button>
+          )}
         </div>
 
-        <div className="space-y-2.5">
-          <label className="block space-y-1.5">
-            <span className="text-xs text-[var(--zelo-muted)]">Chave PIX</span>
-            <input
-              type="text"
-              disabled={!isOwner}
-              value={chavePix}
-              onChange={(e) => setChavePix(e.target.value)}
-              placeholder="CPF, CNPJ, e-mail ou chave aleatória"
-              className="h-11 w-full rounded-xl bg-[var(--zelo-card)] px-3 font-mono-num text-sm outline-none"
-            />
-          </label>
-
-          <label className="flex items-center justify-between gap-3 rounded-xl bg-[var(--zelo-card)] px-3.5 py-2">
-            <span className="text-xs font-medium text-[var(--zelo-muted)]">
-              Sinal para reservar (R$)
-            </span>
-            <input
-              type="text"
-              disabled={!isOwner}
-              value={sinalReais}
-              onChange={(e) => setSinalReais(e.target.value)}
-              placeholder="0,00"
-              className="h-9 w-24 rounded-lg bg-[var(--zelo-soft)] px-2.5 text-right font-mono-num text-sm outline-none"
-            />
-          </label>
+        <div className="flex items-center justify-between gap-3 pt-1">
+          <span className="text-xs font-medium text-[var(--zelo-muted)]">Sinal opcional (R$)</span>
+          <input
+            type="text"
+            disabled={!isOwner}
+            value={sinalReais}
+            onChange={(e) => setSinalReais(e.target.value)}
+            placeholder="0,00"
+            className="h-10 w-28 rounded-lg bg-[var(--zelo-soft)] px-3 text-right font-mono-num text-sm text-[var(--zelo-ink)] outline-none"
+          />
         </div>
       </section>
 
       {feedback && (
-        <p className="rounded-xl bg-[var(--zelo-soft)] px-3.5 py-2.5 text-xs font-medium">
+        <div className="rounded-xl bg-[var(--zelo-soft)] px-3.5 py-2.5 text-xs font-semibold text-[var(--zelo-ink)]">
           {feedback}
-        </p>
+        </div>
       )}
 
       {isOwner && (
@@ -439,10 +481,10 @@ export function CustomizadorLoja({
           type="button"
           onClick={handleSave}
           disabled={isPending}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--zelo-btn-bg)] text-sm font-semibold text-[var(--zelo-btn-ink)] disabled:opacity-60"
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--zelo-btn-bg)] text-sm font-semibold text-[var(--zelo-btn-ink)] shadow-sm transition-transform active:scale-[0.99] disabled:opacity-60"
         >
           {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-          Salvar alterações
+          Salvar Personalização e PIX
         </button>
       )}
     </div>

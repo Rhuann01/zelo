@@ -3,15 +3,22 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import {
+  ArrowLeft,
   ArrowLeftRight,
-  Bell,
+  BellRing,
+  ChevronRight,
   Download,
+  Info,
   Loader2,
+  Lock,
   LogOut,
   Mail,
   Moon,
-  PauseCircle,
-  Shield,
+  Pencil,
+  Phone,
+  ShieldCheck,
+  Store,
+  Umbrella,
 } from "lucide-react";
 import { AvatarUploader } from "@/components/avatar-uploader";
 import {
@@ -68,10 +75,26 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
   }
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-bold tight-heading">Configurações & Meu Perfil</h1>
+    <div className="flex flex-col gap-5 pb-4">
+      {/* Top Subheader */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <Link
+            href="/painel"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--zelo-soft)] text-[var(--zelo-ink)] transition-colors hover:bg-[var(--zelo-border)]"
+            aria-label="Voltar ao painel"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
+          <h1 className="text-2xl font-bold tight-heading">Configurações</h1>
+        </div>
+        <span className="rounded-full bg-[var(--zelo-soft)] px-2.5 py-1 font-mono-num text-xs text-[var(--zelo-muted)]">
+          {ctx.isOwner ? "Dono" : "Equipe"}
+        </span>
+      </div>
 
-      <section className="rounded-2xl bg-[var(--zelo-card)] p-4 space-y-4">
+      {/* Profile Card */}
+      <section className="flex flex-col gap-4 rounded-xl bg-[var(--zelo-card)] p-4 shadow-sm">
         <AvatarUploader
           userId={ctx.userId}
           initialUrl={ctx.perfil.avatar_url}
@@ -79,128 +102,232 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
           displayName={nome || ctx.perfil.nome}
         />
 
-        <div className="space-y-2.5">
-          <label className="block space-y-1">
-            <span className="text-xs font-medium text-[var(--zelo-muted)]">Nome de exibição</span>
-            <input
-              type="text"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              className="h-11 w-full rounded-xl bg-[var(--zelo-soft)] px-3 text-sm outline-none"
-            />
+        <div className="flex flex-col gap-3 pt-1">
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-[var(--zelo-muted)]">Nome de Exibição</span>
+            <div className="flex h-12 items-center justify-between gap-2 rounded-lg bg-[var(--zelo-soft)] px-3.5">
+              <input
+                type="text"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                className="w-full bg-transparent text-sm text-[var(--zelo-ink)] outline-none"
+              />
+              <Pencil className="h-4 w-4 shrink-0 text-[var(--zelo-muted)]" />
+            </div>
           </label>
 
-          <div className="space-y-1">
-            <span className="text-xs font-medium text-[var(--zelo-muted)]">
-              E-mail vinculado (Google)
-            </span>
-            <div className="flex h-11 items-center rounded-xl bg-[var(--zelo-soft)] px-3 text-xs text-[var(--zelo-muted)]">
-              {ctx.userEmail}
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-[var(--zelo-muted)]">E-mail Vinculado (Google SSO)</span>
+            <div className="flex h-12 items-center justify-between gap-2 rounded-lg bg-[var(--zelo-soft)]/70 px-3.5">
+              <div className="flex min-w-0 items-center gap-2">
+                <ShieldCheck className="h-4 w-4 shrink-0 text-[var(--zelo-muted)]" />
+                <span className="truncate font-mono-num text-sm text-[var(--zelo-muted)]">
+                  {ctx.userEmail}
+                </span>
+              </div>
+              <Lock className="h-4 w-4 shrink-0 text-[var(--zelo-muted)]" />
             </div>
           </div>
 
-          <label className="block space-y-1">
-            <span className="text-xs font-medium text-[var(--zelo-muted)]">WhatsApp</span>
-            <input
-              type="tel"
-              value={whatsapp}
-              onChange={(e) => setWhatsapp(e.target.value)}
-              placeholder="(31) 99999-8888"
-              className="h-11 w-full rounded-xl bg-[var(--zelo-soft)] px-3 text-sm font-mono-num outline-none"
-            />
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-[var(--zelo-muted)]">WhatsApp Profissional</span>
+            <div className="flex h-12 items-center justify-between gap-2 rounded-lg bg-[var(--zelo-soft)] px-3.5">
+              <div className="flex min-w-0 flex-1 items-center gap-2">
+                <Phone className="h-4 w-4 shrink-0 text-[var(--zelo-muted)]" />
+                <input
+                  type="tel"
+                  value={whatsapp}
+                  onChange={(e) => setWhatsapp(e.target.value)}
+                  placeholder="(31) 99999-8888"
+                  className="w-full bg-transparent font-mono-num text-sm text-[var(--zelo-ink)] outline-none"
+                />
+              </div>
+              {whatsapp.trim().length >= 10 && (
+                <span className="shrink-0 rounded bg-[#10B981]/15 px-2 py-0.5 font-mono-num text-[11px] font-medium text-[#10B981]">
+                  Ativo
+                </span>
+              )}
+            </div>
           </label>
         </div>
       </section>
 
-      <section className="rounded-2xl bg-[var(--zelo-soft)] p-4 space-y-2.5">
-        <div className="flex items-center gap-2 text-sm font-bold">
-          <ArrowLeftRight className="h-4 w-4 text-[#F59E0B]" />
-          Troca Rápida de Contexto
+      {/* Quick Context Switch */}
+      <section className="flex flex-col gap-3 rounded-xl bg-[var(--zelo-soft)] p-4 shadow-sm">
+        <div className="flex items-start gap-2.5">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--zelo-card)] text-[var(--zelo-ink)]">
+            <ArrowLeftRight className="h-5 w-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold text-[var(--zelo-ink)]">
+              Troca Rápida de Contexto
+            </span>
+            <p className="mt-0.5 text-xs leading-snug text-[var(--zelo-muted)]">
+              Use esta mesma conta para agendar horários em outros estabelecimentos parceiros.
+            </p>
+          </div>
         </div>
-        <p className="text-xs text-[var(--zelo-muted)]">
-          Use esta mesma conta Google para agendar horários como cliente em outros estabelecimentos.
-        </p>
         <Link
           href={`/${ctx.lojaAtual.slug}`}
-          className="flex h-11 w-full items-center justify-center rounded-xl bg-[var(--zelo-btn-bg)] text-xs font-semibold text-[var(--zelo-btn-ink)]"
+          className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg bg-[var(--zelo-btn-bg)] px-4 text-sm font-semibold text-[var(--zelo-btn-ink)] transition-transform active:scale-[0.99]"
         >
-          Ver Página Pública / Modo Cliente
+          <Store className="h-[18px] w-[18px]" />
+          <span>Mudar para Modo Cliente</span>
         </Link>
       </section>
 
-      <section className="rounded-2xl bg-[var(--zelo-card)] p-4 space-y-1">
-        <span className="block pb-1 text-xs font-semibold text-[var(--zelo-muted)]">Preferências</span>
-
-        <div className="flex min-h-[44px] items-center justify-between">
-          <span className="inline-flex items-center gap-2 text-sm font-medium">
-            <Moon className="h-4 w-4 text-[var(--zelo-muted)]" />
-            Tema Escuro
-          </span>
-          <button
-            type="button"
-            onClick={toggleDarkMode}
-            className="inline-flex min-h-[44px] items-center px-1"
-            aria-label="Alternar tema escuro"
-          >
-            <span
-              className={`flex h-7 w-12 items-center rounded-full p-1 transition ${
-                dark ? "bg-[#10B981]" : "bg-[var(--zelo-soft)]"
-              }`}
+      {/* Preferências do Sistema */}
+      <section className="flex flex-col gap-1.5">
+        <span className="px-1 text-xs font-semibold text-[var(--zelo-muted)]">
+          Preferências do Sistema
+        </span>
+        <div className="flex flex-col gap-1 rounded-xl bg-[var(--zelo-card)] p-2 shadow-sm">
+          <div className="flex h-14 items-center justify-between rounded-lg px-2.5 transition-colors hover:bg-[var(--zelo-soft)]">
+            <div className="flex items-center gap-2.5">
+              <Moon className="h-5 w-5 text-[var(--zelo-muted)]" />
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-[var(--zelo-ink)]">Tema Visual</span>
+                <span className="text-xs text-[var(--zelo-muted)]">
+                  {dark ? "Escuro • Alto contraste" : "Claro • Alto contraste"}
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={toggleDarkMode}
+              className="inline-flex min-h-[44px] items-center px-1"
+              aria-label="Alternar tema escuro"
             >
               <span
-                className={`block h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
-                  dark ? "translate-x-5" : "translate-x-0"
+                className={`flex h-7 w-12 items-center rounded-full p-1 transition-colors ${
+                  dark ? "bg-[var(--zelo-btn-bg)]" : "bg-[var(--zelo-soft)]"
                 }`}
-              />
-            </span>
-          </button>
+              >
+                <span
+                  className={`h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                    dark ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </span>
+            </button>
+          </div>
+
+          <label className="flex h-14 cursor-pointer items-center justify-between rounded-lg px-2.5 transition-colors hover:bg-[var(--zelo-soft)]">
+            <div className="flex items-center gap-2.5">
+              <BellRing className="h-5 w-5 text-[var(--zelo-muted)]" />
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-[var(--zelo-ink)]">Web Push</span>
+                <span
+                  className={`text-xs ${
+                    pushAtivo ? "text-[#10B981]" : "text-[var(--zelo-muted)]"
+                  }`}
+                >
+                  {pushAtivo ? "Ativo neste navegador" : "Desativado"}
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPushAtivo((v) => !v)}
+              className="inline-flex min-h-[44px] items-center px-1"
+              aria-label="Alternar Web Push"
+            >
+              <span
+                className={`flex h-7 w-12 items-center rounded-full p-1 transition-colors ${
+                  pushAtivo ? "bg-[var(--zelo-btn-bg)]" : "bg-[var(--zelo-soft)]"
+                }`}
+              >
+                <span
+                  className={`h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                    pushAtivo ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </span>
+            </button>
+          </label>
+
+          <label className="flex h-14 cursor-pointer items-center justify-between rounded-lg px-2.5 transition-colors hover:bg-[var(--zelo-soft)]">
+            <div className="flex items-center gap-2.5">
+              <Mail className="h-5 w-5 text-[var(--zelo-muted)]" />
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-[var(--zelo-ink)]">
+                  Lembretes por E-mail
+                </span>
+                <span className="text-xs text-[var(--zelo-muted)]">Resumo diário às 07:00</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setEmailAtivo((v) => !v)}
+              className="inline-flex min-h-[44px] items-center px-1"
+              aria-label="Alternar lembretes por e-mail"
+            >
+              <span
+                className={`flex h-7 w-12 items-center rounded-full p-1 transition-colors ${
+                  emailAtivo ? "bg-[var(--zelo-btn-bg)]" : "bg-[var(--zelo-soft)]"
+                }`}
+              >
+                <span
+                  className={`h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                    emailAtivo ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </span>
+            </button>
+          </label>
         </div>
-
-        <label className="flex min-h-[44px] cursor-pointer items-center justify-between">
-          <span className="inline-flex items-center gap-2 text-sm font-medium">
-            <Bell className="h-4 w-4 text-[var(--zelo-muted)]" />
-            Alertas Web Push
-          </span>
-          <input
-            type="checkbox"
-            checked={pushAtivo}
-            onChange={(e) => setPushAtivo(e.target.checked)}
-            className="h-5 w-5 accent-[#111111]"
-          />
-        </label>
-
-        <label className="flex min-h-[44px] cursor-pointer items-center justify-between">
-          <span className="inline-flex items-center gap-2 text-sm font-medium">
-            <Mail className="h-4 w-4 text-[var(--zelo-muted)]" />
-            Lembretes por E-mail
-          </span>
-          <input
-            type="checkbox"
-            checked={emailAtivo}
-            onChange={(e) => setEmailAtivo(e.target.checked)}
-            className="h-5 w-5 accent-[#111111]"
-          />
-        </label>
       </section>
 
+      {/* Controles da Unidade */}
       {ctx.isOwner && (
-        <label className="flex min-h-[56px] cursor-pointer items-center justify-between gap-3 rounded-2xl bg-[var(--zelo-card)] p-4">
-          <div className="space-y-0.5">
-            <div className="flex items-center gap-1.5 text-sm font-bold">
-              <PauseCircle className="h-4 w-4 text-[#F59E0B]" />
-              Pausar Loja Temporariamente
+        <section className="flex flex-col gap-1.5">
+          <span className="px-1 text-xs font-semibold text-[var(--zelo-muted)]">
+            Controles da Unidade
+          </span>
+          <div className="flex flex-col gap-3 rounded-xl bg-[var(--zelo-card)] p-4 shadow-sm">
+            <div className="flex items-start justify-between gap-2.5">
+              <div className="flex items-start gap-2.5">
+                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F59E0B]/15 text-[#F59E0B]">
+                  <Umbrella className="h-[18px] w-[18px]" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold text-[var(--zelo-ink)]">
+                    Pausar Loja Temporariamente
+                  </span>
+                  <span className="mt-0.5 text-xs text-[var(--zelo-muted)]">
+                    Modo Férias • Bloqueia novas reservas no catálogo público
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPausada((v) => !v)}
+                className="inline-flex min-h-[44px] shrink-0 items-center px-1"
+                aria-label="Pausar loja temporariamente"
+              >
+                <span
+                  className={`flex h-7 w-12 items-center rounded-full p-1 transition-colors ${
+                    pausada ? "bg-[#F59E0B]" : "bg-[var(--zelo-soft)]"
+                  }`}
+                >
+                  <span
+                    className={`h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                      pausada ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </span>
+              </button>
             </div>
-            <p className="text-xs text-[var(--zelo-muted)]">
-              Modo férias: oculta da vitrine e pausa novas reservas.
-            </p>
+            {pausada && (
+              <div className="flex items-center gap-2 rounded-lg bg-[#F59E0B]/10 p-2.5">
+                <Info className="h-[18px] w-[18px] shrink-0 text-[#F59E0B]" />
+                <span className="text-xs text-[var(--zelo-ink)]">
+                  Agendamentos futuros existentes serão mantidos na sua agenda.
+                </span>
+              </div>
+            )}
           </div>
-          <input
-            type="checkbox"
-            checked={pausada}
-            onChange={(e) => setPausada(e.target.checked)}
-            className="h-5 w-5 shrink-0 accent-[#111111]"
-          />
-        </label>
+        </section>
       )}
 
       {feedback && (
@@ -213,35 +340,51 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
         type="button"
         onClick={handleSave}
         disabled={isPending}
-        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--zelo-btn-bg)] text-sm font-semibold text-[var(--zelo-btn-ink)] disabled:opacity-60"
+        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--zelo-btn-bg)] text-sm font-semibold text-[var(--zelo-btn-ink)] shadow-sm transition-transform active:scale-[0.99] disabled:opacity-60"
       >
         {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
         Salvar Alterações
       </button>
 
-      <section className="rounded-2xl bg-[var(--zelo-card)] p-4 space-y-2.5">
-        <button
-          type="button"
-          onClick={handleExportLgpd}
-          className="flex h-11 w-full items-center justify-between rounded-xl bg-[var(--zelo-soft)] px-3.5 text-xs font-semibold"
-        >
-          <span className="inline-flex items-center gap-2">
-            <Shield className="h-4 w-4 text-[#10B981]" />
-            Baixar Meus Dados (LGPD)
-          </span>
-          <Download className="h-4 w-4 text-[var(--zelo-muted)]" />
-        </button>
-
-        <form action={signOutConfigAction}>
+      {/* Privacidade & Sessão (LGPD) */}
+      <section className="flex flex-col gap-1.5">
+        <span className="px-1 text-xs font-semibold text-[var(--zelo-muted)]">
+          Privacidade & Sessão (LGPD)
+        </span>
+        <div className="flex flex-col gap-1 rounded-xl bg-[var(--zelo-card)] p-2 shadow-sm">
           <button
-            type="submit"
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-red-500/10 text-xs font-semibold text-red-600"
+            type="button"
+            onClick={handleExportLgpd}
+            className="flex h-12 w-full items-center justify-between rounded-lg px-2.5 text-left transition-colors hover:bg-[var(--zelo-soft)]"
           >
-            <LogOut className="h-4 w-4" />
-            Sair da Conta
+            <div className="flex items-center gap-2.5">
+              <Download className="h-5 w-5 text-[var(--zelo-muted)]" />
+              <span className="text-sm text-[var(--zelo-ink)]">Baixar Meus Dados (LGPD)</span>
+            </div>
+            <ChevronRight className="h-[18px] w-[18px] text-[var(--zelo-muted)]" />
           </button>
-        </form>
+
+          <form action={signOutConfigAction}>
+            <button
+              type="submit"
+              className="mt-1 flex h-12 w-full items-center justify-between rounded-lg bg-red-500/10 px-2.5 text-red-600 transition-colors hover:bg-red-500/15"
+            >
+              <div className="flex items-center gap-2.5">
+                <LogOut className="h-5 w-5" />
+                <span className="text-sm font-semibold">Sair da Conta</span>
+              </div>
+              <span className="font-mono-num text-xs">Sessão Atual</span>
+            </button>
+          </form>
+        </div>
       </section>
+
+      <div className="flex flex-col items-center justify-center gap-1 py-2 text-center">
+        <div className="flex items-center gap-1.5 text-[var(--zelo-muted)]">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#10B981]" />
+          <span className="font-mono-num text-xs">Conexão criptografada ponta a ponta</span>
+        </div>
+      </div>
     </div>
   );
 }
