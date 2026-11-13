@@ -14,10 +14,54 @@ import { Slider } from "@/components/ui/slider";
 import type { LojaResumo } from "@/lib/painel/get-painel-context";
 
 const TEMAS = [
-  { key: "urban", label: "Urban Noir", desc: "Dark premium", bg: "#0F0F12", badge: "DARK" },
-  { key: "glam", label: "Clean Glam", desc: "Estética & Spa", bg: "#FDF8F6", badge: "GLAM" },
-  { key: "brutal", label: "Neo-Brutal", desc: "Visual bold e pop", bg: "#FFFDF4", badge: "POP" },
-  { key: "slate", label: "Minimalist Slate", desc: "Clínica moderna", bg: "#FFFFFF", badge: "SLATE" },
+  {
+    key: "urban",
+    label: "Urban Noir",
+    desc: "Dark premium",
+    bg: "#0F0F12",
+    surface: "#18181D",
+    ink: "#F4F4F5",
+    muted: "#52525B",
+    border: "1px solid #2C2C35",
+    shadow: "none",
+    radius: "8px",
+  },
+  {
+    key: "glam",
+    label: "Clean Glam",
+    desc: "Estética & Spa",
+    bg: "#FDF8F6",
+    surface: "#FFFFFF",
+    ink: "#1F1619",
+    muted: "#D6C5C0",
+    border: "1px solid #F2DFDA",
+    shadow: "0 2px 8px rgba(190, 24, 93, 0.06)",
+    radius: "10px",
+  },
+  {
+    key: "brutal",
+    label: "Neo-Brutal",
+    desc: "Visual bold e pop",
+    bg: "#FFFDF4",
+    surface: "#FFFFFF",
+    ink: "#000000",
+    muted: "#A1A1AA",
+    border: "1.5px solid #000000",
+    shadow: "2px 2px 0px #000000",
+    radius: "3px",
+  },
+  {
+    key: "slate",
+    label: "Minimalist Slate",
+    desc: "Clínica moderna",
+    bg: "#F8FAFC",
+    surface: "#FFFFFF",
+    ink: "#0F172A",
+    muted: "#CBD5E1",
+    border: "1px solid #E2E8F0",
+    shadow: "none",
+    radius: "8px",
+  },
 ] as const;
 
 const SWATCHES = [
@@ -206,59 +250,100 @@ export function CustomizadorLoja({
       )}
 
       <Card className="py-4">
-        <CardContent className="space-y-4 px-4">
-          <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Temas Pré-definidos
-          </span>
-          <div className="grid grid-cols-2 gap-2.5">
-            {TEMAS.map((t) => {
-              const active = tema === t.key;
-              return (
-                <button
-                  key={t.key}
-                  type="button"
-                  disabled={!isOwner}
-                  onClick={() => setTema(t.key)}
-                  className={`min-h-[80px] rounded-xl bg-secondary p-3 text-left transition ${
-                    active ? "ring-2 ring-foreground" : ""
-                  }`}
-                >
-                  <div
-                    className="mb-2 flex h-7 items-center justify-between rounded-lg px-2"
-                    style={{ backgroundColor: t.bg }}
+        <CardContent className="space-y-5 px-4">
+          <div className="space-y-2.5">
+            <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Estilo da Loja
+            </span>
+            <div className="grid grid-cols-2 gap-2.5">
+              {TEMAS.map((t) => {
+                const active = tema === t.key;
+                return (
+                  <button
+                    key={t.key}
+                    type="button"
+                    disabled={!isOwner}
+                    onClick={() => setTema(t.key)}
+                    className={`group flex flex-col gap-2.5 rounded-xl bg-secondary p-2.5 text-left transition ${
+                      active ? "ring-1 ring-foreground" : "opacity-85 hover:opacity-100"
+                    }`}
                   >
-                    <span className="font-mono-num text-[10px] font-bold text-[#9CA3AF]">
-                      {t.badge}
-                    </span>
-                    {active && <Check className="h-3.5 w-3.5 text-[#10B981]" />}
-                  </div>
-                  <p className="text-xs font-bold">{t.label}</p>
-                  <p className="text-[11px] text-muted-foreground">{t.desc}</p>
-                </button>
-              );
-            })}
+                    {/* Mini-UI preview fiel ao tema */}
+                    <div
+                      className="w-full p-2"
+                      style={{
+                        backgroundColor: t.bg,
+                        borderRadius: t.radius,
+                        border: t.border,
+                        boxShadow: t.shadow,
+                      }}
+                    >
+                      <div
+                        className="space-y-1.5 p-2"
+                        style={{
+                          backgroundColor: t.surface,
+                          borderRadius: t.radius,
+                          border: t.key === "brutal" ? "1.5px solid #000000" : undefined,
+                        }}
+                      >
+                        <div className="flex items-center justify-between gap-1.5">
+                          <span
+                            className="h-2 w-10 rounded-full"
+                            style={{ backgroundColor: t.ink }}
+                          />
+                          {active && <Check className="h-3 w-3 shrink-0 text-[#10B981]" />}
+                        </div>
+                        <span
+                          className="block h-1.5 w-14 rounded-full"
+                          style={{ backgroundColor: t.muted }}
+                        />
+                        <div
+                          className="mt-1.5 h-3.5 w-full"
+                          style={{
+                            backgroundColor: cor,
+                            borderRadius: t.key === "brutal" ? "2px" : "9999px",
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="px-0.5">
+                      <p className="text-xs font-bold leading-tight">{t.label}</p>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground">{t.desc}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          <div className="space-y-2.5 pt-1">
+          <div className="space-y-2.5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold">Cor de Acento</span>
-              <span className="font-mono-num text-xs text-muted-foreground">{cor}</span>
+              <span className="font-mono-num text-[11px] text-muted-foreground">{cor}</span>
             </div>
-            <div className="flex items-center gap-3">
-              {SWATCHES.map((s) => (
-                <button
-                  key={s.color}
-                  type="button"
-                  disabled={!isOwner}
-                  onClick={() => setCor(s.color)}
-                  title={s.label}
-                  aria-label={`Cor ${s.label}`}
-                  className={`h-11 w-11 rounded-full transition ${
-                    cor.toUpperCase() === s.color ? "ring-2 ring-foreground ring-offset-2" : ""
-                  }`}
-                  style={{ backgroundColor: s.color }}
-                />
-              ))}
+            <div className="flex flex-wrap gap-2">
+              {SWATCHES.map((s) => {
+                const selected = cor.toUpperCase() === s.color;
+                return (
+                  <button
+                    key={s.color}
+                    type="button"
+                    disabled={!isOwner}
+                    onClick={() => setCor(s.color)}
+                    aria-label={`Cor ${s.label}`}
+                    className={`inline-flex h-11 items-center gap-2 rounded-xl bg-secondary px-3 text-xs font-medium transition ${
+                      selected ? "ring-1 ring-foreground font-semibold" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <span
+                      className="h-3.5 w-3.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: s.color }}
+                    />
+                    <span>{s.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
