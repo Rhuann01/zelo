@@ -14,6 +14,7 @@ import {
   UserCircle2,
 } from "lucide-react";
 import { getAccentInk, type VitrineLojaCard } from "@/lib/public/get-loja-publica";
+import { useViewerPerfil } from "@/lib/supabase/use-viewer-perfil";
 
 const NICHOS = [
   { key: "todos", label: "Todas" },
@@ -45,6 +46,7 @@ export function ExplorarVitrine({ lojas }: { lojas: VitrineLojaCard[] }) {
   const [nicho, setNicho] = useState<string>("todos");
   const [cidade, setCidade] = useState<string>("todas");
   const searchRef = useRef<HTMLInputElement>(null);
+  const viewer = useViewerPerfil();
 
   const cidades = useMemo(() => {
     const set = new Set<string>();
@@ -237,7 +239,7 @@ export function ExplorarVitrine({ lojas }: { lojas: VitrineLojaCard[] }) {
 
         {/* Business Conversion Footer Card */}
         <Link
-          href="/entrar"
+          href={viewer ? "/onboarding" : "/entrar?next=/onboarding"}
           className="mt-5 flex items-center justify-between gap-3 rounded-2xl bg-[var(--zelo-card)] p-4 shadow-sm transition-colors hover:bg-[var(--zelo-soft)]/50 active:scale-[0.99]"
         >
           <div className="flex min-w-0 flex-col gap-1">
@@ -280,18 +282,27 @@ export function ExplorarVitrine({ lojas }: { lojas: VitrineLojaCard[] }) {
             <span className="text-[11px] tracking-tight">Buscar</span>
           </button>
           <Link
-            href="/entrar?next=/painel"
+            href={viewer ? "/painel" : "/entrar?next=/painel"}
             className="flex h-12 w-16 flex-col items-center justify-center gap-1 text-[var(--zelo-muted)] transition-colors hover:text-[var(--zelo-ink)]"
           >
             <Calendar className="h-5 w-5" />
             <span className="text-[11px] tracking-tight">Horários</span>
           </Link>
           <Link
-            href="/entrar"
+            href={viewer ? "/painel/configuracoes" : "/entrar"}
             className="flex h-12 w-16 flex-col items-center justify-center gap-1 text-[var(--zelo-muted)] transition-colors hover:text-[var(--zelo-ink)]"
           >
-            <UserCircle2 className="h-5 w-5" />
-            <span className="text-[11px] tracking-tight">Entrar</span>
+            {viewer?.avatar_url ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={viewer.avatar_url}
+                alt={viewer.nome}
+                className="h-5 w-5 rounded-full object-cover"
+              />
+            ) : (
+              <UserCircle2 className="h-5 w-5" />
+            )}
+            <span className="text-[11px] tracking-tight">{viewer ? "Perfil" : "Entrar"}</span>
           </Link>
         </div>
       </nav>

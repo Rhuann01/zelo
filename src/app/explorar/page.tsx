@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { User } from "lucide-react";
 import { ZeloLogo } from "@/components/zelo-logo";
+import { ExplorarHeaderAvatar } from "@/components/explorar-header-avatar";
 import { ExplorarVitrine } from "@/components/explorar-vitrine";
 import { getVitrineLojas } from "@/lib/public/get-loja-publica";
 
@@ -24,15 +24,7 @@ export default async function ExplorarPage() {
             <ZeloLogo size="sm" />
           </Link>
 
-          <Link
-            href="/entrar"
-            aria-label="Entrar ou acessar painel"
-            className="flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-[var(--zelo-soft)]"
-          >
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)]">
-              <User className="h-4 w-4" />
-            </span>
-          </Link>
+          <ExplorarHeaderAvatar />
         </div>
       </header>
 
