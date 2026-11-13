@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   ArrowLeftRight,
@@ -29,6 +30,7 @@ import {
 import type { PainelContext } from "@/lib/painel/get-painel-context";
 
 export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
+  const router = useRouter();
   const [nome, setNome] = useState(ctx.perfil.nome);
   const [whatsapp, setWhatsapp] = useState(ctx.perfil.whatsapp ?? "");
   const [pushAtivo, setPushAtivo] = useState(ctx.perfil.notificacoes_push);
@@ -36,6 +38,13 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
   const [pausada, setPausada] = useState(ctx.lojaAtual.pausada);
   const [dark, setDark] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  const hasChanges =
+    nome !== ctx.perfil.nome ||
+    whatsapp !== (ctx.perfil.whatsapp ?? "") ||
+    pushAtivo !== ctx.perfil.notificacoes_push ||
+    emailAtivo !== ctx.perfil.notificacoes_email ||
+    (ctx.isOwner && pausada !== ctx.lojaAtual.pausada);
 
   useEffect(() => {
     setDark(document.documentElement.classList.contains("dark"));
@@ -77,7 +86,10 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
         ...(ctx.isOwner ? { loja_id: ctx.lojaAtual.id, pausada } : {}),
       });
       if (res.error) showToast(res.error, "error");
-      else if (res.message) showToast(res.message, "success");
+      else {
+        router.refresh();
+        if (res.message) showToast(res.message, "success");
+      }
     });
   }
 
@@ -100,7 +112,14 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
         </span>
       </div>
 
-      {/* Profile Card */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSave();
+        }}
+        className="flex flex-col gap-5"
+      >
+        {/* Profile Card */}
       <section className="flex flex-col gap-4 rounded-xl bg-[var(--zelo-card)] p-4 shadow-sm">
         <AvatarUploader
           userId={ctx.userId}
@@ -337,15 +356,21 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
         </section>
       )}
 
-      <button
-        type="button"
-        onClick={handleSave}
-        disabled={isPending}
-        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--zelo-btn-bg)] text-sm font-semibold text-[var(--zelo-btn-ink)] shadow-sm transition-transform active:scale-[0.99] disabled:opacity-60"
-      >
-        {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-        Salvar Alterações
-      </button>
+        {hasChanges && (
+          <p className="text-center text-xs font-medium text-[#F59E0B]">
+            Você tem alterações não salvas — clique abaixo para gravar.
+          </p>
+        )}
+
+        <button
+          type="submit"
+          disabled={isPending}
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--zelo-btn-bg)] text-sm font-semibold text-[var(--zelo-btn-ink)] shadow-sm transition-transform active:scale-[0.99] disabled:opacity-60"
+        >
+          {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+          Salvar Alterações
+        </button>
+      </form>
 
       {/* Privacidade & Sessão (LGPD) */}
       <section className="flex flex-col gap-1.5">
