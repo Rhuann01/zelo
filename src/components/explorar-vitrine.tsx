@@ -1,20 +1,21 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
-  BadgeCheck,
+  Calendar,
+  ChevronDown,
+  Compass,
   MapPin,
-  Scissors,
   Search,
-  Sparkles,
   Store,
+  UserCircle2,
 } from "lucide-react";
 import { getAccentInk, type VitrineLojaCard } from "@/lib/public/get-loja-publica";
 
 const NICHOS = [
-  { key: "todos", label: "Todos" },
+  { key: "todos", label: "Todas" },
   { key: "barbearia", label: "Barbearia" },
   { key: "manicure", label: "Manicure & Unhas" },
   { key: "salao", label: "Salão & Cabelo" },
@@ -30,14 +31,23 @@ const NICHO_LABEL: Record<string, string> = {
   outro: "Espaço",
 };
 
-function formatPrice(centavos: number) {
-  return `R$ ${(centavos / 100).toFixed(2).replace(".", ",")}`;
+function formatPriceShort(centavos: number) {
+  return `R$ ${(centavos / 100).toFixed(0)}`;
+}
+
+function getInitials(nome: string) {
+  const parts = nome.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  }
+  return (nome.trim().slice(0, 2) || "ZL").toUpperCase();
 }
 
 export function ExplorarVitrine({ lojas }: { lojas: VitrineLojaCard[] }) {
   const [busca, setBusca] = useState("");
   const [nicho, setNicho] = useState<string>("todos");
   const [cidade, setCidade] = useState<string>("todas");
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const cidades = useMemo(() => {
     const set = new Set<string>();
@@ -62,39 +72,55 @@ export function ExplorarVitrine({ lojas }: { lojas: VitrineLojaCard[] }) {
   }, [lojas, busca, nicho, cidade]);
 
   return (
-    <div className="space-y-5">
-      {/* Search & Filters */}
-      <section className="space-y-3">
-        <div className="flex flex-col gap-2.5 sm:flex-row">
-          <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3.5 top-3.5 h-4 w-4 text-[var(--zelo-muted)]" />
-            <input
-              type="search"
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              placeholder="Buscar por nome, bairro ou cidade..."
-              className="h-11 w-full rounded-xl bg-[var(--zelo-card)] pl-10 pr-3.5 text-sm shadow-sm outline-none ring-1 ring-black/5 focus:ring-[var(--zelo-ink)] dark:ring-white/10"
-            />
-          </div>
-          {cidades.length > 1 && (
+    <>
+      <div className="mx-auto flex w-full max-w-[480px] flex-col px-4 pb-28">
+        {/* Location Selector Bar & Live Availability Pill */}
+        <div className="flex items-center justify-between gap-2 pt-2 pb-1">
+          <div className="relative inline-flex items-center rounded-full bg-[var(--zelo-soft)] px-3 py-1.5 shadow-xs">
+            <MapPin className="mr-1.5 h-4 w-4 shrink-0 text-[var(--zelo-ink)]" />
             <select
-              aria-label="Filtrar por cidade"
+              aria-label="Selecionar cidade"
               value={cidade}
               onChange={(e) => setCidade(e.target.value)}
-              className="h-11 rounded-xl bg-[var(--zelo-card)] px-3.5 text-sm font-medium shadow-sm outline-none ring-1 ring-black/5 dark:ring-white/10"
+              className="appearance-none bg-transparent pr-5 text-xs font-semibold tracking-tight text-[var(--zelo-ink)] outline-none"
             >
-              <option value="todas">Todas as cidades</option>
-              {cidades.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
+              <option value="todas">
+                {cidades.length === 1 ? cidades[0] : "Todas as cidades"}
+              </option>
+              {cidades.length > 1 &&
+                cidades.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
             </select>
-          )}
+            <ChevronDown className="pointer-events-none -ml-4 h-3.5 w-3.5 text-[var(--zelo-muted)]" />
+          </div>
+
+          <div className="flex items-center gap-1.5 rounded-full bg-[var(--zelo-soft)] px-2.5 py-1">
+            <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-[#10B981]" />
+            <span className="font-mono-num text-[11px] font-medium text-[var(--zelo-muted)]">
+              {filtradas.length}{" "}
+              {filtradas.length === 1 ? "disponível" : "disponíveis"}
+            </span>
+          </div>
         </div>
 
-        {/* Horizontal Scrollable Niche Pills */}
-        <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-1">
+        {/* Search Input Bar */}
+        <div className="relative mt-2.5 flex w-full items-center">
+          <Search className="pointer-events-none absolute left-3.5 h-[18px] w-[18px] text-[var(--zelo-muted)]" />
+          <input
+            ref={searchRef}
+            type="search"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Buscar serviço, barbearia, manicure..."
+            className="h-12 w-full rounded-xl bg-[var(--zelo-card)] pl-11 pr-4 text-sm text-[var(--zelo-ink)] placeholder:text-[var(--zelo-muted)] shadow-sm outline-none transition-all"
+          />
+        </div>
+
+        {/* Niche Filter Horizontal Scroll */}
+        <div className="no-scrollbar -mx-4 mt-3.5 flex items-center gap-2 overflow-x-auto px-4 py-0.5">
           {NICHOS.map((item) => {
             const active = nicho === item.key;
             return (
@@ -102,9 +128,9 @@ export function ExplorarVitrine({ lojas }: { lojas: VitrineLojaCard[] }) {
                 key={item.key}
                 type="button"
                 onClick={() => setNicho(item.key)}
-                className={`inline-flex h-11 shrink-0 items-center rounded-full px-3.5 text-xs font-semibold whitespace-nowrap transition-colors ${
+                className={`min-h-[38px] shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-xs font-semibold shadow-sm transition-all ${
                   active
-                    ? "bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)] shadow-sm"
+                    ? "bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)]"
                     : "bg-[var(--zelo-card)] text-[var(--zelo-muted)] hover:text-[var(--zelo-ink)]"
                 }`}
               >
@@ -113,60 +139,48 @@ export function ExplorarVitrine({ lojas }: { lojas: VitrineLojaCard[] }) {
             );
           })}
         </div>
-      </section>
 
-      {/* Results Count */}
-      <div className="flex items-center justify-between px-0.5">
-        <p className="text-xs font-medium text-[var(--zelo-muted)]">
-          {filtradas.length === 1
-            ? "1 espaço disponível"
-            : `${filtradas.length} espaços disponíveis`}
-        </p>
-        {(busca || nicho !== "todos" || cidade !== "todas") && (
-          <button
-            type="button"
-            onClick={() => {
-              setBusca("");
-              setNicho("todos");
-              setCidade("todas");
-            }}
-            className="text-xs font-semibold text-[var(--zelo-ink)] underline underline-offset-2"
-          >
-            Limpar filtros
-          </button>
-        )}
-      </div>
+        {/* Main Establishments Feed (1 Column Mobile Cards) */}
+        <div className="mt-5 flex flex-col gap-3.5">
+          {filtradas.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-2xl bg-[var(--zelo-card)] px-6 py-12 text-center shadow-sm">
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--zelo-soft)] text-[var(--zelo-muted)]">
+                <Store className="h-5 w-5" />
+              </div>
+              <h2 className="text-base font-bold">Nenhum espaço encontrado</h2>
+              <p className="mt-1 max-w-xs text-xs leading-relaxed text-[var(--zelo-muted)]">
+                Tente buscar por outro bairro ou limpe os filtros para ver os espaços ativos.
+              </p>
+              {(busca || nicho !== "todos" || cidade !== "todas") && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBusca("");
+                    setNicho("todos");
+                    setCidade("todas");
+                  }}
+                  className="mt-4 rounded-xl bg-[var(--zelo-btn-bg)] px-4 py-2 text-xs font-semibold text-[var(--zelo-btn-ink)]"
+                >
+                  Limpar filtros
+                </button>
+              )}
+            </div>
+          ) : (
+            filtradas.map((loja) => {
+              const accentInk = getAccentInk(loja.cor_primaria);
+              const initials = getInitials(loja.nome);
+              const localLabel = [loja.bairro || loja.cidade, NICHO_LABEL[loja.nicho] ?? "Espaço"]
+                .filter(Boolean)
+                .join(" • ");
 
-      {/* Store Grid */}
-      {filtradas.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl bg-[var(--zelo-card)] px-6 py-12 text-center shadow-sm">
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--zelo-soft)] text-[var(--zelo-muted)]">
-            <Store className="h-5 w-5" />
-          </div>
-          <h2 className="text-base font-bold">Nenhum espaço encontrado</h2>
-          <p className="mt-1 max-w-xs text-xs leading-relaxed text-[var(--zelo-muted)]">
-            Tente buscar por outro bairro ou limpe os filtros para ver todos os estabelecimentos ativos.
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
-          {filtradas.map((loja) => {
-            const accentInk = getAccentInk(loja.cor_primaria);
-            const inicial = (loja.nome.trim()[0] || "Z").toUpperCase();
-            return (
-              <Link
-                key={loja.id}
-                href={`/${loja.slug}`}
-                className="group flex flex-col justify-between overflow-hidden rounded-2xl bg-[var(--zelo-card)] shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99]"
-              >
-                <div>
-                  {/* Subtle Theme Accent Bar */}
-                  <div
-                    className="h-1.5 w-full"
-                    style={{ backgroundColor: loja.cor_primaria }}
-                  />
-                  <div className="p-4 space-y-3">
-                    <div className="flex items-start gap-3">
+              return (
+                <Link
+                  key={loja.id}
+                  href={`/${loja.slug}`}
+                  className="flex flex-col gap-3 rounded-2xl bg-[var(--zelo-card)] p-4 shadow-sm transition-transform duration-150 hover:bg-[var(--zelo-soft)]/40 active:scale-[0.99]"
+                >
+                  <div className="flex items-start justify-between gap-2.5">
+                    <div className="flex min-w-0 items-center gap-3">
                       {loja.logo_url ? (
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img
@@ -174,73 +188,116 @@ export function ExplorarVitrine({ lojas }: { lojas: VitrineLojaCard[] }) {
                           alt={loja.nome}
                           loading="lazy"
                           decoding="async"
-                          className="h-12 w-12 shrink-0 rounded-xl object-cover bg-[var(--zelo-soft)]"
+                          className="h-12 w-12 shrink-0 rounded-xl bg-[var(--zelo-soft)] object-cover shadow-xs"
                         />
                       ) : (
                         <div
-                          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-base font-bold"
+                          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-base font-bold tracking-tight shadow-xs"
                           style={{
                             backgroundColor: loja.cor_primaria,
                             color: accentInk,
                           }}
                         >
-                          {inicial}
+                          {initials}
                         </div>
                       )}
 
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1">
-                          <h2 className="truncate text-sm font-bold text-[var(--zelo-ink)]">
-                            {loja.nome}
-                          </h2>
-                          <BadgeCheck
-                            className="h-4 w-4 shrink-0"
-                            style={{ color: loja.cor_primaria }}
-                          />
-                        </div>
-                        <p className="mt-0.5 text-xs font-medium text-[var(--zelo-muted)]">
-                          {NICHO_LABEL[loja.nicho] ?? "Espaço"}
+                      <div className="flex min-w-0 flex-col">
+                        <h2 className="truncate text-[18px] font-bold leading-tight text-[var(--zelo-ink)]">
+                          {loja.nome}
+                        </h2>
+                        <p className="mt-0.5 truncate text-xs text-[var(--zelo-muted)]">
+                          {localLabel}
                         </p>
-                        {(loja.cidade || loja.bairro) && (
-                          <p className="mt-1 flex items-center gap-1 truncate text-[11px] text-[var(--zelo-muted)]">
-                            <MapPin className="h-3 w-3 shrink-0" />
-                            <span className="truncate">
-                              {[loja.bairro, loja.cidade].filter(Boolean).join(" • ")}
-                            </span>
-                          </p>
-                        )}
                       </div>
                     </div>
-                  </div>
-                </div>
 
-                <div className="flex items-center justify-between bg-[var(--zelo-soft)]/70 px-4 py-2.5">
-                  <div className="flex items-center gap-1.5 text-xs">
-                    {loja.preco_inicial_centavos !== null ? (
-                      <>
-                        <Scissors className="h-3.5 w-3.5 text-[var(--zelo-muted)]" />
-                        <span className="text-[var(--zelo-muted)]">A partir de</span>
-                        <span className="font-mono-num font-bold text-[var(--zelo-ink)]">
-                          {formatPrice(loja.preco_inicial_centavos)}
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="h-3.5 w-3.5 text-[var(--zelo-muted)]" />
-                        <span className="text-[var(--zelo-muted)]">Agenda online</span>
-                      </>
+                    {loja.preco_inicial_centavos !== null && (
+                      <div className="shrink-0 rounded-lg bg-[var(--zelo-soft)] px-2.5 py-1 font-mono-num text-xs font-bold text-[var(--zelo-ink)]">
+                        {formatPriceShort(loja.preco_inicial_centavos)}+
+                      </div>
                     )}
                   </div>
-                  <span className="inline-flex items-center gap-1 text-xs font-bold text-[var(--zelo-ink)] transition-transform group-hover:translate-x-0.5">
-                    Agendar
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </span>
-                </div>
-              </Link>
-            );
-          })}
+
+                  <div className="flex items-center justify-between gap-2 pt-0.5">
+                    <div className="inline-flex items-center gap-1.5 rounded-md bg-[#10B981]/15 px-2.5 py-1 text-[#10B981]">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#10B981]" />
+                      <span className="font-mono-num text-[11px] font-medium tracking-tight">
+                        Agenda aberta
+                      </span>
+                    </div>
+
+                    <span className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-[var(--zelo-btn-bg)] px-4 text-xs font-semibold text-[var(--zelo-btn-ink)] shadow-sm">
+                      <span>Agendar</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </span>
+                  </div>
+                </Link>
+              );
+            })
+          )}
         </div>
-      )}
-    </div>
+
+        {/* Business Conversion Footer Card */}
+        <Link
+          href="/entrar"
+          className="mt-5 flex items-center justify-between gap-3 rounded-2xl bg-[var(--zelo-card)] p-4 shadow-sm transition-colors hover:bg-[var(--zelo-soft)]/50 active:scale-[0.99]"
+        >
+          <div className="flex min-w-0 flex-col gap-1">
+            <span className="w-max rounded-full bg-[var(--zelo-soft)] px-2.5 py-0.5 font-mono-num text-[10px] font-semibold uppercase tracking-wider text-[var(--zelo-muted)]">
+              Para Profissionais
+            </span>
+            <h3 className="mt-1 text-[18px] font-bold leading-tight text-[var(--zelo-ink)]">
+              Crie sua página no Zelo
+            </h3>
+            <p className="text-xs leading-relaxed text-[var(--zelo-muted)]">
+              Cadastre seu espaço em 3 minutos e comece a receber agendamentos.
+            </p>
+          </div>
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)] shadow-sm">
+            <ArrowRight className="h-5 w-5" />
+          </span>
+        </Link>
+      </div>
+
+      {/* Fixed Bottom Navigation (Stitch) */}
+      <nav className="fixed bottom-0 z-50 w-full bg-[var(--zelo-bg)]/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(0,0,0,0.03)]">
+        <div className="mx-auto flex h-16 max-w-[480px] items-center justify-around px-2">
+          <Link
+            href="/explorar"
+            aria-current="page"
+            className="flex h-12 w-16 flex-col items-center justify-center gap-1 font-semibold text-[var(--zelo-ink)]"
+          >
+            <Compass className="h-5 w-5" />
+            <span className="text-[11px] tracking-tight">Explorar</span>
+          </Link>
+          <button
+            type="button"
+            onClick={() => {
+              window.scrollTo({ top: 0, behavior: "smooth" });
+              searchRef.current?.focus();
+            }}
+            className="flex h-12 w-16 flex-col items-center justify-center gap-1 text-[var(--zelo-muted)] transition-colors hover:text-[var(--zelo-ink)]"
+          >
+            <Search className="h-5 w-5" />
+            <span className="text-[11px] tracking-tight">Buscar</span>
+          </button>
+          <Link
+            href="/entrar?next=/painel"
+            className="flex h-12 w-16 flex-col items-center justify-center gap-1 text-[var(--zelo-muted)] transition-colors hover:text-[var(--zelo-ink)]"
+          >
+            <Calendar className="h-5 w-5" />
+            <span className="text-[11px] tracking-tight">Horários</span>
+          </Link>
+          <Link
+            href="/entrar"
+            className="flex h-12 w-16 flex-col items-center justify-center gap-1 text-[var(--zelo-muted)] transition-colors hover:text-[var(--zelo-ink)]"
+          >
+            <UserCircle2 className="h-5 w-5" />
+            <span className="text-[11px] tracking-tight">Entrar</span>
+          </Link>
+        </div>
+      </nav>
+    </>
   );
 }
