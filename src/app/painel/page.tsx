@@ -1,21 +1,90 @@
 import Link from "next/link";
 import {
-  Calendar,
-  ChevronRight,
-  Clock,
   LayoutGrid,
   Palette,
   Plus,
   Settings,
   Sparkles,
-  Utensils,
 } from "lucide-react";
 import { getPainelContext } from "@/lib/painel/get-painel-context";
+import { createClient } from "@/lib/supabase/server";
 import { PainelShell } from "@/components/painel-shell";
+import {
+  PainelAgendaSX,
+  type AgendaAgendamentoItem,
+} from "@/components/painel-agenda-sx";
+import { WebPushOptIn } from "@/components/web-push-optin";
 
 export default async function PainelPage() {
   const ctx = await getPainelContext("/painel");
   const primeiroNome = ctx.perfil.nome.split(" ")[0] || "Gestor";
+  const supabase = await createClient();
+
+  const [{ data: profissionais }, { data: servicos }] = await Promise.all([
+    supabase
+      .from("profissionais")
+      .select("id, nome, user_id")
+      .eq("loja_id", ctx.lojaAtual.id)
+      .eq("ativo", true)
+      .order("eh_dono", { ascending: false }),
+    supabase
+      .from("servicos")
+      .select("id, nome, duracao_min, preco_centavos")
+      .eq("loja_id", ctx.lojaAtual.id)
+      .eq("ativo", true)
+      .order("ordem", { ascending: true }),
+  ]);
+
+  const meuProfissional = (profissionais ?? []).find((p) => p.user_id === ctx.userId);
+  const inicioJanela = new Date(Date.now() - 7 * 86_400_000).toISOString();
+  const fimJanela = new Date(Date.now() + 30 * 86_400_000).toISOString();
+
+  let agQuery = supabase
+    .from("agendamentos")
+    .select(
+      "id, profissional_id, origem, cliente_nome, cliente_whatsapp, beneficiario_nome, beneficiario_whatsapp, inicio, fim, status, total_centavos, cliente:perfis(nome, whatsapp), profissional:profissionais(nome)"
+    )
+    .eq("loja_id", ctx.lojaAtual.id)
+    .gte("inicio", inicioJanela)
+    .lte("inicio", fimJanela)
+    .order("inicio", { ascending: true });
+
+  if (!ctx.isOwner && meuProfissional) {
+    agQuery = agQuery.eq("profissional_id", meuProfissional.id);
+  }
+
+  const { data: rawAgendamentos } = await agQuery;
+
+  const agendamentos: AgendaAgendamentoItem[] = (rawAgendamentos ?? []).map((row) => {
+    const cli = Array.isArray(row.cliente) ? row.cliente[0] : row.cliente;
+    const pro = Array.isArray(row.profissional) ? row.profissional[0] : row.profissional;
+    return {
+      id: row.id as string,
+      profissional_id: row.profissional_id as string,
+      profissional_nome: pro?.nome ?? "Profissional",
+      cliente_nome:
+        (row.beneficiario_nome as string | null) ||
+        (row.cliente_nome as string | null) ||
+        cli?.nome ||
+        "Cliente",
+      cliente_whatsapp:
+        (row.beneficiario_whatsapp as string | null) ||
+        (row.cliente_whatsapp as string | null) ||
+        cli?.whatsapp ||
+        null,
+      inicio: row.inicio as string,
+      fim: row.fim as string,
+      status: row.status as AgendaAgendamentoItem["status"],
+      total_centavos: Number(row.total_centavos ?? 0),
+      origem: row.origem as "online" | "manual",
+    };
+  });
+
+  const profissionaisVisiveis = ctx.isOwner
+    ? (profissionais ?? []).map((p) => ({ id: p.id, nome: p.nome }))
+    : meuProfissional
+      ? [{ id: meuProfissional.id, nome: meuProfissional.nome }]
+      : [];
 
   return (
     <PainelShell
@@ -103,47 +172,21 @@ export default async function PainelPage() {
           </div>
         </section>
 
-        {/* Agenda Visual Preview (Etapa 5) */}
-        <section className="rounded-2xl bg-[var(--zelo-card)] p-4 shadow-sm space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F59E0B]/15 text-[#D97706]">
-                <Calendar className="h-4 w-4" />
-              </div>
-              <div>
-                <h2 className="text-sm font-bold">Agenda do Dia</h2>
-                <p className="text-[11px] text-[var(--zelo-muted)]">
-                  Schedule-X • Linha do tempo
-                </p>
-              </div>
-            </div>
-            <span className="rounded-full bg-[#F59E0B]/15 px-2.5 py-0.5 text-[11px] font-semibold text-[#D97706]">
-              Etapa 5
-            </span>
-          </div>
+        {/* Agenda Visual Schedule-X MIT (Etapa 5) */}
+        <PainelAgendaSX
+          lojaId={ctx.lojaAtual.id}
+          isOwner={ctx.isOwner}
+          agendamentos={agendamentos}
+          profissionais={profissionaisVisiveis}
+          servicos={(servicos ?? []).map((s) => ({
+            id: s.id,
+            nome: s.nome,
+            duracao_min: s.duracao_min,
+            preco_centavos: s.preco_centavos,
+          }))}
+        />
 
-          <div className="space-y-2 rounded-xl bg-[var(--zelo-soft)] p-3">
-            <div className="flex items-center gap-2.5 text-xs text-[var(--zelo-muted)]">
-              <Clock className="h-3.5 w-3.5 shrink-0" />
-              <span>
-                A grade interativa com encaixe manual em 3s, baixa de atendimentos e alertas Web Push entra na Etapa 5.
-              </span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg bg-[var(--zelo-card)] px-3 py-2 text-[11px]">
-              <div className="flex items-center gap-2 font-medium">
-                <Utensils className="h-3.5 w-3.5 text-[#F59E0B]" />
-                <span>Pausa padrão configurada</span>
-              </div>
-              <Link
-                href="/painel/gestao"
-                className="inline-flex items-center gap-0.5 font-semibold text-[var(--zelo-ink)] hover:underline"
-              >
-                Ajustar
-                <ChevronRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
-          </div>
-        </section>
+        <WebPushOptIn />
 
         {ctx.isOwner && (
           <Link

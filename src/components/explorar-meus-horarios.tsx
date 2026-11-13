@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
-import { ArrowRight, Calendar, Clock, Loader2, Store, User } from "lucide-react";
+import { ArrowRight, Calendar, Clock, Loader2, Store, User, XCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { cancelarOuRemarcarAction } from "@/app/[slug]/actions";
+import { showToast } from "@/components/zelo-toast";
 import type { ViewerPerfil } from "@/lib/supabase/use-viewer-perfil";
 
 interface ClienteAgendamento {
@@ -51,6 +53,27 @@ export function ExplorarMeusHorarios({
   const cached = viewer ? agendamentosCache.get(viewer.id) : undefined;
   const [items, setItems] = useState<ClienteAgendamento[]>(() => cached?.items ?? []);
   const [loading, setLoading] = useState(() => Boolean(viewer && !cached));
+  const [isPending, startTransition] = useTransition();
+
+  function handleCancelar(agId: string) {
+    if (!viewer) return;
+    startTransition(async () => {
+      const res = await cancelarOuRemarcarAction({
+        agendamento_id: agId,
+        acao: "cancelar",
+      });
+      if (res.error) {
+        showToast(res.error, "error");
+        return;
+      }
+      setItems((prev) => {
+        const next = prev.map((a) => (a.id === agId ? { ...a, status: "cancelado" as const } : a));
+        agendamentosCache.set(viewer.id, { items: next, fetchedAt: Date.now() });
+        return next;
+      });
+      showToast("Horário cancelado. A vaga foi liberada.", "success");
+    });
+  }
 
   useEffect(() => {
     if (!viewer) return;
@@ -203,15 +226,28 @@ export function ExplorarMeusHorarios({
                 </span>
               </div>
 
-              {ag.loja?.slug && (
-                <Link
-                  href={`/${ag.loja.slug}`}
-                  className="inline-flex h-9 items-center gap-1 rounded-lg bg-[var(--zelo-soft)] px-3 text-xs font-semibold text-[var(--zelo-ink)] transition-colors hover:bg-[var(--zelo-border)]"
-                >
-                  <span>Ver loja</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
-              )}
+              <div className="flex items-center gap-2">
+                {(ag.status === "pendente" || ag.status === "confirmado") && (
+                  <button
+                    type="button"
+                    disabled={isPending}
+                    onClick={() => handleCancelar(ag.id)}
+                    className="inline-flex h-9 items-center gap-1 rounded-lg bg-red-500/10 px-2.5 text-xs font-semibold text-red-500 transition-colors hover:bg-red-500/15 disabled:opacity-50"
+                  >
+                    <XCircle className="h-3.5 w-3.5" />
+                    <span>Cancelar</span>
+                  </button>
+                )}
+                {ag.loja?.slug && (
+                  <Link
+                    href={`/${ag.loja.slug}`}
+                    className="inline-flex h-9 items-center gap-1 rounded-lg bg-[var(--zelo-soft)] px-3 text-xs font-semibold text-[var(--zelo-ink)] transition-colors hover:bg-[var(--zelo-border)]"
+                  >
+                    <span>Ver loja</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
         );
