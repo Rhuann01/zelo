@@ -5,11 +5,6 @@ import { Check, ImagePlus, Loader2, MapPin, QrCode, Scissors } from "lucide-reac
 import { saveCustomizacaoAction } from "@/app/painel/personalizar/actions";
 import { createClient } from "@/lib/supabase/client";
 import { compressImageToWebP, STORE_MEDIA_COMPRESS_CONFIG } from "@/lib/image/compress-webp";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Slider } from "@/components/ui/slider";
 import type { LojaResumo } from "@/lib/painel/get-painel-context";
 
 const TEMAS = [
@@ -154,7 +149,6 @@ export function CustomizadorLoja({
 
   return (
     <div className="space-y-6">
-      {/* Preview em destaque — sem chrome decorativo */}
       <div
         className={`store-view-base theme-${tema} p-4`}
         style={{
@@ -253,7 +247,6 @@ export function CustomizadorLoja({
         </p>
       )}
 
-      {/* Estilo da loja — sem card envolvente extra */}
       <section className="space-y-3">
         <h2 className="text-sm font-semibold">Estilo da página</h2>
         <div className="grid grid-cols-2 gap-3">
@@ -265,8 +258,8 @@ export function CustomizadorLoja({
                 type="button"
                 disabled={!isOwner}
                 onClick={() => setTema(t.key)}
-                className={`flex flex-col gap-2 rounded-2xl bg-card p-2.5 text-left transition ${
-                  active ? "ring-1 ring-foreground" : "opacity-80 hover:opacity-100"
+                className={`flex flex-col gap-2 rounded-2xl bg-[var(--zelo-card)] p-2.5 text-left transition ${
+                  active ? "ring-1 ring-[var(--zelo-ink)]" : "opacity-85 hover:opacity-100"
                 }`}
               >
                 <div
@@ -313,7 +306,7 @@ export function CustomizadorLoja({
                 <div className="flex items-center justify-between px-1">
                   <div>
                     <p className="text-xs font-semibold leading-tight">{t.label}</p>
-                    <p className="text-[11px] text-muted-foreground">{t.desc}</p>
+                    <p className="text-[11px] text-[var(--zelo-muted)]">{t.desc}</p>
                   </div>
                   {active && <Check className="h-3.5 w-3.5 shrink-0 text-[#10B981]" />}
                 </div>
@@ -323,16 +316,15 @@ export function CustomizadorLoja({
         </div>
       </section>
 
-      <Separator />
+      <div className="h-px bg-[var(--zelo-border)]" />
 
-      {/* Cor, cantos e logo — controles limpos */}
       <section className="space-y-5">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold">Cor principal</span>
-            <span className="font-mono-num text-xs text-muted-foreground">{cor}</span>
+            <span className="font-mono-num text-xs text-[var(--zelo-muted)]">{cor}</span>
           </div>
-          <div className="flex items-center justify-between rounded-2xl bg-card px-2 py-1">
+          <div className="flex items-center justify-between rounded-2xl bg-[var(--zelo-card)] px-2 py-1">
             {SWATCHES.map((s) => {
               const selected = cor.toUpperCase() === s.color;
               return (
@@ -343,11 +335,13 @@ export function CustomizadorLoja({
                   onClick={() => setCor(s.color)}
                   title={s.label}
                   aria-label={`Cor ${s.label}`}
-                  className="flex h-11 w-11 items-center justify-center rounded-xl transition hover:bg-secondary/70"
+                  className="flex h-11 w-11 items-center justify-center rounded-xl transition hover:bg-[var(--zelo-soft)]"
                 >
                   <span
                     className={`h-5 w-5 rounded-full transition ${
-                      selected ? "ring-2 ring-foreground ring-offset-2 ring-offset-card scale-110" : ""
+                      selected
+                        ? "scale-110 ring-2 ring-[var(--zelo-ink)] ring-offset-2 ring-offset-[var(--zelo-card)]"
+                        : ""
                     }`}
                     style={{ backgroundColor: s.color }}
                   />
@@ -357,33 +351,34 @@ export function CustomizadorLoja({
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold">Arredondamento</span>
-            <span className="font-mono-num text-xs text-muted-foreground">{raio}px</span>
+            <span className="font-mono-num text-xs text-[var(--zelo-muted)]">{raio}px</span>
           </div>
-          <Slider
+          <input
+            type="range"
             min={2}
             max={24}
-            step={1}
             disabled={!isOwner}
-            value={[raio]}
-            onValueChange={(val) => setRaio(Array.isArray(val) ? (val[0] ?? 12) : val)}
+            value={raio}
+            onChange={(e) => setRaio(Number(e.target.value))}
+            className="w-full accent-[var(--zelo-ink)]"
             aria-label="Arredondamento dos cantos"
           />
         </div>
 
         {isOwner && (
-          <label className="flex h-11 cursor-pointer items-center justify-between rounded-xl bg-card px-3.5 text-xs font-medium text-foreground transition hover:bg-secondary">
+          <label className="flex h-11 cursor-pointer items-center justify-between rounded-xl bg-[var(--zelo-card)] px-3.5 text-xs font-medium text-[var(--zelo-ink)] transition hover:bg-[var(--zelo-soft)]">
             <span className="inline-flex items-center gap-2">
               {uploading ? (
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                <Loader2 className="h-4 w-4 animate-spin text-[var(--zelo-muted)]" />
               ) : (
-                <ImagePlus className="h-4 w-4 text-muted-foreground" />
+                <ImagePlus className="h-4 w-4 text-[var(--zelo-muted)]" />
               )}
               <span>{uploading ? "Enviando logo..." : "Logo da loja"}</span>
             </span>
-            <span className="text-[11px] text-muted-foreground">
+            <span className="text-[11px] text-[var(--zelo-muted)]">
               {logoUrl ? "Alterar" : "Enviar"}
             </span>
             <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
@@ -391,67 +386,64 @@ export function CustomizadorLoja({
         )}
       </section>
 
-      <Separator />
+      <div className="h-px bg-[var(--zelo-border)]" />
 
-      {/* Recebimento por PIX */}
       <section className="space-y-3">
         <div className="space-y-0.5">
           <div className="flex items-center gap-2 text-sm font-semibold">
             <QrCode className="h-4 w-4 text-[#10B981]" />
             Recebimento por PIX
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-[var(--zelo-muted)]">
             O sinal vai direto para sua conta, sem intermediação.
           </p>
         </div>
 
         <div className="space-y-2.5">
-          <div className="space-y-1.5">
-            <Label htmlFor="pix-key" className="text-xs text-muted-foreground">
-              Chave PIX
-            </Label>
-            <Input
-              id="pix-key"
+          <label className="block space-y-1.5">
+            <span className="text-xs text-[var(--zelo-muted)]">Chave PIX</span>
+            <input
               type="text"
               disabled={!isOwner}
               value={chavePix}
               onChange={(e) => setChavePix(e.target.value)}
               placeholder="CPF, CNPJ, e-mail ou chave aleatória"
-              className="h-11 rounded-xl border-0 bg-card px-3 font-mono-num text-sm dark:bg-card"
+              className="h-11 w-full rounded-xl bg-[var(--zelo-card)] px-3 font-mono-num text-sm outline-none"
             />
-          </div>
+          </label>
 
-          <div className="flex items-center justify-between gap-3 rounded-xl bg-card px-3.5 py-2">
-            <Label htmlFor="pix-sinal" className="text-xs font-medium text-muted-foreground">
+          <label className="flex items-center justify-between gap-3 rounded-xl bg-[var(--zelo-card)] px-3.5 py-2">
+            <span className="text-xs font-medium text-[var(--zelo-muted)]">
               Sinal para reservar (R$)
-            </Label>
-            <Input
-              id="pix-sinal"
+            </span>
+            <input
               type="text"
               disabled={!isOwner}
               value={sinalReais}
               onChange={(e) => setSinalReais(e.target.value)}
               placeholder="0,00"
-              className="h-9 w-24 rounded-lg border-0 bg-secondary px-2.5 text-right font-mono-num text-sm dark:bg-secondary"
+              className="h-9 w-24 rounded-lg bg-[var(--zelo-soft)] px-2.5 text-right font-mono-num text-sm outline-none"
             />
-          </div>
+          </label>
         </div>
       </section>
 
       {feedback && (
-        <p className="rounded-xl bg-secondary px-3.5 py-2.5 text-xs font-medium">{feedback}</p>
+        <p className="rounded-xl bg-[var(--zelo-soft)] px-3.5 py-2.5 text-xs font-medium">
+          {feedback}
+        </p>
       )}
 
       {isOwner && (
-        <Button
+        <button
           type="button"
           onClick={handleSave}
           disabled={isPending}
-          className="h-12 w-full rounded-xl text-sm font-semibold"
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--zelo-btn-bg)] text-sm font-semibold text-[var(--zelo-btn-ink)] disabled:opacity-60"
         >
           {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
           Salvar alterações
-        </Button>
+        </button>
       )}
     </div>
   );

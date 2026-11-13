@@ -14,11 +14,6 @@ import {
   Shield,
 } from "lucide-react";
 import { AvatarUploader } from "@/components/avatar-uploader";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import {
   saveConfiguracoesAction,
   signOutConfigAction,
@@ -37,7 +32,8 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  function toggleDarkMode(next: boolean) {
+  function toggleDarkMode() {
+    const next = !dark;
     setDark(next);
     document.documentElement.classList.toggle("dark", next);
   }
@@ -75,189 +71,177 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
     <div className="space-y-4">
       <h1 className="text-xl font-bold tight-heading">Configurações & Meu Perfil</h1>
 
-      <Card className="py-4">
-        <CardContent className="space-y-4 px-4">
-          <AvatarUploader
-            userId={ctx.userId}
-            initialUrl={ctx.perfil.avatar_url}
-            isCustom={ctx.perfil.avatar_customizado}
-            displayName={nome || ctx.perfil.nome}
-          />
+      <section className="rounded-2xl bg-[var(--zelo-card)] p-4 space-y-4">
+        <AvatarUploader
+          userId={ctx.userId}
+          initialUrl={ctx.perfil.avatar_url}
+          isCustom={ctx.perfil.avatar_customizado}
+          displayName={nome || ctx.perfil.nome}
+        />
 
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label
-                htmlFor="cfg-nome"
-                className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
-              >
-                Nome de exibição
-              </Label>
-              <Input
-                id="cfg-nome"
-                type="text"
-                value={nome}
-                onChange={(e) => setNome(e.target.value)}
-                className="h-11 rounded-xl border-0 bg-secondary px-3 text-sm"
-              />
-            </div>
+        <div className="space-y-2.5">
+          <label className="block space-y-1">
+            <span className="text-xs font-medium text-[var(--zelo-muted)]">Nome de exibição</span>
+            <input
+              type="text"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              className="h-11 w-full rounded-xl bg-[var(--zelo-soft)] px-3 text-sm outline-none"
+            />
+          </label>
 
-            <div className="space-y-1.5">
-              <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                E-mail vinculado (Google)
-              </span>
-              <div className="flex h-11 items-center rounded-xl bg-secondary px-3 text-xs text-muted-foreground">
-                {ctx.userEmail}
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label
-                htmlFor="cfg-whatsapp"
-                className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
-              >
-                WhatsApp
-              </Label>
-              <Input
-                id="cfg-whatsapp"
-                type="tel"
-                value={whatsapp}
-                onChange={(e) => setWhatsapp(e.target.value)}
-                placeholder="(31) 99999-8888"
-                className="h-11 rounded-xl border-0 bg-secondary px-3 font-mono-num text-sm"
-              />
+          <div className="space-y-1">
+            <span className="text-xs font-medium text-[var(--zelo-muted)]">
+              E-mail vinculado (Google)
+            </span>
+            <div className="flex h-11 items-center rounded-xl bg-[var(--zelo-soft)] px-3 text-xs text-[var(--zelo-muted)]">
+              {ctx.userEmail}
             </div>
           </div>
-        </CardContent>
-      </Card>
 
-      <Card className="bg-secondary py-4">
-        <CardContent className="space-y-3 px-4">
-          <div className="flex items-center gap-2 text-sm font-bold">
-            <ArrowLeftRight className="h-4 w-4 text-[#F59E0B]" />
-            Troca Rápida de Contexto
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Use esta mesma conta Google para agendar horários como cliente em outros estabelecimentos.
-          </p>
-          <Link
-            href={`/${ctx.lojaAtual.slug}`}
-            className="flex h-11 w-full items-center justify-center rounded-xl bg-primary text-xs font-semibold text-primary-foreground transition hover:opacity-90"
-          >
-            Ver Página Pública / Modo Cliente
-          </Link>
-        </CardContent>
-      </Card>
+          <label className="block space-y-1">
+            <span className="text-xs font-medium text-[var(--zelo-muted)]">WhatsApp</span>
+            <input
+              type="tel"
+              value={whatsapp}
+              onChange={(e) => setWhatsapp(e.target.value)}
+              placeholder="(31) 99999-8888"
+              className="h-11 w-full rounded-xl bg-[var(--zelo-soft)] px-3 text-sm font-mono-num outline-none"
+            />
+          </label>
+        </div>
+      </section>
 
-      <Card className="py-4">
-        <CardContent className="space-y-2 px-4">
-          <span className="block pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Preferências
+      <section className="rounded-2xl bg-[var(--zelo-soft)] p-4 space-y-2.5">
+        <div className="flex items-center gap-2 text-sm font-bold">
+          <ArrowLeftRight className="h-4 w-4 text-[#F59E0B]" />
+          Troca Rápida de Contexto
+        </div>
+        <p className="text-xs text-[var(--zelo-muted)]">
+          Use esta mesma conta Google para agendar horários como cliente em outros estabelecimentos.
+        </p>
+        <Link
+          href={`/${ctx.lojaAtual.slug}`}
+          className="flex h-11 w-full items-center justify-center rounded-xl bg-[var(--zelo-btn-bg)] text-xs font-semibold text-[var(--zelo-btn-ink)]"
+        >
+          Ver Página Pública / Modo Cliente
+        </Link>
+      </section>
+
+      <section className="rounded-2xl bg-[var(--zelo-card)] p-4 space-y-1">
+        <span className="block pb-1 text-xs font-semibold text-[var(--zelo-muted)]">Preferências</span>
+
+        <div className="flex min-h-[44px] items-center justify-between">
+          <span className="inline-flex items-center gap-2 text-sm font-medium">
+            <Moon className="h-4 w-4 text-[var(--zelo-muted)]" />
+            Tema Escuro
           </span>
-
-          <label className="flex min-h-[44px] cursor-pointer items-center justify-between gap-3">
-            <span className="inline-flex items-center gap-2 text-sm font-medium">
-              <Moon className="h-4 w-4 text-muted-foreground" />
-              Tema Escuro
+          <button
+            type="button"
+            onClick={toggleDarkMode}
+            className="inline-flex min-h-[44px] items-center px-1"
+            aria-label="Alternar tema escuro"
+          >
+            <span
+              className={`flex h-7 w-12 items-center rounded-full p-1 transition ${
+                dark ? "bg-[#10B981]" : "bg-[var(--zelo-soft)]"
+              }`}
+            >
+              <span
+                className={`block h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
+                  dark ? "translate-x-5" : "translate-x-0"
+                }`}
+              />
             </span>
-            <Switch
-              checked={dark}
-              onCheckedChange={toggleDarkMode}
-              aria-label="Alternar tema escuro"
-            />
-          </label>
+          </button>
+        </div>
 
-          <label className="flex min-h-[44px] cursor-pointer items-center justify-between gap-3">
-            <span className="inline-flex items-center gap-2 text-sm font-medium">
-              <Bell className="h-4 w-4 text-muted-foreground" />
-              Alertas Web Push
-            </span>
-            <Switch
-              checked={pushAtivo}
-              onCheckedChange={setPushAtivo}
-              aria-label="Alertas Web Push"
-            />
-          </label>
+        <label className="flex min-h-[44px] cursor-pointer items-center justify-between">
+          <span className="inline-flex items-center gap-2 text-sm font-medium">
+            <Bell className="h-4 w-4 text-[var(--zelo-muted)]" />
+            Alertas Web Push
+          </span>
+          <input
+            type="checkbox"
+            checked={pushAtivo}
+            onChange={(e) => setPushAtivo(e.target.checked)}
+            className="h-5 w-5 accent-[#111111]"
+          />
+        </label>
 
-          <label className="flex min-h-[44px] cursor-pointer items-center justify-between gap-3">
-            <span className="inline-flex items-center gap-2 text-sm font-medium">
-              <Mail className="h-4 w-4 text-muted-foreground" />
-              Lembretes por E-mail
-            </span>
-            <Switch
-              checked={emailAtivo}
-              onCheckedChange={setEmailAtivo}
-              aria-label="Lembretes por E-mail"
-            />
-          </label>
-        </CardContent>
-      </Card>
+        <label className="flex min-h-[44px] cursor-pointer items-center justify-between">
+          <span className="inline-flex items-center gap-2 text-sm font-medium">
+            <Mail className="h-4 w-4 text-[var(--zelo-muted)]" />
+            Lembretes por E-mail
+          </span>
+          <input
+            type="checkbox"
+            checked={emailAtivo}
+            onChange={(e) => setEmailAtivo(e.target.checked)}
+            className="h-5 w-5 accent-[#111111]"
+          />
+        </label>
+      </section>
 
       {ctx.isOwner && (
-        <Card className="py-4">
-          <CardContent className="px-4">
-            <label className="flex min-h-[44px] cursor-pointer items-center justify-between gap-3">
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-1.5 text-sm font-bold">
-                  <PauseCircle className="h-4 w-4 text-[#F59E0B]" />
-                  Pausar Loja Temporariamente
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Modo férias: oculta da vitrine e pausa novas reservas.
-                </p>
-              </div>
-              <Switch
-                checked={pausada}
-                onCheckedChange={setPausada}
-                aria-label="Pausar Loja Temporariamente"
-              />
-            </label>
-          </CardContent>
-        </Card>
+        <label className="flex min-h-[56px] cursor-pointer items-center justify-between gap-3 rounded-2xl bg-[var(--zelo-card)] p-4">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-1.5 text-sm font-bold">
+              <PauseCircle className="h-4 w-4 text-[#F59E0B]" />
+              Pausar Loja Temporariamente
+            </div>
+            <p className="text-xs text-[var(--zelo-muted)]">
+              Modo férias: oculta da vitrine e pausa novas reservas.
+            </p>
+          </div>
+          <input
+            type="checkbox"
+            checked={pausada}
+            onChange={(e) => setPausada(e.target.checked)}
+            className="h-5 w-5 shrink-0 accent-[#111111]"
+          />
+        </label>
       )}
 
       {feedback && (
-        <div className="rounded-xl bg-secondary px-3.5 py-2.5 text-xs font-semibold">
+        <div className="rounded-xl bg-[var(--zelo-soft)] px-3.5 py-2.5 text-xs font-semibold">
           {feedback}
         </div>
       )}
 
-      <Button
+      <button
         type="button"
         onClick={handleSave}
         disabled={isPending}
-        className="h-12 w-full rounded-xl text-sm font-semibold"
+        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--zelo-btn-bg)] text-sm font-semibold text-[var(--zelo-btn-ink)] disabled:opacity-60"
       >
         {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
         Salvar Alterações
-      </Button>
+      </button>
 
-      <Card className="py-4">
-        <CardContent className="space-y-2.5 px-4">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={handleExportLgpd}
-            className="h-11 w-full justify-between rounded-xl px-3.5 text-xs font-semibold"
+      <section className="rounded-2xl bg-[var(--zelo-card)] p-4 space-y-2.5">
+        <button
+          type="button"
+          onClick={handleExportLgpd}
+          className="flex h-11 w-full items-center justify-between rounded-xl bg-[var(--zelo-soft)] px-3.5 text-xs font-semibold"
+        >
+          <span className="inline-flex items-center gap-2">
+            <Shield className="h-4 w-4 text-[#10B981]" />
+            Baixar Meus Dados (LGPD)
+          </span>
+          <Download className="h-4 w-4 text-[var(--zelo-muted)]" />
+        </button>
+
+        <form action={signOutConfigAction}>
+          <button
+            type="submit"
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-red-500/10 text-xs font-semibold text-red-600"
           >
-            <span className="inline-flex items-center gap-2">
-              <Shield className="h-4 w-4 text-[#10B981]" />
-              Baixar Meus Dados (LGPD)
-            </span>
-            <Download className="h-4 w-4 text-muted-foreground" />
-          </Button>
-
-          <form action={signOutConfigAction}>
-            <Button
-              type="submit"
-              variant="ghost"
-              className="h-11 w-full rounded-xl bg-red-500/10 text-xs font-semibold text-red-600 hover:bg-red-500/15 hover:text-red-600"
-            >
-              <LogOut className="h-4 w-4" />
-              Sair da Conta
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+            <LogOut className="h-4 w-4" />
+            Sair da Conta
+          </button>
+        </form>
+      </section>
     </div>
   );
 }
