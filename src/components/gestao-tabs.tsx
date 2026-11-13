@@ -24,6 +24,7 @@ import {
   saveServicoAction,
   toggleDonoAtendeAction,
 } from "@/app/painel/gestao/actions";
+import { showToast } from "@/components/zelo-toast";
 
 export interface ServicoRow {
   id: string;
@@ -88,7 +89,6 @@ export function GestaoTabs({
   bloqueios,
 }: GestaoTabsProps) {
   const [tab, setTab] = useState<"horarios" | "equipe" | "servicos">("horarios");
-  const [feedback, setFeedback] = useState<{ text: string; isError?: boolean } | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const [semana, setSemana] = useState<Record<string, DiaConfig>>(() => {
@@ -133,11 +133,10 @@ export function GestaoTabs({
   const outrosAtivos = profissionais.filter((p) => !p.eh_dono && p.ativo);
 
   function runAction(fn: () => Promise<{ error?: string; message?: string }>) {
-    setFeedback(null);
     startTransition(async () => {
       const res = await fn();
-      if (res.error) setFeedback({ text: res.error, isError: true });
-      else if (res.message) setFeedback({ text: res.message });
+      if (res.error) showToast(res.error, "error");
+      else if (res.message) showToast(res.message, "success");
     });
   }
 
@@ -186,18 +185,6 @@ export function GestaoTabs({
       {!isOwner && (
         <div className="rounded-xl bg-[#F59E0B]/15 px-3.5 py-2.5 text-xs font-medium text-[#D97706]">
           Você está logado como Equipe. Apenas o proprietário pode editar serviços, equipe e horários da loja.
-        </div>
-      )}
-
-      {feedback && (
-        <div
-          className={`rounded-xl px-3.5 py-2.5 text-xs font-semibold ${
-            feedback.isError
-              ? "bg-red-500/10 text-red-500"
-              : "bg-[#10B981]/15 text-[#10B981]"
-          }`}
-        >
-          {feedback.text}
         </div>
       )}
 

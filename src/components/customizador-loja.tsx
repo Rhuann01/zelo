@@ -12,11 +12,13 @@ import {
   ImagePlus,
   Loader2,
   RefreshCw,
+  Trash2,
   Wallet,
 } from "lucide-react";
 import { saveCustomizacaoAction } from "@/app/painel/personalizar/actions";
 import { createClient } from "@/lib/supabase/client";
 import { compressImageToWebP, STORE_MEDIA_COMPRESS_CONFIG } from "@/lib/image/compress-webp";
+import { showToast } from "@/components/zelo-toast";
 import type { LojaResumo } from "@/lib/painel/get-painel-context";
 
 const TEMAS = [
@@ -89,7 +91,6 @@ export function CustomizadorLoja({
   );
   const [logoUrl, setLogoUrl] = useState(loja.logo_url);
   const [refreshing, setRefreshing] = useState(false);
-  const [feedback, setFeedback] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -102,7 +103,6 @@ export function CustomizadorLoja({
     const file = e.target.files?.[0];
     if (!file || !isOwner) return;
     setUploading(true);
-    setFeedback(null);
     try {
       const blob = await compressImageToWebP(file, STORE_MEDIA_COMPRESS_CONFIG);
       const supabase = createClient();
@@ -124,9 +124,29 @@ export function CustomizadorLoja({
       if (dbErr) throw dbErr;
 
       setLogoUrl(url);
-      setFeedback("Logo atualizada com sucesso.");
+      showToast("Logo atualizada com sucesso.", "success");
     } catch (err) {
-      setFeedback(err instanceof Error ? err.message : "Erro ao enviar logo.");
+      showToast(err instanceof Error ? err.message : "Erro ao enviar logo.", "error");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleRemoveLogo() {
+    setUploading(true);
+    try {
+      const supabase = createClient();
+      await supabase.storage.from("lojas-media").remove([`${loja.id}/logo.webp`]).catch(() => null);
+      const { error: dbErr } = await supabase
+        .from("lojas")
+        .update({ logo_url: null })
+        .eq("id", loja.id);
+      if (dbErr) throw dbErr;
+
+      setLogoUrl(null);
+      showToast("Logo da loja removida.", "success");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Erro ao remover logo.", "error");
     } finally {
       setUploading(false);
     }
@@ -139,7 +159,6 @@ export function CustomizadorLoja({
   }
 
   function handleSave() {
-    setFeedback(null);
     const sinalCentavos = Math.max(
       0,
       Math.round(Number(sinalReais.replace(/[^\d,.-]/g, "").replace(",", ".")) * 100) || 0
@@ -154,7 +173,8 @@ export function CustomizadorLoja({
         chave_pix: chavePix.trim() || null,
         sinal_centavos: sinalCentavos,
       });
-      setFeedback(res.error ?? res.message ?? null);
+      if (res.error) showToast(res.error, "error");
+      else if (res.message) showToast(res.message, "success");
     });
   }
 
@@ -424,15 +444,29 @@ export function CustomizadorLoja({
         </div>
 
         {isOwner && (
-          <label className="flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg bg-[var(--zelo-soft)] text-xs font-semibold text-[var(--zelo-ink)] transition-colors hover:bg-[var(--zelo-border)]">
-            {uploading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <ImagePlus className="h-4 w-4 text-[#F59E0B]" />
+          <div className="flex items-center gap-2">
+            <label className="flex h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[var(--zelo-soft)] text-xs font-semibold text-[var(--zelo-ink)] transition-colors hover:bg-[var(--zelo-border)]">
+              {uploading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ImagePlus className="h-4 w-4 text-[#F59E0B]" />
+              )}
+              <span>{uploading ? "Processando..." : logoUrl ? "Alterar Logo" : "Enviar Logo da Loja"}</span>
+              <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+            </label>
+            {logoUrl && (
+              <button
+                type="button"
+                disabled={uploading}
+                onClick={handleRemoveLogo}
+                aria-label="Remover logo da loja"
+                className="inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-red-500/10 px-3.5 text-xs font-semibold text-red-500 transition-colors hover:bg-red-500/15 disabled:opacity-60"
+              >
+                <Trash2 className="h-4 w-4" />
+                <span>Remover</span>
+              </button>
             )}
-            <span>{uploading ? "Enviando logo..." : logoUrl ? "Alterar Logo da Loja" : "Enviar Logo da Loja"}</span>
-            <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
-          </label>
+          </div>
         )}
       </section>
 
@@ -468,7 +502,7 @@ export function CustomizadorLoja({
               type="button"
               onClick={() => {
                 navigator.clipboard?.writeText(chavePix);
-                setFeedback("Chave PIX copiada!");
+                showToast("Chave PIX copiada!", "info");
               }}
               className="rounded-md p-1.5 text-[var(--zelo-muted)] transition-colors hover:bg-[var(--zelo-border)]"
               title="Copiar chave"
@@ -491,12 +525,6 @@ export function CustomizadorLoja({
           />
         </div>
       </section>
-
-      {feedback && (
-        <div className="rounded-xl bg-[var(--zelo-soft)] px-3.5 py-2.5 text-xs font-semibold text-[var(--zelo-ink)]">
-          {feedback}
-        </div>
-      )}
 
       {isOwner && (
         <button

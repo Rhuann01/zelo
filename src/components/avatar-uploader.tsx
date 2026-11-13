@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { Camera, Loader2, RotateCcw } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { AVATAR_COMPRESS_CONFIG, compressImageToWebP } from "@/lib/image/compress-webp";
+import { showToast } from "@/components/zelo-toast";
 
 interface AvatarUploaderProps {
   userId: string;
@@ -22,14 +23,12 @@ export function AvatarUploader({
   const [avatarUrl, setAvatarUrl] = useState(initialUrl);
   const [custom, setCustom] = useState(isCustom);
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<string | null>(null);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setLoading(true);
-    setStatus(null);
     try {
       const webpBlob = await compressImageToWebP(file, AVATAR_COMPRESS_CONFIG);
       const supabase = createClient();
@@ -57,9 +56,9 @@ export function AvatarUploader({
 
       setAvatarUrl(bustedUrl);
       setCustom(true);
-      setStatus(`Foto salva (${Math.round(webpBlob.size / 1024)} KB WebP)`);
+      showToast(`Foto salva (${Math.round(webpBlob.size / 1024)} KB WebP)`, "success");
     } catch (err) {
-      setStatus(err instanceof Error ? err.message : "Erro ao enviar foto.");
+      showToast(err instanceof Error ? err.message : "Erro ao enviar foto.", "error");
     } finally {
       setLoading(false);
     }
@@ -67,7 +66,6 @@ export function AvatarUploader({
 
   async function handleRestoreGoogle() {
     setLoading(true);
-    setStatus(null);
     try {
       const supabase = createClient();
       const {
@@ -86,9 +84,9 @@ export function AvatarUploader({
       if (error) throw error;
       setAvatarUrl(googlePic);
       setCustom(false);
-      setStatus("Foto do Google restaurada.");
+      showToast("Foto do Google restaurada.", "success");
     } catch {
-      setStatus("Não foi possível restaurar a foto do Google.");
+      showToast("Não foi possível restaurar a foto do Google.", "error");
     } finally {
       setLoading(false);
     }
@@ -135,23 +133,21 @@ export function AvatarUploader({
 
       <div className="min-w-0 space-y-1">
         <p className="truncate text-base font-bold">{displayName}</p>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1 rounded-full bg-[#10B981]/15 px-2.5 py-0.5 text-[11px] font-semibold text-[#10B981]">
-            {custom ? "Foto customizada" : "Foto Google"}
-          </span>
-          {custom && (
-            <button
-              type="button"
-              onClick={handleRestoreGoogle}
-              disabled={loading}
-              className="inline-flex items-center gap-1 text-[11px] font-medium text-[var(--zelo-muted)] underline"
-            >
-              <RotateCcw className="h-3 w-3" />
-              Restaurar Google
-            </button>
-          )}
-        </div>
-        {status && <p className="text-[11px] text-[var(--zelo-muted)]">{status}</p>}
+        {custom ? (
+          <button
+            type="button"
+            onClick={handleRestoreGoogle}
+            disabled={loading}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--zelo-muted)] transition-colors hover:text-[var(--zelo-ink)]"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            Restaurar foto do Google
+          </button>
+        ) : (
+          <p className="text-xs text-[var(--zelo-muted)]">
+            Toque na câmera para trocar sua foto
+          </p>
+        )}
       </div>
     </div>
   );

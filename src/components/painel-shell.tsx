@@ -13,6 +13,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { ZeloLogo } from "@/components/zelo-logo";
+import { ZeloToastViewport } from "@/components/zelo-toast";
 import type { LojaResumo } from "@/lib/painel/get-painel-context";
 
 interface PainelShellProps {
@@ -50,6 +51,7 @@ export function PainelShell({
 
   return (
     <div className="flex min-h-screen flex-col bg-[var(--zelo-bg)] text-[var(--zelo-ink)]">
+      <ZeloToastViewport />
       <header className="sticky top-0 z-50 w-full bg-[var(--zelo-bg)]/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.03)]">
         <div className="mx-auto flex h-16 max-w-[480px] items-center justify-between gap-2 px-4">
           <Link href="/painel" className="shrink-0">

@@ -21,6 +21,7 @@ import {
   Umbrella,
 } from "lucide-react";
 import { AvatarUploader } from "@/components/avatar-uploader";
+import { showToast } from "@/components/zelo-toast";
 import {
   saveConfiguracoesAction,
   signOutConfigAction,
@@ -36,7 +37,6 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
   const [dark, setDark] = useState(() =>
     typeof document !== "undefined" ? document.documentElement.classList.contains("dark") : false
   );
-  const [feedback, setFeedback] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function toggleDarkMode() {
@@ -61,7 +61,6 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
   }
 
   function handleSave() {
-    setFeedback(null);
     startTransition(async () => {
       const res = await saveConfiguracoesAction({
         nome,
@@ -70,7 +69,8 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
         notificacoes_email: emailAtivo,
         ...(ctx.isOwner ? { loja_id: ctx.lojaAtual.id, pausada } : {}),
       });
-      setFeedback(res.error ?? res.message ?? null);
+      if (res.error) showToast(res.error, "error");
+      else if (res.message) showToast(res.message, "success");
     });
   }
 
@@ -328,12 +328,6 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
             )}
           </div>
         </section>
-      )}
-
-      {feedback && (
-        <div className="rounded-xl bg-[var(--zelo-soft)] px-3.5 py-2.5 text-xs font-semibold">
-          {feedback}
-        </div>
       )}
 
       <button
