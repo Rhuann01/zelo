@@ -1,0 +1,11 @@
+{
+  "name": "zelo-stack-mcps",
+  "displayName": "Zelo Stack MCPs (Schedule-X + shadcn/ui)",
+  "description": "Servidores MCP locais e isolados apenas para o projeto Zelo: documentação e APIs do Schedule-X (@schedule-x/mcp) e componentes/temas shadcn/ui (shadcn@latest mcp).",
+  "version": "1.0.0",
+  "suggestedPrompts": [
+    "Consultar componentes e props do Schedule-X para o /painel",
+    "Instalar componentes acessíveis do shadcn/ui para o fluxo de agendamento",
+    "Verificar opções de tema e localização pt-BR no Schedule-X"
+  ]
+}

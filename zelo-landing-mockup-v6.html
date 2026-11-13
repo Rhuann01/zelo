@@ -1,0 +1,1694 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zelo — Sua agenda online com a cara do seu negócio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script>
+    (function () {
+      const saved = localStorage.getItem('zelo-lp-theme');
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
+  <style>
+    :root {
+      --lp-bg: #FAF9F6;
+      --lp-card: #FFFFFF;
+      --lp-soft: #F4F3EF;
+      --lp-border: #E6E4DD;
+      --lp-border-strong: #DFDDD4;
+      --lp-ink: #111111;
+      --lp-muted: #5C5A54;
+      --lp-subtle: #6E6B64;
+      --lp-btn-bg: #111111;
+      --lp-btn-ink: #FFFFFF;
+      --lp-btn-hover: #27272A;
+      --lp-nav-bg: rgba(255, 255, 255, 0.92);
+    }
+
+    html.dark {
+      --lp-bg: #0E0E11;
+      --lp-card: #16161A;
+      --lp-soft: #1C1C22;
+      --lp-border: #27272F;
+      --lp-border-strong: #34343F;
+      --lp-ink: #F4F4F5;
+      --lp-muted: #A1A1AA;
+      --lp-subtle: #71717A;
+      --lp-btn-bg: #FFFFFF;
+      --lp-btn-ink: #111111;
+      --lp-btn-hover: #E4E4E7;
+      --lp-nav-bg: rgba(22, 22, 26, 0.90);
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--lp-bg);
+      color: var(--lp-ink);
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    .font-mono {
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .font-editorial {
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-weight: 400;
+      letter-spacing: -0.02em;
+    }
+
+    /* Motivo visual discreto do Zelo: grade pontilhada de agenda com fade radial */
+    .hero-grid-bg {
+      background-image: radial-gradient(var(--lp-border-strong) 1px, transparent 1px);
+      background-size: 22px 22px;
+      mask-image: radial-gradient(ellipse 75% 70% at 50% 42%, #000 45%, transparent 100%);
+      -webkit-mask-image: radial-gradient(ellipse 75% 70% at 50% 42%, #000 45%, transparent 100%);
+    }
+
+    /* FAQ Acordeão suave */
+    details.faq-item summary {
+      list-style: none;
+    }
+    details.faq-item summary::-webkit-details-marker {
+      display: none;
+    }
+    details.faq-item[open] .faq-chevron {
+      transform: rotate(180deg);
+    }
+    .faq-chevron {
+      transition: transform 0.2s ease;
+    }
+
+    /* Drawer Mobile suave (grid-template-rows + opacidade) */
+    .mobile-drawer {
+      display: grid;
+      grid-template-rows: 0fr;
+      opacity: 0;
+      margin-top: 0;
+      transition: grid-template-rows 0.32s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.22s ease, margin-top 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .mobile-drawer.is-open {
+      grid-template-rows: 1fr;
+      opacity: 1;
+      margin-top: 0.75rem;
+    }
+    .mobile-drawer-inner {
+      overflow: hidden;
+    }
+
+    /* Scroll Reveal suave */
+    .scroll-reveal {
+      opacity: 0;
+      transform: translateY(22px);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .scroll-reveal {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    .tight-heading {
+      letter-spacing: -0.035em;
+    }
+
+    .lp-surface {
+      background-color: var(--lp-card);
+      border: 1px solid var(--lp-border);
+      transition: background-color 0.25s ease, border-color 0.25s ease;
+    }
+
+    .lp-soft-surface {
+      background-color: var(--lp-soft);
+      border: 1px solid var(--lp-border);
+    }
+
+    .lp-btn-primary {
+      background-color: var(--lp-btn-bg);
+      color: var(--lp-btn-ink);
+      transition: background-color 0.2s ease, transform 0.15s ease;
+    }
+    .lp-btn-primary:hover {
+      background-color: var(--lp-btn-hover);
+    }
+
+    .lp-btn-secondary {
+      background-color: var(--lp-card);
+      color: var(--lp-ink);
+      border: 1px solid var(--lp-border-strong);
+      transition: border-color 0.2s ease, background-color 0.2s ease;
+    }
+    .lp-btn-secondary:hover {
+      border-color: var(--lp-ink);
+    }
+
+    .showcase-window {
+      border-radius: 20px;
+      border: 1px solid var(--lp-border-strong);
+      box-shadow: 0 24px 60px -15px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.06);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Odometer Individual por Dígito */
+    .odo-digit-box {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 1.15em;
+      width: 0.62em;
+      overflow: hidden;
+      position: relative;
+      vertical-align: top;
+    }
+    .odo-char {
+      display: inline-block;
+      will-change: transform, opacity;
+    }
+
+    /* Base da Prévia da Loja */
+    .store-view-base {
+      --store-accent: #F59E0B;
+      --store-accent-ink: #111111;
+      --store-radius: 12px;
+      --store-border-w: 1px;
+      --store-shadow: none;
+      --store-card-shadow: none;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .theme-urban {
+      background: #0F0F12;
+      color: #F4F4F5;
+      --store-surface: #18181D;
+      --store-border-c: #2C2C35;
+      --store-muted: #A1A1AA;
+      --store-slot-bg: #18181D;
+    }
+    .theme-glam {
+      background: #FDF8F6;
+      color: #2A1D1D;
+      --store-surface: #FFFFFF;
+      --store-border-c: #EFE0DA;
+      --store-muted: #7C6565;
+      --store-slot-bg: #FFFFFF;
+    }
+    .theme-brutal {
+      background: #FFFDF4;
+      color: #000000;
+      --store-surface: #FFFFFF;
+      --store-border-c: #000000;
+      --store-muted: #27272A;
+      --store-slot-bg: #FFFFFF;
+      --store-border-w: 2px;
+      --store-shadow: 3px 3px 0px #000000;
+      --store-card-shadow: 4px 4px 0px #000000;
+    }
+    .theme-slate {
+      background: #FFFFFF;
+      color: #0F172A;
+      --store-surface: #F8FAFC;
+      --store-border-c: #CBD5E1;
+      --store-muted: #64748B;
+      --store-slot-bg: #FFFFFF;
+    }
+
+    .t-surface {
+      background: var(--store-surface);
+      border: var(--store-border-w) solid var(--store-border-c);
+      border-radius: var(--store-radius);
+      box-shadow: var(--store-card-shadow);
+      transition: border-radius 0.15s ease, background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.2s ease;
+    }
+    .t-inner-card {
+      background: var(--store-surface);
+      border: var(--store-border-w) solid var(--store-border-c);
+      border-radius: calc(var(--store-radius) * 0.85);
+      box-shadow: var(--store-shadow);
+      transition: border-radius 0.15s ease, background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.2s ease;
+    }
+    .t-muted {
+      color: var(--store-muted);
+    }
+    .t-accent-bg {
+      background: var(--store-accent);
+      color: var(--store-accent-ink);
+      border-radius: calc(var(--store-radius) * 0.78);
+      border: var(--store-border-w) solid var(--store-border-c);
+      box-shadow: var(--store-shadow);
+      transition: background-color 0.25s ease, color 0.25s ease, border-radius 0.15s ease, transform 0.12s ease, box-shadow 0.12s ease;
+    }
+    .theme-brutal .t-accent-bg:hover,
+    .theme-brutal .t-slot:hover {
+      transform: translate(-1px, -1px);
+    }
+    .theme-brutal .t-accent-bg:active,
+    .theme-brutal .t-slot:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px #000000;
+    }
+    .t-slot {
+      background: var(--store-slot-bg);
+      border: var(--store-border-w) solid var(--store-border-c);
+      border-radius: calc(var(--store-radius) * 0.7);
+      box-shadow: var(--store-shadow);
+      transition: border-radius 0.15s ease, background-color 0.25s ease, border-color 0.25s ease, transform 0.12s ease, box-shadow 0.12s ease;
+    }
+    .t-slot.active {
+      background: var(--store-accent);
+      color: var(--store-accent-ink);
+      border-color: var(--store-accent);
+      font-weight: 700;
+    }
+    .theme-brutal .t-slot.active {
+      border-color: #000000;
+      box-shadow: 3px 3px 0px #000000;
+    }
+    .t-tab-active {
+      border-bottom: 2px solid var(--store-accent);
+      color: var(--store-accent);
+    }
+    .theme-brutal .t-tab-active {
+      color: #000000;
+      border-bottom: 3px solid #000000;
+      font-weight: 800;
+    }
+
+    #demo-cursor,
+    #demo-touch {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 50;
+      pointer-events: none;
+      will-change: transform, opacity;
+      display: none;
+    }
+    .cursor-ring {
+      position: absolute;
+      top: -6px;
+      left: -6px;
+      width: 24px;
+      height: 24px;
+      border-radius: 9999px;
+      border: 2px solid var(--lp-ink);
+      opacity: 0;
+      transform: scale(0.4);
+    }
+    .touch-dot {
+      width: 24px;
+      height: 24px;
+      margin-left: -12px;
+      margin-top: -12px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.85);
+      border: 2px solid #111111;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    }
+    .touch-ripple {
+      position: absolute;
+      top: -12px;
+      left: -12px;
+      width: 24px;
+      height: 24px;
+      border-radius: 9999px;
+      border: 2px solid #10B981;
+      opacity: 0;
+      transform: scale(0.6);
+    }
+  </style>
+</head>
+<body class="antialiased selection:bg-amber-200 selection:text-black">
+
+  <!-- Navbar Flutuante com Menu Mobile -->
+  <div class="sticky top-2.5 sm:top-3 z-40 mx-auto max-w-5xl px-3 sm:px-4">
+    <header style="background-color: var(--lp-nav-bg); border-color: var(--lp-border);" class="rounded-2xl border px-3.5 sm:px-4 py-2.5 shadow-sm backdrop-blur-md transition-colors">
+      <div class="flex items-center justify-between gap-2">
+        <a href="#topo" class="flex items-center gap-2 text-base font-bold tight-heading shrink-0" style="color: var(--lp-ink);">
+          <span class="lp-btn-primary flex h-7 w-7 items-center justify-center rounded-lg">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M5 6h14L5 18h14"/>
+              <circle cx="19" cy="6" r="1.75" fill="#F59E0B" stroke="none"/>
+            </svg>
+          </span>
+          Zelo
+        </a>
+
+        <nav class="hidden md:flex items-center gap-6 text-sm font-medium" style="color: var(--lp-muted);">
+          <a href="#estilos" class="hover:opacity-100 opacity-85 transition-opacity" style="color: var(--lp-ink);">Telas & Estilos</a>
+          <a href="#recursos" class="hover:opacity-100 opacity-85 transition-opacity" style="color: var(--lp-ink);">Funcionalidades</a>
+          <a href="#vitrine" class="hover:opacity-100 opacity-85 transition-opacity" style="color: var(--lp-ink);">Vitrine Regional</a>
+          <a href="#precos" class="hover:opacity-100 opacity-85 transition-opacity" style="color: var(--lp-ink);">Preços</a>
+        </nav>
+
+        <div class="flex items-center gap-1.5 sm:gap-2">
+          <!-- Botão Meia-Lua / Sol -->
+          <button onclick="toggleDarkMode()" id="theme-toggle-btn" aria-label="Alternar modo escuro" title="Alternar modo claro/escuro" class="lp-btn-secondary flex h-9 w-9 items-center justify-center rounded-xl shrink-0">
+            <svg id="icon-moon" class="h-4 w-4 block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+            </svg>
+            <svg id="icon-sun" class="h-4 w-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="4"/>
+              <path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+            </svg>
+          </button>
+
+          <a href="#precos" class="hidden sm:inline-block px-3 py-1.5 text-sm font-medium" style="color: var(--lp-muted);">Entrar</a>
+          <a href="#precos" class="lp-btn-primary rounded-xl px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold whitespace-nowrap shrink-0">
+            Começar grátis
+          </a>
+
+          <!-- Botão Menu Mobile -->
+          <button onclick="toggleMobileMenu()" id="mobile-menu-btn" aria-label="Abrir menu" aria-expanded="false" class="lp-btn-secondary flex md:hidden h-9 w-9 items-center justify-center rounded-xl shrink-0">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Drawer Mobile com abertura suave -->
+      <div id="mobile-menu" class="mobile-drawer md:hidden">
+        <div class="mobile-drawer-inner">
+          <div class="pt-3 border-t space-y-1 text-sm font-medium" style="border-color: var(--lp-border); color: var(--lp-ink);">
+            <a href="#estilos" onclick="closeMobileMenu()" class="block rounded-lg px-3 py-2 hover:opacity-80">Telas & Estilos</a>
+            <a href="#recursos" onclick="closeMobileMenu()" class="block rounded-lg px-3 py-2 hover:opacity-80">Funcionalidades</a>
+            <a href="#vitrine" onclick="closeMobileMenu()" class="block rounded-lg px-3 py-2 hover:opacity-80">Vitrine Regional</a>
+            <a href="#precos" onclick="closeMobileMenu()" class="block rounded-lg px-3 py-2 hover:opacity-80">Preços</a>
+          </div>
+        </div>
+      </div>
+    </header>
+  </div>
+
+  <!-- HERO CENTRALIZADO (Responsivo para 375px+) -->
+  <section id="topo" class="relative overflow-hidden mx-auto max-w-4xl px-4 sm:px-5 pt-24 pb-20 sm:pt-14 sm:pb-10 text-center md:pt-20 md:pb-12">
+    <div class="hero-grid-bg pointer-events-none absolute inset-0 -z-10 opacity-70"></div>
+    <div class="lp-surface mb-6 inline-flex max-w-full items-center gap-2 rounded-full p-1 pr-3 text-xs font-medium" style="color: var(--lp-muted);">
+      <span class="rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-semibold text-amber-600 dark:text-amber-400 shrink-0">NOVO</span>
+      <span class="truncate">Para barbearias, manicures e estúdios</span>
+    </div>
+
+    <h1 class="mx-auto max-w-3xl text-[2.35rem] leading-[1.08] font-bold tight-heading sm:text-6xl sm:leading-[1.08]" style="color: var(--lp-ink);">
+      Sua agenda online
+      <span class="lp-surface mx-1 inline-flex items-center rounded-xl sm:rounded-2xl px-3 sm:px-3.5 py-1 sm:py-1.5 text-2xl sm:text-4xl font-bold align-middle shadow-sm tabular-nums font-mono">
+        <span class="mr-2 h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="odo-digit-box"><span id="odo-0" class="odo-char">1</span></span>
+        <span class="odo-digit-box"><span id="odo-1" class="odo-char">4</span></span>
+        <span class="mx-0.5 opacity-60">:</span>
+        <span class="odo-digit-box"><span id="odo-2" class="odo-char">3</span></span>
+        <span class="odo-digit-box"><span id="odo-3" class="odo-char">0</span></span>
+      </span>
+      com a <span class="font-editorial italic font-normal text-[2.65rem] sm:text-[4.25rem] text-amber-500">cara</span> do <span class="relative inline-block whitespace-nowrap">seu negócio.<span class="absolute left-0 right-0 bottom-0.5 sm:bottom-1 h-2 sm:h-2.5 rounded-full bg-amber-500/25 -z-10"></span></span>
+    </h1>
+
+    <p class="sm:hidden mx-auto mt-5 max-w-xs text-base leading-relaxed" style="color: var(--lp-muted);">
+      Sua página exclusiva de agendamento, no seu estilo e com sinal via PIX.
+    </p>
+    <p class="hidden sm:block mx-auto mt-6 max-w-xl text-lg leading-relaxed" style="color: var(--lp-muted);">
+      Crie a página exclusiva do seu negócio com sua cor, seu formato e sua identidade visual. Sem concorrência na tela e com sinal via PIX.
+    </p>
+
+    <div class="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3">
+      <a href="#precos" class="lp-btn-primary inline-flex items-center justify-center gap-2.5 rounded-xl px-6 py-3.5 text-sm font-semibold shadow-sm">
+        <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        Criar minha loja com Google
+      </a>
+      <a href="#vitrine" class="lp-btn-secondary inline-flex items-center justify-center rounded-xl px-6 py-3.5 text-sm font-semibold">
+        Explorar Vitrine Regional
+      </a>
+    </div>
+
+    <div class="mt-3 text-xs" style="color: var(--lp-subtle);">
+      14 dias grátis • Sem cartão de crédito • Link próprio sem concorrência
+    </div>
+  </section>
+
+  <!-- SHOWCASE VIVO (Mobile: limpo e tátil sem cursor | Desktop: Demo animada GSAP) -->
+  <section id="estilos" class="scroll-mt-24 mx-auto max-w-6xl px-3.5 sm:px-5 pb-16 sm:pb-20">
+    
+    <div class="mb-3 flex flex-wrap items-center justify-between gap-2.5">
+      <div class="lp-surface grid grid-cols-2 sm:inline-flex w-full sm:w-auto rounded-xl p-1">
+        <button onclick="switchAppMode('client')" id="mode-client" class="lp-btn-primary rounded-lg px-3 py-2 sm:py-1.5 text-xs font-semibold transition whitespace-nowrap">
+          Tela do Cliente
+        </button>
+        <button onclick="switchAppMode('admin')" id="mode-admin" class="rounded-lg px-3 py-2 sm:py-1.5 text-xs font-medium transition whitespace-nowrap" style="color: var(--lp-muted);">
+          Painel do Dono
+        </button>
+      </div>
+
+      <!-- Indicador da Demo Animada (Desktop + Mobile) -->
+      <div class="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+        <span id="demo-status-pill" class="lp-surface inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium" style="color: var(--lp-muted);">
+          <span id="demo-dot" class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+          <span id="demo-status-text-desktop" class="hidden sm:inline">Demo animada rodando (clique para testar)</span>
+          <span id="demo-status-text-mobile" class="sm:hidden">Demo rodando (toque para testar)</span>
+        </span>
+        <button onclick="toggleAutoDemo()" id="btn-toggle-demo" class="lp-btn-primary hidden inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap">
+          <svg class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <polygon points="6 3 20 12 6 21 6 3"/>
+          </svg>
+          Retomar
+        </button>
+      </div>
+    </div>
+
+    <!-- Janela do Navegador -->
+    <div id="showcase-container" class="showcase-window lp-surface">
+      
+      <!-- Cursor Animado Desktop -->
+      <div id="demo-cursor" class="items-start gap-1">
+        <div id="cursor-ring" class="cursor-ring"></div>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" class="drop-shadow-md">
+          <path d="M5.5 3.2L19.5 10.6L12.6 13.1L10.1 20L5.5 3.2Z" fill="#111111" stroke="#FFFFFF" stroke-width="1.8" stroke-linejoin="round"/>
+        </svg>
+        <span class="mt-3 rounded-full bg-[#111111] px-2.5 py-0.5 text-xs font-semibold text-white shadow-md whitespace-nowrap border border-white/20">
+          Personalizando loja...
+        </span>
+      </div>
+
+      <!-- Indicador de Toque Animado Mobile -->
+      <div id="demo-touch">
+        <div id="touch-ripple" class="touch-ripple"></div>
+        <div class="touch-dot"></div>
+      </div>
+
+      <!-- Barra Safari Responsiva (URL nunca quebra em 2 linhas no celular) -->
+      <div class="lp-soft-surface flex items-center justify-between gap-3 border-x-0 border-t-0 px-3 sm:px-4 py-2.5">
+        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <span class="h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full bg-[#FF5F57]"></span>
+          <span class="h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full bg-[#FEBC2E]"></span>
+          <span class="h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full bg-[#28C840]"></span>
+        </div>
+        <div class="lp-surface flex items-center gap-2 rounded-lg px-3 py-1 text-xs flex-1 sm:flex-initial sm:min-w-[260px] min-w-0 justify-center" style="color: var(--lp-muted);">
+          <span class="h-2 w-2 rounded-full bg-emerald-500 shrink-0"></span>
+          <span id="browser-url" class="font-mono truncate">zelo.app/barbearia-don-leon</span>
+        </div>
+        <div class="hidden sm:block text-xs font-medium shrink-0" style="color: var(--lp-subtle);">100% Personalizável</div>
+      </div>
+
+      <!-- Barra de Personalização Ao Vivo (Mobile: 1 linha Estilo + temas / espaçamento / 1 linha Cor+Bordas | PC: intacto) -->
+      <div id="customizer-bar" class="lp-soft-surface flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-x-0 border-t-0 px-2.5 sm:px-5 py-3">
+        <div class="flex flex-nowrap sm:flex-wrap items-center justify-between sm:justify-start gap-1 sm:gap-1.5">
+          <span class="inline shrink-0 sm:mr-1 text-[10px] sm:text-xs font-semibold" style="color: var(--lp-muted);">Estilo:</span>
+          <button onclick="manualTheme('urban')" id="btn-urban" class="theme-btn lp-btn-primary rounded-lg px-1.5 py-1 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-semibold whitespace-nowrap">Urban Noir</button>
+          <button onclick="manualTheme('glam')" id="btn-glam" class="theme-btn lp-btn-secondary rounded-lg px-1.5 py-1 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-medium whitespace-nowrap">Clean Glam</button>
+          <button onclick="manualTheme('brutal')" id="btn-brutal" class="theme-btn lp-btn-secondary rounded-lg px-1.5 py-1 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-medium whitespace-nowrap">Neo-Brutal</button>
+          <button onclick="manualTheme('slate')" id="btn-slate" class="theme-btn lp-btn-secondary rounded-lg px-1.5 py-1 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-medium whitespace-nowrap">Slate</button>
+        </div>
+
+        <div class="flex flex-nowrap items-center justify-between sm:justify-start gap-2 sm:gap-4">
+          <div class="flex items-center gap-1.5 sm:gap-2">
+            <span class="text-xs font-semibold" style="color: var(--lp-muted);">Cor:</span>
+            <div class="flex items-center gap-1.5 sm:gap-2" style="--tw-ring-offset-color: var(--lp-soft);">
+              <button onclick="manualColor('#F59E0B', '#111111', this)" id="swatch-amber" class="swatch-btn h-4 w-4 sm:h-5 sm:w-5 rounded-full bg-[#F59E0B] ring-2 ring-current ring-offset-2 transition" title="Âmbar"></button>
+              <button onclick="manualColor('#10B981', '#FFFFFF', this)" id="swatch-emerald" class="swatch-btn h-4 w-4 sm:h-5 sm:w-5 rounded-full bg-[#10B981] border border-black/20 transition" title="Esmeralda"></button>
+              <button onclick="manualColor('#BE185D', '#FFFFFF', this)" id="swatch-rose" class="swatch-btn h-4 w-4 sm:h-5 sm:w-5 rounded-full bg-[#BE185D] border border-black/20 transition" title="Rosé"></button>
+              <button onclick="manualColor('#2563EB', '#FFFFFF', this)" id="swatch-blue" class="swatch-btn h-4 w-4 sm:h-5 sm:w-5 rounded-full bg-[#2563EB] border border-black/20 transition" title="Cobalto"></button>
+              <button onclick="manualColor('#A3E635', '#111111', this)" id="swatch-lime" class="swatch-btn h-4 w-4 sm:h-5 sm:w-5 rounded-full bg-[#A3E635] border border-black/20 transition" title="Lima"></button>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1.5 sm:gap-2">
+            <span class="text-xs font-semibold" style="color: var(--lp-muted);">Bordas:</span>
+            <input id="radius-slider" type="range" min="2" max="24" value="12" oninput="manualRadius(this.value)" class="h-1.5 w-14 sm:w-24 cursor-pointer accent-[#111111] dark:accent-white" />
+            <span id="radius-value" class="w-8 sm:w-9 font-mono text-xs font-semibold" style="color: var(--lp-ink);">12px</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODO 1: TELA REAL DO CLIENTE -->
+      <div id="view-client" class="store-view-base theme-urban p-3.5 sm:p-6 md:p-8">
+        <div class="mx-auto max-w-5xl grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-12">
+          
+          <div class="lg:col-span-7 space-y-4">
+            <div class="t-surface p-4 sm:p-5">
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div class="flex items-center gap-3">
+                  <div id="store-avatar" class="t-accent-bg flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center text-base sm:text-lg font-bold">DL</div>
+                  <div class="min-w-0">
+                    <h3 id="store-name" class="text-lg sm:text-xl font-bold leading-snug">Barbearia Don Leon</h3>
+                    <p id="store-address" class="t-muted text-xs mt-0.5">Av. Paulista, 420 • Bela Vista • Aberto hoje 09h–20h</p>
+                  </div>
+                </div>
+                <span class="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-500 whitespace-nowrap">PIX para sinal ativo</span>
+              </div>
+
+              <!-- Abas com scroll horizontal suave no celular (NUNCA mais corta texto!) -->
+              <div class="mt-4 sm:mt-5 flex gap-5 overflow-x-auto no-scrollbar whitespace-nowrap border-b border-current/15 text-xs font-semibold">
+                <span class="t-tab-active pb-2.5 cursor-pointer shrink-0">Serviços</span>
+                <span class="t-muted pb-2.5 cursor-pointer shrink-0">Equipe & Horários</span>
+                <span class="t-muted pb-2.5 cursor-pointer shrink-0">Detalhes & Mapa</span>
+                <span class="t-muted pb-2.5 cursor-pointer shrink-0">Meus Horários</span>
+              </div>
+
+              <div class="mt-4 space-y-3">
+                <div class="t-inner-card px-3.5 py-2.5 text-xs t-muted">Buscar serviço (ex: degradê, barba, gel)...</div>
+                
+                <!-- Card de Serviço 1: empilha preço/botão abaixo no celular pequeno para texto respirar -->
+                <div class="t-inner-card p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div>
+                    <div class="text-sm font-semibold" id="srv1-title">Corte Degradê na Navalha</div>
+                    <div class="t-muted text-xs">35 min • Acabamento completo</div>
+                  </div>
+                  <div class="flex items-center justify-between sm:justify-end gap-3 pt-1 sm:pt-0 border-t sm:border-t-0 border-current/10">
+                    <span class="text-sm font-bold whitespace-nowrap" id="srv1-price">R$ 45,00</span>
+                    <span class="t-accent-bg px-3 py-1.5 text-xs font-bold whitespace-nowrap">Selecionado</span>
+                  </div>
+                </div>
+
+                <!-- Card de Serviço 2 -->
+                <div onclick="toggleService()" class="t-inner-card p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 cursor-pointer">
+                  <div>
+                    <div class="text-sm font-semibold" id="srv2-title">Barba Completa + Toalha Quente</div>
+                    <div class="t-muted text-xs">25 min • + Adicionar ao pacote</div>
+                  </div>
+                  <div class="flex items-center justify-between sm:justify-end gap-3 pt-1 sm:pt-0 border-t sm:border-t-0 border-current/10">
+                    <span class="text-sm font-bold whitespace-nowrap" id="srv2-price">R$ 35,00</span>
+                    <span class="t-slot px-3 py-1.5 text-xs font-semibold whitespace-nowrap" id="srv2-btn">+ Adicionar</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="lg:col-span-5 space-y-4">
+            <div class="t-surface p-4 sm:p-5 space-y-4">
+              <div>
+                <div class="text-xs font-semibold t-muted mb-2">Profissional selecionado</div>
+                <div class="grid grid-cols-2 gap-2.5">
+                  <button onclick="pickBarber(this, 'Matheus')" class="t-slot active py-2 px-3 text-xs flex items-center gap-2">
+                    <span class="h-5 w-5 rounded-full bg-black/20 flex items-center justify-center text-xs font-bold shrink-0">M</span>
+                    <span class="truncate">Matheus</span>
+                  </button>
+                  <button onclick="pickBarber(this, 'Lucas')" class="t-slot py-2 px-3 text-xs flex items-center gap-2">
+                    <span class="h-5 w-5 rounded-full bg-black/15 flex items-center justify-center text-xs font-bold shrink-0">L</span>
+                    <span class="truncate">Lucas</span>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between gap-2 mb-2">
+                  <span class="text-xs font-semibold">Novembro 2026</span>
+                  <span class="text-xs font-semibold underline cursor-pointer whitespace-nowrap">Próxima vaga</span>
+                </div>
+                <div class="grid grid-cols-5 gap-1.5 sm:gap-2 text-center">
+                  <div class="t-slot py-2 cursor-pointer">
+                    <div class="text-xs t-muted">Qui</div>
+                    <div class="text-sm font-bold">12</div>
+                    <div class="mx-auto mt-1 h-1 w-4 rounded-full bg-amber-400"></div>
+                  </div>
+                  <div class="t-slot active py-2 cursor-pointer">
+                    <div class="text-xs">Sex</div>
+                    <div class="text-sm font-bold">13</div>
+                    <div class="mx-auto mt-1 h-1 w-4 rounded-full bg-emerald-400"></div>
+                  </div>
+                  <div class="t-slot py-2 cursor-pointer">
+                    <div class="text-xs t-muted">Sáb</div>
+                    <div class="text-sm font-bold">14</div>
+                    <div class="mx-auto mt-1 h-1 w-4 rounded-full bg-rose-500"></div>
+                  </div>
+                  <div class="t-slot py-2 opacity-40">
+                    <div class="text-xs">Dom</div>
+                    <div class="text-sm font-bold">15</div>
+                    <div class="mx-auto mt-1 h-1 w-4 rounded-full bg-zinc-500"></div>
+                  </div>
+                  <div class="t-slot py-2 cursor-pointer">
+                    <div class="text-xs t-muted">Seg</div>
+                    <div class="text-sm font-bold">16</div>
+                    <div class="mx-auto mt-1 h-1 w-4 rounded-full bg-emerald-400"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div class="grid grid-cols-3 gap-1.5 sm:gap-2 mb-2.5 text-xs text-center">
+                  <span class="t-slot py-1.5 cursor-pointer">Manhã</span>
+                  <span class="t-slot active py-1.5 cursor-pointer">Tarde</span>
+                  <span class="t-slot py-1.5 cursor-pointer">Noite</span>
+                </div>
+                <div class="grid grid-cols-4 gap-1.5 sm:gap-2">
+                  <button onclick="selectTime(this)" class="t-slot py-2 text-xs">14:00</button>
+                  <button onclick="selectTime(this)" class="t-slot active py-2 text-xs">14:45</button>
+                  <button onclick="selectTime(this)" class="t-slot py-2 text-xs">15:30</button>
+                  <button onclick="selectTime(this)" class="t-slot py-2 text-xs">16:15</button>
+                </div>
+              </div>
+
+              <div class="border-t border-current/15 pt-3 flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                  <div id="summary-meta" class="t-muted text-xs truncate">1 serviço • 35 min • Matheus</div>
+                  <div id="summary-total" class="text-lg font-bold">R$ 45,00</div>
+                </div>
+                <button onclick="confirmPreviewBooking(this)" id="btn-confirm-preview" class="t-accent-bg px-4 py-2.5 text-xs font-bold whitespace-nowrap shrink-0">
+                  Confirmar 14:45
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- MODO 2: PAINEL DO DONO (Responsivo no celular!) -->
+      <div id="view-admin" class="hidden p-4 sm:p-6 md:p-8" style="background-color: var(--lp-card); color: var(--lp-ink);">
+        <div class="mx-auto max-w-5xl grid grid-cols-1 gap-5 md:grid-cols-12">
+          <!-- Menu horizontal no mobile, sidebar no desktop -->
+          <div class="lp-soft-surface md:col-span-3 rounded-xl p-3 sm:p-4 text-xs font-medium" style="color: var(--lp-muted);">
+            <div class="text-sm font-bold pb-2 mb-2 border-b hidden md:block" style="color: var(--lp-ink); border-color: var(--lp-border);">Don Leon Admin</div>
+            <div class="flex md:flex-col gap-2 overflow-x-auto no-scrollbar whitespace-nowrap">
+              <div class="lp-surface rounded-lg px-3 py-1.5 sm:py-2 font-semibold shrink-0" style="color: var(--lp-ink);">Agenda de Hoje</div>
+              <div class="px-3 py-1.5 shrink-0">Serviços & Presets</div>
+              <div class="px-3 py-1.5 shrink-0">Equipe & Almoço</div>
+              <div class="px-3 py-1.5 shrink-0">Personalizar Estilo</div>
+              <div class="px-3 py-1.5 shrink-0">PIX & Asaas</div>
+            </div>
+          </div>
+
+          <div class="md:col-span-9 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 class="text-base sm:text-lg font-bold">Agenda — Sexta, 13 de Novembro</h3>
+                <p class="text-xs" style="color: var(--lp-muted);">4 atendimentos confirmados • R$ 215,00 previstos</p>
+              </div>
+              <div class="flex gap-2">
+                <button class="lp-btn-secondary flex-1 sm:flex-initial rounded-lg px-3 py-2 sm:py-1.5 text-xs font-semibold whitespace-nowrap">Bloquear horário</button>
+                <button class="lp-btn-primary flex-1 sm:flex-initial rounded-lg px-3 py-2 sm:py-1.5 text-xs font-semibold whitespace-nowrap">+ Encaixe manual</button>
+              </div>
+            </div>
+
+            <div class="space-y-2.5">
+              <div class="lp-soft-surface flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl p-3.5">
+                <div class="flex items-start sm:items-center gap-3 sm:gap-4">
+                  <span class="font-mono text-sm font-bold shrink-0">14:00</span>
+                  <div>
+                    <div class="text-sm font-semibold">Rafael Mendes — Corte Degradê + Barba</div>
+                    <div class="text-xs" style="color: var(--lp-muted);">Com Matheus • 60 min • Sinal PIX pago (R$ 10)</div>
+                  </div>
+                </div>
+                <span class="self-start sm:self-center rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-500 whitespace-nowrap">Confirmado</span>
+              </div>
+
+              <div class="lp-surface flex items-center justify-between gap-2 rounded-xl border-dashed p-3.5">
+                <div class="flex items-center gap-3 sm:gap-4">
+                  <span class="font-mono text-sm font-bold shrink-0" style="color: var(--lp-subtle);">15:00</span>
+                  <div class="text-sm" style="color: var(--lp-muted);">Horário livre na grade pública</div>
+                </div>
+                <span class="text-xs font-semibold text-blue-500 whitespace-nowrap">Disponível</span>
+              </div>
+
+              <div class="lp-soft-surface flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl p-3.5">
+                <div class="flex items-start sm:items-center gap-3 sm:gap-4">
+                  <span class="font-mono text-sm font-bold shrink-0">16:00</span>
+                  <div>
+                    <div class="text-sm font-semibold">Gabriel Costa — Corte Social</div>
+                    <div class="text-xs" style="color: var(--lp-muted);">Com Lucas • 35 min • Lembrete automático enviado</div>
+                  </div>
+                </div>
+                <span class="self-start sm:self-center rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-500 whitespace-nowrap">Confirmado</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- BENTO GRID DE FUNCIONALIDADES -->
+  <section id="recursos" class="scroll-mt-24 mx-auto max-w-6xl px-4 sm:px-5 py-12 sm:py-16 border-t" style="border-color: var(--lp-border);">
+    <div class="max-w-2xl mb-8 sm:mb-10">
+      <h2 class="text-2xl sm:text-3xl font-bold tight-heading" style="color: var(--lp-ink);">
+        Feito para vender o seu trabalho, não o da concorrência.
+      </h2>
+      <p class="mt-2 text-sm sm:text-base" style="color: var(--lp-muted);">
+        Todas as ferramentas essenciais para o pequeno negócio rodar profissionalmente no navegador.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-6">
+      <div class="lp-surface rounded-2xl md:col-span-3 p-5 sm:p-6">
+        <div class="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" x2="16" y1="12" y2="12"/></svg>
+        </div>
+        <h3 class="text-base sm:text-lg font-bold">Link exclusivo na bio do Instagram</h3>
+        <p class="mt-2 text-sm leading-relaxed" style="color: var(--lp-muted);">
+          Quem entra pelo seu link vê apenas os seus serviços, seus horários e a sua marca. Sem propagandas e sem indicar outro barbeiro da rua ao lado.
+        </p>
+      </div>
+
+      <div class="lp-surface rounded-2xl md:col-span-3 p-5 sm:p-6">
+        <div class="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        </div>
+        <h3 class="text-base sm:text-lg font-bold">Lembretes automáticos para o cliente não esquecer</h3>
+        <p class="mt-2 text-sm leading-relaxed" style="color: var(--lp-muted);">
+          Assim que o horário é marcado, o cliente recebe a confirmação direto no celular e por e-mail, já com o link pronto para remarcar ou cancelar se precisar.
+        </p>
+      </div>
+
+      <div class="lp-surface rounded-2xl md:col-span-2 p-5 sm:p-6">
+        <div class="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg>
+        </div>
+        <h3 class="text-base sm:text-lg font-bold">Chave PIX da loja</h3>
+        <p class="mt-2 text-sm leading-relaxed" style="color: var(--lp-muted);">
+          Cadastre sua chave PIX para receber sinal na reserva e reduzir faltas em horários de pico.
+        </p>
+      </div>
+
+      <div class="lp-surface rounded-2xl md:col-span-2 p-5 sm:p-6">
+        <div class="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <h3 class="text-base sm:text-lg font-bold">Soma automática de tempo</h3>
+        <p class="mt-2 text-sm leading-relaxed" style="color: var(--lp-muted);">
+          Se o cliente pedir Corte + Barba, o Zelo calcula os minutos juntos e só mostra horários com espaço contínuo.
+        </p>
+      </div>
+
+      <div class="lp-surface rounded-2xl md:col-span-2 p-5 sm:p-6">
+        <div class="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg>
+        </div>
+        <h3 class="text-base sm:text-lg font-bold">Presets prontos por nicho</h3>
+        <p class="mt-2 text-sm leading-relaxed" style="color: var(--lp-muted);">
+          Barbearia ou Manicure? Ao criar a loja, os serviços mais comuns já vêm pré-cadastrados para você só ajustar o preço.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- NA PRÁTICA (Sem clichê de X e check repetido) -->
+  <section class="mx-auto max-w-6xl px-4 sm:px-5 py-12 sm:py-16 border-t" style="border-color: var(--lp-border);">
+    <div class="max-w-2xl mb-8 sm:mb-10">
+      <h2 class="text-2xl sm:text-3xl font-bold tight-heading" style="color: var(--lp-ink);">
+        Menos mensagem fora de hora. Mais cadeira ocupada.
+      </h2>
+      <p class="mt-2 text-sm sm:text-base" style="color: var(--lp-muted);">
+        Em vez de responder áudio tarde da noite ou dividir tela com concorrentes, seu cliente resolve tudo direto no seu link.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+      <!-- Lado Esquerdo: Antes (WhatsApp tarde da noite) -->
+      <div class="lp-soft-surface rounded-2xl p-6 sm:p-7 flex flex-col justify-between gap-6">
+        <div class="space-y-4">
+          <div class="text-xs font-semibold uppercase tracking-wider" style="color: var(--lp-subtle);">
+            No WhatsApp manual
+          </div>
+
+          <!-- Balão realista -->
+          <div class="lp-surface rounded-2xl rounded-tl-sm p-4 max-w-sm shadow-sm">
+            <div class="flex items-center justify-between gap-2 text-[11px]" style="color: var(--lp-subtle);">
+              <span class="font-semibold" style="color: var(--lp-muted);">Cliente</span>
+              <span class="font-mono">23:14</span>
+            </div>
+            <p class="mt-1.5 text-sm leading-relaxed" style="color: var(--lp-muted);">
+              "Opa, tudo bem? Tem horário amanhã depois das 18h? Só vi agora que cheguei do trabalho."
+            </p>
+          </div>
+        </div>
+
+        <p class="text-xs leading-relaxed" style="color: var(--lp-subtle);">
+          Se você demora para responder, o cliente esfria — e se usar app genérico, ele vê outros barbeiros na mesma busca.
+        </p>
+      </div>
+
+      <!-- Lado Direito: Com o Zelo -->
+      <div class="lp-surface rounded-2xl p-6 sm:p-7 flex flex-col justify-between gap-6">
+        <div class="space-y-4">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+              Com a sua página no Zelo
+            </span>
+            <span class="text-xs font-medium text-emerald-500">24h no ar</span>
+          </div>
+
+          <!-- Notificação real do Zelo -->
+          <div class="lp-soft-surface rounded-2xl p-4">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="h-2 w-2 rounded-full bg-emerald-500 shrink-0"></span>
+                <span class="text-xs font-bold" style="color: var(--lp-ink);">Novo horário confirmado</span>
+              </div>
+              <span class="font-mono text-[11px]" style="color: var(--lp-subtle);">agora</span>
+            </div>
+            <div class="mt-2.5 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <div class="text-sm font-semibold" style="color: var(--lp-ink);">Rafael Mendes — Corte Degradê</div>
+                <div class="text-xs mt-0.5" style="color: var(--lp-muted);">Amanhã às 18:30 • Com Matheus</div>
+              </div>
+              <span class="rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-semibold text-emerald-500 whitespace-nowrap">
+                Sinal PIX R$ 10
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <p class="text-xs leading-relaxed" style="color: var(--lp-muted);">
+          Só a sua marca na tela, escolha em 3 toques direto da bio do Instagram e lembrete automático antes do atendimento.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- VITRINE REGIONAL (Sem excesso de bordas aninhadas + filtro interativo) -->
+  <section id="vitrine" class="scroll-mt-24 mx-auto max-w-6xl px-4 sm:px-5 py-12 sm:py-16 border-t" style="border-color: var(--lp-border);">
+    <div class="grid grid-cols-1 items-center gap-8 md:grid-cols-12">
+      <div class="md:col-span-5 space-y-4">
+        <span class="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-500">
+          <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+          Vitrine Regional Separada
+        </span>
+        <h2 class="text-2xl font-bold tight-heading sm:text-3xl" style="color: var(--lp-ink);">
+          Novos clientes também te acham pela sua cidade
+        </h2>
+        <p class="text-sm leading-relaxed" style="color: var(--lp-muted);">
+          Enquanto o seu link direto é fechado só para você, quem pesquisa no site principal do Zelo pode filtrar por bairro e categoria para descobrir barbearias e manicures por perto.
+        </p>
+      </div>
+
+      <div class="lp-soft-surface md:col-span-7 rounded-2xl border-0 p-4 sm:p-5 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <span class="lp-surface inline-flex items-center gap-1.5 rounded-lg border-0 px-3 py-1.5 text-xs font-semibold">
+            <svg class="h-3.5 w-3.5 text-emerald-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+            Belo Horizonte
+          </span>
+          <div class="flex items-center gap-1.5">
+            <button onclick="filterVitrine('all', this)" class="vitrine-filter-btn lp-btn-primary rounded-lg px-2.5 py-1.5 text-xs font-semibold transition">Todas</button>
+            <button onclick="filterVitrine('barber', this)" class="vitrine-filter-btn lp-surface rounded-lg border-0 px-2.5 py-1.5 text-xs font-medium transition" style="color: var(--lp-muted);">Barbearia</button>
+            <button onclick="filterVitrine('nails', this)" class="vitrine-filter-btn lp-surface rounded-lg border-0 px-2.5 py-1.5 text-xs font-medium transition" style="color: var(--lp-muted);">Manicure</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div data-cat="barber" class="vitrine-card lp-surface rounded-xl border-0 p-4 flex flex-col justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-xs font-bold text-[#111111]">DL</div>
+              <div class="min-w-0">
+                <div class="text-sm font-bold truncate">Barbearia Don Leon</div>
+                <div class="text-xs truncate" style="color: var(--lp-muted);">Bela Vista • Barbearia</div>
+              </div>
+            </div>
+            <div class="flex items-center justify-between gap-2 pt-2 border-t text-xs" style="border-color: var(--lp-border);">
+              <span class="font-semibold text-emerald-500">Hoje a partir das 14:00</span>
+              <span class="font-semibold" style="color: var(--lp-ink);">Agendar →</span>
+            </div>
+          </div>
+
+          <div data-cat="nails" class="vitrine-card lp-surface rounded-xl border-0 p-4 flex flex-col justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-600 text-xs font-bold text-white">NS</div>
+              <div class="min-w-0">
+                <div class="text-sm font-bold truncate">Novo Stilo Studio & Unhas</div>
+                <div class="text-xs truncate" style="color: var(--lp-muted);">Buritis • Manicure & Gel</div>
+              </div>
+            </div>
+            <div class="flex items-center justify-between gap-2 pt-2 border-t text-xs" style="border-color: var(--lp-border);">
+              <span class="font-semibold text-emerald-500">Hoje a partir das 15:30</span>
+              <span class="font-semibold" style="color: var(--lp-ink);">Agendar →</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PREÇOS -->
+  <section id="precos" class="scroll-mt-24 mx-auto max-w-6xl px-4 sm:px-5 py-12 sm:py-16 border-t" style="border-color: var(--lp-border);">
+    <div class="text-center max-w-xl mx-auto mb-8 sm:mb-10">
+      <h2 class="text-2xl sm:text-3xl font-bold tight-heading" style="color: var(--lp-ink);">
+        Preço justo para quem está crescendo
+      </h2>
+      <p class="mt-2 text-sm sm:text-base" style="color: var(--lp-muted);">
+        14 dias grátis para testar sem cartão. Pagamento seguro via PIX, Boleto ou Cartão.
+      </p>
+    </div>
+
+    <div class="mx-auto grid max-w-3xl grid-cols-1 gap-5 sm:gap-6 md:grid-cols-2">
+      <div class="lp-surface rounded-2xl p-6 sm:p-7 flex flex-col justify-between">
+        <div>
+          <div class="text-sm font-semibold" style="color: var(--lp-muted);">Plano Solo</div>
+          <div class="mt-2 flex items-baseline gap-1">
+            <span class="text-3xl sm:text-4xl font-bold tight-heading tabular-nums">R$ 34,90</span>
+            <span class="text-sm" style="color: var(--lp-subtle);">/mês</span>
+          </div>
+          <p class="mt-2 text-xs leading-relaxed" style="color: var(--lp-muted);">
+            Para quem atende sozinho — <span class="font-semibold text-amber-600 dark:text-amber-400">menos que 1 corte por mês</span>.
+          </p>
+          <ul class="mt-5 space-y-2.5 text-sm">
+            <li class="flex items-start gap-2">
+              <svg class="h-4 w-4 mt-0.5 shrink-0 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>1 profissional completo</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="h-4 w-4 mt-0.5 shrink-0 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Link exclusivo + escolha e ajuste de temas</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="h-4 w-4 mt-0.5 shrink-0 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Agendamentos ilimitados sem baixar app</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="h-4 w-4 mt-0.5 shrink-0 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Remarcação/cancelamento e chave PIX</span>
+            </li>
+          </ul>
+        </div>
+        <a href="#" class="lp-btn-secondary mt-7 block rounded-xl py-3 text-center text-sm font-semibold">
+          Testar 14 dias grátis
+        </a>
+      </div>
+
+      <div class="lp-surface rounded-2xl p-6 sm:p-7 flex flex-col justify-between shadow-lg" style="border-color: rgba(245, 158, 11, 0.35);">
+        <div>
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-sm font-semibold">Plano Estúdio</span>
+            <span class="rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-semibold text-amber-600 dark:text-amber-400 whitespace-nowrap">Mais econômico</span>
+          </div>
+          <div class="mt-2 flex items-baseline gap-1">
+            <span class="text-3xl sm:text-4xl font-bold tight-heading tabular-nums">R$ 69,90</span>
+            <span class="text-sm" style="color: var(--lp-subtle);">/mês</span>
+          </div>
+          <p class="mt-2 text-xs leading-relaxed" style="color: var(--lp-muted);">
+            Para equipe de até 5 pessoas — <span class="font-semibold text-amber-600 dark:text-amber-400">R$ 13,98 por profissional</span>.
+          </p>
+          <ul class="mt-5 space-y-2.5 text-sm">
+            <li class="flex items-start gap-2">
+              <svg class="h-4 w-4 mt-0.5 shrink-0 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Até 5 barbeiros ou manicures</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="h-4 w-4 mt-0.5 shrink-0 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Agenda independente + horário de almoço</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="h-4 w-4 mt-0.5 shrink-0 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Bloqueio rápido de encaixes presenciais</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="h-4 w-4 mt-0.5 shrink-0 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Lembretes automáticos no celular e por e-mail</span>
+            </li>
+          </ul>
+        </div>
+        <a href="#" class="lp-btn-primary mt-7 block rounded-xl py-3 text-center text-sm font-semibold">
+          Testar equipe 14 dias grátis
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ RÁPIDO (Acordeão de objeções reais) -->
+  <section id="faq" class="scroll-mt-24 mx-auto max-w-4xl px-4 sm:px-5 py-12 sm:py-16 border-t" style="border-color: var(--lp-border);">
+    <div class="text-center max-w-xl mx-auto mb-8 sm:mb-10">
+      <h2 class="text-2xl sm:text-3xl font-bold tight-heading" style="color: var(--lp-ink);">
+        Dúvidas rápidas antes de começar
+      </h2>
+    </div>
+
+    <div class="space-y-3">
+      <details class="faq-item lp-surface rounded-2xl p-5" open>
+        <summary class="flex cursor-pointer items-center justify-between gap-4 text-sm sm:text-base font-semibold" style="color: var(--lp-ink);">
+          <span>Meu cliente precisa baixar algum aplicativo para agendar?</span>
+          <svg class="faq-chevron h-4 w-4 shrink-0" style="color: var(--lp-muted);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </summary>
+        <p class="mt-3 text-sm leading-relaxed" style="color: var(--lp-muted);">
+          Não. Seu link abre direto no navegador do celular (Instagram, WhatsApp ou Google) em menos de 1 segundo, e o cliente confirma o horário com a conta Google em 3 toques.
+        </p>
+      </details>
+
+      <details class="faq-item lp-surface rounded-2xl p-5">
+        <summary class="flex cursor-pointer items-center justify-between gap-4 text-sm sm:text-base font-semibold" style="color: var(--lp-ink);">
+          <span>Preciso cadastrar cartão de crédito para testar os 14 dias grátis?</span>
+          <svg class="faq-chevron h-4 w-4 shrink-0" style="color: var(--lp-muted);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </summary>
+        <p class="mt-3 text-sm leading-relaxed" style="color: var(--lp-muted);">
+          Não. Você cria sua loja grátis com o Google e testa tudo por 14 dias sem informar cartão. Depois, pode pagar via PIX, Boleto ou Cartão.
+        </p>
+      </details>
+
+      <details class="faq-item lp-surface rounded-2xl p-5">
+        <summary class="flex cursor-pointer items-center justify-between gap-4 text-sm sm:text-base font-semibold" style="color: var(--lp-ink);">
+          <span>O dinheiro do sinal via PIX passa pelo Zelo?</span>
+          <svg class="faq-chevron h-4 w-4 shrink-0" style="color: var(--lp-muted);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </summary>
+        <p class="mt-3 text-sm leading-relaxed" style="color: var(--lp-muted);">
+          Não. Você cadastra a chave PIX da sua própria loja, e o valor do sinal cai direto na sua conta sem intermediários ou taxas extras por agendamento.
+        </p>
+      </details>
+
+      <details class="faq-item lp-surface rounded-2xl p-5">
+        <summary class="flex cursor-pointer items-center justify-between gap-4 text-sm sm:text-base font-semibold" style="color: var(--lp-ink);">
+          <span>Posso começar atendendo sozinho e adicionar barbeiros depois?</span>
+          <svg class="faq-chevron h-4 w-4 shrink-0" style="color: var(--lp-muted);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </summary>
+        <p class="mt-3 text-sm leading-relaxed" style="color: var(--lp-muted);">
+          Sim. Você pode começar no Plano Solo e, quando sua equipe crescer, mudar para o Plano Estúdio (até 5 profissionais) sem perder seus clientes nem o seu link.
+        </p>
+      </details>
+    </div>
+  </section>
+
+  <!-- Faixa Final de Conversão (Sem borda, grade pontilhada sutil + CTA com Google) -->
+  <section class="relative overflow-hidden mx-auto max-w-6xl px-4 sm:px-5 py-12 sm:py-16 border-t" style="border-color: var(--lp-border);">
+    <div class="lp-soft-surface relative overflow-hidden rounded-3xl border-0 p-7 text-center sm:p-10 md:p-14">
+      <div class="hero-grid-bg pointer-events-none absolute inset-0 opacity-60"></div>
+      <div class="relative z-10">
+        <h2 class="text-2xl font-bold tight-heading sm:text-4xl" style="color: var(--lp-ink);">
+          Coloque o seu link na bio hoje mesmo.
+        </h2>
+        <p class="mx-auto mt-3 max-w-md text-sm sm:text-base leading-relaxed" style="color: var(--lp-muted);">
+          14 dias grátis, sem cartão. Crie sua página com o Google e comece a receber agendamentos em minutos.
+        </p>
+        <div class="mt-7 flex flex-col sm:flex-row justify-center gap-3">
+          <a href="#precos" class="lp-btn-primary inline-flex items-center justify-center gap-2.5 rounded-xl px-6 py-3.5 text-sm font-semibold">
+            <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Criar minha loja com Google
+          </a>
+          <a href="#vitrine" class="lp-btn-secondary inline-flex items-center justify-center rounded-xl px-6 py-3.5 text-sm font-semibold">
+            Explorar Vitrine Regional
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer Profissional Responsivo -->
+  <footer class="border-t pt-12 pb-10" style="border-color: var(--lp-border); background-color: var(--lp-bg);">
+    <div class="mx-auto max-w-6xl px-4 sm:px-5">
+      <div class="grid grid-cols-1 gap-10 md:grid-cols-12">
+        
+        <div class="md:col-span-5 space-y-4">
+          <a href="#topo" class="inline-flex items-center gap-2 text-lg font-bold tight-heading" style="color: var(--lp-ink);">
+            <span class="lp-btn-primary flex h-7 w-7 items-center justify-center rounded-lg">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M5 6h14L5 18h14"/>
+                <circle cx="19" cy="6" r="1.75" fill="#F59E0B" stroke="none"/>
+              </svg>
+            </span>
+            Zelo
+          </a>
+          <p class="max-w-xs text-sm leading-relaxed" style="color: var(--lp-muted);">
+            Agendamento online e vitrine local para barbearias, manicures e estúdios de beleza.
+          </p>
+
+          <div class="lp-surface inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium" style="color: var(--lp-muted);">
+            <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+            Todos os sistemas operando
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3 pt-1 text-xs font-medium" style="color: var(--lp-muted);">
+            <a href="mailto:contato@zelo.app" class="hover:underline" style="color: var(--lp-ink);">contato@zelo.app</a>
+            <span>•</span>
+            <a href="#" aria-label="Instagram do Zelo" class="inline-flex items-center gap-1.5 hover:underline" style="color: var(--lp-ink);">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
+              </svg>
+              Instagram
+            </a>
+          </div>
+        </div>
+
+        <div class="md:col-span-7 grid grid-cols-2 gap-8 sm:grid-cols-3 text-sm">
+          <div class="space-y-3">
+            <div class="font-semibold" style="color: var(--lp-ink);">Produto</div>
+            <ul class="space-y-2 text-xs" style="color: var(--lp-muted);">
+              <li><a href="#recursos" class="hover:underline">Funcionalidades</a></li>
+              <li><a href="#estilos" class="hover:underline">Estilos de Loja</a></li>
+              <li><a href="#vitrine" class="hover:underline">Vitrine Regional</a></li>
+              <li><a href="#precos" class="hover:underline">Planos e Preços</a></li>
+            </ul>
+          </div>
+
+          <div class="space-y-3">
+            <div class="font-semibold" style="color: var(--lp-ink);">Para Negócios</div>
+            <ul class="space-y-2 text-xs" style="color: var(--lp-muted);">
+              <li><a href="#estilos" class="hover:underline">Barbearias</a></li>
+              <li><a href="#estilos" class="hover:underline">Manicures & Unhas</a></li>
+              <li><a href="#estilos" class="hover:underline">Salões & Estética</a></li>
+              <li><a href="#precos" class="hover:underline">Autônomos</a></li>
+            </ul>
+          </div>
+
+          <div class="space-y-3">
+            <div class="font-semibold" style="color: var(--lp-ink);">Suporte & Legal</div>
+            <ul class="space-y-2 text-xs" style="color: var(--lp-muted);">
+              <li><a href="mailto:contato@zelo.app" class="hover:underline">Central de Ajuda</a></li>
+              <li><a href="mailto:contato@zelo.app" class="hover:underline">Fale Conosco</a></li>
+              <li><a href="#" class="hover:underline">Termos de Uso</a></li>
+              <li><a href="#" class="hover:underline">Privacidade</a></li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="mt-10 flex flex-col items-center justify-between gap-4 border-t pt-6 text-xs sm:flex-row" style="border-color: var(--lp-border); color: var(--lp-subtle);">
+        <div>© 2026 Zelo. Todos os direitos reservados.</div>
+        <div class="inline-flex items-center gap-1.5">
+          <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>
+          </svg>
+          <span>Português (Brasil)</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    let currentBarber = 'Matheus';
+    let currentTime = '14:45';
+    let extraAdded = false;
+    let demoPaused = false;
+    let demoTimeline = null;
+    let inactivityTimer = null;
+
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobile-menu');
+      const btn = document.getElementById('mobile-menu-btn');
+      const open = menu.classList.toggle('is-open');
+      if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    function closeMobileMenu() {
+      const menu = document.getElementById('mobile-menu');
+      const btn = document.getElementById('mobile-menu-btn');
+      menu.classList.remove('is-open');
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+    }
+
+    function syncDarkModeIcons() {
+      const isDark = document.documentElement.classList.contains('dark');
+      document.getElementById('icon-moon').style.display = isDark ? 'none' : 'block';
+      document.getElementById('icon-sun').style.display = isDark ? 'block' : 'none';
+    }
+    function toggleDarkMode() {
+      const html = document.documentElement;
+      const isDark = html.classList.toggle('dark');
+      localStorage.setItem('zelo-lp-theme', isDark ? 'dark' : 'light');
+      syncDarkModeIcons();
+    }
+    syncDarkModeIcons();
+
+    const themeData = {
+      urban: { cls: 'store-view-base theme-urban p-3.5 sm:p-6 md:p-8', url: 'zelo.app/barbearia-don-leon', avatar: 'DL', name: 'Barbearia Don Leon', addr: 'Av. Paulista, 420 • Bela Vista • Aberto hoje 09h–20h' },
+      glam: { cls: 'store-view-base theme-glam p-3.5 sm:p-6 md:p-8', url: 'zelo.app/studio-novo-stilo', avatar: 'NS', name: 'Novo Stilo Studio & Unhas', addr: 'Bairro Buritis • Manicure & Gel • Aberto hoje 09h–19h' },
+      brutal: { cls: 'store-view-base theme-brutal p-3.5 sm:p-6 md:p-8', url: 'zelo.app/fade-club-studio', avatar: 'FC', name: 'FADE CLUB STUDIO', addr: 'Rua Augusta, 910 • Cortes & Pigmentação • Até 21h' },
+      slate: { cls: 'store-view-base theme-slate p-3.5 sm:p-6 md:p-8', url: 'zelo.app/espaco-essencia', avatar: 'EE', name: 'Espaço Essência', addr: 'Centro • Cabelo, Barba & Estética • Aberto hoje 09h–20h' }
+    };
+
+    function applyTheme(key) {
+      const t = themeData[key];
+      document.getElementById('view-client').className = t.cls;
+      document.getElementById('browser-url').textContent = t.url;
+      document.getElementById('store-avatar').textContent = t.avatar;
+      document.getElementById('store-name').textContent = t.name;
+      document.getElementById('store-address').textContent = t.addr;
+
+      document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.className = 'theme-btn lp-btn-secondary rounded-lg px-1.5 py-1 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-medium whitespace-nowrap';
+      });
+      document.getElementById('btn-' + key).className = 'theme-btn lp-btn-primary rounded-lg px-1.5 py-1 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-semibold whitespace-nowrap';
+    }
+
+    function applyColor(bg, ink, btnEl) {
+      const view = document.getElementById('view-client');
+      view.style.setProperty('--store-accent', bg);
+      view.style.setProperty('--store-accent-ink', ink);
+      document.querySelectorAll('.swatch-btn').forEach(b => {
+        b.classList.remove('ring-2', 'ring-current', 'ring-offset-2');
+      });
+      if (btnEl) {
+        btnEl.classList.add('ring-2', 'ring-current', 'ring-offset-2');
+      }
+    }
+
+    function applyRadius(px) {
+      const view = document.getElementById('view-client');
+      const val = Math.round(px);
+      view.style.setProperty('--store-radius', val + 'px');
+      document.getElementById('radius-slider').value = val;
+      document.getElementById('radius-value').textContent = val + 'px';
+    }
+
+    function setDemoStatusText(desktopTxt, mobileTxt, isRunning) {
+      document.getElementById('demo-status-text-desktop').textContent = desktopTxt;
+      document.getElementById('demo-status-text-mobile').textContent = mobileTxt;
+      document.getElementById('demo-dot').className = isRunning
+        ? 'h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0'
+        : 'h-2 w-2 rounded-full bg-amber-500 shrink-0';
+    }
+
+    function getActivePointer() {
+      return window.innerWidth < 768
+        ? document.getElementById('demo-touch')
+        : document.getElementById('demo-cursor');
+    }
+
+    function pauseDemoWithInactivity() {
+      const inClientMode = !document.getElementById('view-client').classList.contains('hidden');
+      if (inactivityTimer) clearTimeout(inactivityTimer);
+
+      if (!demoPaused) {
+        demoPaused = true;
+        if (demoTimeline) demoTimeline.pause();
+        document.getElementById('demo-cursor').style.opacity = '0';
+        document.getElementById('demo-touch').style.opacity = '0';
+        setDemoStatusText('Você no controle (retoma em 8s se parar)', 'Você no controle (retoma em 8s)', false);
+        document.getElementById('btn-toggle-demo').classList.remove('hidden');
+      }
+
+      if (inClientMode) {
+        inactivityTimer = setTimeout(() => {
+          const stillClient = !document.getElementById('view-client').classList.contains('hidden');
+          if (stillClient && demoPaused) {
+            resumeAutoDemo(false);
+          }
+        }, 8000);
+      }
+    }
+
+    function resumeAutoDemo(restartFromTop = true) {
+      if (inactivityTimer) clearTimeout(inactivityTimer);
+      demoPaused = false;
+      document.getElementById('btn-toggle-demo').classList.add('hidden');
+      setDemoStatusText('Demo animada rodando (clique para testar)', 'Demo rodando (toque para testar)', true);
+      const ptr = getActivePointer();
+      if (ptr) gsap.to(ptr, { opacity: 1, duration: 0.3 });
+      if (demoTimeline) {
+        if (restartFromTop) demoTimeline.restart();
+        else demoTimeline.resume();
+      } else if (typeof window.rebuildShowcaseDemo === 'function') {
+        window.rebuildShowcaseDemo();
+      }
+    }
+
+    function toggleAutoDemo() {
+      resumeAutoDemo(false);
+    }
+
+    function manualTheme(key) { pauseDemoWithInactivity(); applyTheme(key); }
+    function manualColor(bg, ink, el) { pauseDemoWithInactivity(); applyColor(bg, ink, el); }
+    function manualRadius(val) { pauseDemoWithInactivity(); applyRadius(val); }
+
+    function switchAppMode(mode) {
+      const clientEl = document.getElementById('view-client');
+      const adminEl = document.getElementById('view-admin');
+      const btnClient = document.getElementById('mode-client');
+      const btnAdmin = document.getElementById('mode-admin');
+      const customizerBar = document.getElementById('customizer-bar');
+
+      if (mode === 'client') {
+        clientEl.classList.remove('hidden');
+        adminEl.classList.add('hidden');
+        customizerBar.classList.remove('hidden');
+        btnClient.className = 'lp-btn-primary rounded-lg px-3 py-2 sm:py-1.5 text-xs font-semibold transition whitespace-nowrap';
+        btnAdmin.className = 'rounded-lg px-3 py-2 sm:py-1.5 text-xs font-medium transition whitespace-nowrap';
+        btnAdmin.style.color = 'var(--lp-muted)';
+        btnClient.style.color = '';
+        document.getElementById('browser-url').textContent = 'zelo.app/barbearia-don-leon';
+        pauseDemoWithInactivity();
+      } else {
+        if (inactivityTimer) clearTimeout(inactivityTimer);
+        demoPaused = true;
+        if (demoTimeline) demoTimeline.pause();
+        document.getElementById('demo-cursor').style.opacity = '0';
+        document.getElementById('demo-touch').style.opacity = '0';
+        setDemoStatusText('Painel Admin ativo', 'Admin ativo', false);
+        document.getElementById('btn-toggle-demo').classList.add('hidden');
+
+        adminEl.classList.remove('hidden');
+        clientEl.classList.add('hidden');
+        customizerBar.classList.add('hidden');
+        btnAdmin.className = 'lp-btn-primary rounded-lg px-3 py-2 sm:py-1.5 text-xs font-semibold transition whitespace-nowrap';
+        btnClient.className = 'rounded-lg px-3 py-2 sm:py-1.5 text-xs font-medium transition whitespace-nowrap';
+        btnClient.style.color = 'var(--lp-muted)';
+        btnAdmin.style.color = '';
+        document.getElementById('browser-url').textContent = 'zelo.app/painel/agenda';
+      }
+    }
+
+    function toggleService() {
+      pauseDemoWithInactivity();
+      extraAdded = !extraAdded;
+      document.getElementById('srv2-btn').textContent = extraAdded ? 'Adicionado ✓' : '+ Adicionar';
+      updateSummary();
+    }
+
+    function pickBarber(el, name) {
+      pauseDemoWithInactivity();
+      el.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      currentBarber = name;
+      updateSummary();
+    }
+
+    function selectTime(el) {
+      pauseDemoWithInactivity();
+      el.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      currentTime = el.textContent.trim();
+      document.getElementById('btn-confirm-preview').textContent = 'Confirmar ' + currentTime;
+    }
+
+    function updateSummary() {
+      const count = extraAdded ? '2 serviços' : '1 serviço';
+      const mins = extraAdded ? '60 min' : '35 min';
+      const price = extraAdded ? 'R$ 80,00' : 'R$ 45,00';
+      document.getElementById('summary-meta').textContent = `${count} • ${mins} • ${currentBarber}`;
+      document.getElementById('summary-total').textContent = price;
+    }
+
+    function confirmPreviewBooking(btn) {
+      pauseDemoWithInactivity();
+      const old = btn.textContent;
+      btn.textContent = 'Confirmado! ✓';
+      setTimeout(() => { btn.textContent = old; }, 1600);
+    }
+
+    // GSAP: Odometer (Desktop + Celular!) + Demo Cursor (Apenas Desktop md+)
+    window.addEventListener('DOMContentLoaded', () => {
+      if (typeof gsap === 'undefined') return;
+
+      const times = ['1430', '1515', '1600', '0930'];
+      let currentDigits = ['1', '4', '3', '0'];
+      let timeIdx = 0;
+
+      setInterval(() => {
+        timeIdx = (timeIdx + 1) % times.length;
+        const nextDigits = times[timeIdx].split('');
+        let changedCount = 0;
+
+        nextDigits.forEach((nextVal, idx) => {
+          if (nextVal !== currentDigits[idx]) {
+            const el = document.getElementById('odo-' + idx);
+            const delay = changedCount * 0.06;
+            changedCount++;
+
+            gsap.timeline({ delay })
+              .to(el, {
+                yPercent: -110,
+                opacity: 0,
+                duration: 0.22,
+                ease: 'power2.in',
+                onComplete: () => { el.textContent = nextVal; }
+              })
+              .fromTo(
+                el,
+                { yPercent: 110, opacity: 0 },
+                { yPercent: 0, opacity: 1, duration: 0.34, ease: 'power3.out' }
+              );
+          }
+        });
+
+        currentDigits = nextDigits;
+      }, 2800);
+
+      const cursor = document.getElementById('demo-cursor');
+      const ring = document.getElementById('cursor-ring');
+      const touchPtr = document.getElementById('demo-touch');
+      const touchRipple = document.getElementById('touch-ripple');
+      const container = document.getElementById('showcase-container');
+
+      function getPos(elId) {
+        const el = document.getElementById(elId);
+        const cRect = container.getBoundingClientRect();
+        const eRect = el.getBoundingClientRect();
+        return {
+          x: eRect.left - cRect.left + eRect.width / 2,
+          y: eRect.top - cRect.top + eRect.height / 2
+        };
+      }
+
+      // Calcula a posição exata (x, y) da bolinha do slider para qualquer valor (2..24)
+      function getSliderThumbPos(val) {
+        const el = document.getElementById('radius-slider');
+        const cRect = container.getBoundingClientRect();
+        const eRect = el.getBoundingClientRect();
+        const thumbPad = 8;
+        const ratio = Math.max(0, Math.min(1, (val - 2) / (24 - 2)));
+        return {
+          x: (eRect.left - cRect.left) + thumbPad + ratio * (eRect.width - thumbPad * 2),
+          y: (eRect.top - cRect.top) + eRect.height / 2
+        };
+      }
+
+      function clickAndRun(tl, ptrEl, rippleEl, onClickFn) {
+        return tl
+          .to(ptrEl, { scale: 0.84, duration: 0.12, ease: 'power2.out' })
+          .call(() => { if (onClickFn) onClickFn(); })
+          .fromTo(rippleEl, { opacity: 0.95, scale: 0.5 }, { opacity: 0, scale: 2.1, duration: 0.4, ease: 'power2.out' }, '<')
+          .to(ptrEl, { scale: 1, duration: 0.15, ease: 'power2.out' });
+      }
+
+      const radiusProxy = { val: 12 };
+
+      function buildSharedTimeline(ptrEl, rippleEl) {
+        const tl = gsap.timeline({ repeat: -1, repeatDelay: 0.8 });
+
+        tl.call(() => {
+          applyTheme('urban');
+          applyColor('#F59E0B', '#111111', document.getElementById('swatch-amber'));
+          radiusProxy.val = 12;
+          applyRadius(12);
+        });
+
+        // 1. Vai até Esmeralda -> Clica
+        tl.to(ptrEl, {
+          x: () => getPos('swatch-emerald').x,
+          y: () => getPos('swatch-emerald').y,
+          duration: 0.85,
+          ease: 'power2.inOut',
+          delay: 0.65
+        });
+        clickAndRun(tl, ptrEl, rippleEl, () => {
+          applyColor('#10B981', '#FFFFFF', document.getElementById('swatch-emerald'));
+        });
+
+        // 2. Vai EXATAMENTE até a bolinha do slider (12px) antes de arrastar -> depois arrasta junto até 24px
+        tl.to(ptrEl, {
+          x: () => getSliderThumbPos(12).x,
+          y: () => getSliderThumbPos(12).y,
+          duration: 0.75,
+          ease: 'power2.inOut',
+          delay: 0.7
+        });
+        tl.to(ptrEl, { scale: 0.9, duration: 0.12, ease: 'power2.out' });
+        tl.to(radiusProxy, {
+          val: 24,
+          duration: 0.9,
+          ease: 'power1.inOut',
+          onUpdate: () => {
+            applyRadius(radiusProxy.val);
+            const p = getSliderThumbPos(radiusProxy.val);
+            gsap.set(ptrEl, { x: p.x, y: p.y });
+          }
+        });
+        tl.to(ptrEl, { scale: 1, duration: 0.12, ease: 'power2.out' });
+
+        // 3. Vai até Clean Glam -> Clica -> Muda para Rosé
+        tl.to(ptrEl, {
+          x: () => getPos('btn-glam').x,
+          y: () => getPos('btn-glam').y,
+          duration: 0.8,
+          ease: 'power2.inOut',
+          delay: 0.85
+        });
+        clickAndRun(tl, ptrEl, rippleEl, () => {
+          applyTheme('glam');
+          applyColor('#BE185D', '#FFFFFF', document.getElementById('swatch-rose'));
+        });
+
+        // 4. Vai até Neo-Brutal -> Clica
+        tl.to(ptrEl, {
+          x: () => getPos('btn-brutal').x,
+          y: () => getPos('btn-brutal').y,
+          duration: 0.85,
+          ease: 'power2.inOut',
+          delay: 1.1
+        });
+        clickAndRun(tl, ptrEl, rippleEl, () => {
+          applyTheme('brutal');
+          applyColor('#A3E635', '#111111', document.getElementById('swatch-lime'));
+        });
+
+        // 5. Vai EXATAMENTE até onde a bolinha está agora (24px), segura, e arrasta junto até 6px!
+        tl.to(ptrEl, {
+          x: () => getSliderThumbPos(24).x,
+          y: () => getSliderThumbPos(24).y,
+          duration: 0.8,
+          ease: 'power2.inOut',
+          delay: 0.45
+        });
+        tl.to(ptrEl, { scale: 0.9, duration: 0.12, ease: 'power2.out' });
+        tl.to(radiusProxy, {
+          val: 6,
+          duration: 0.85,
+          ease: 'power1.inOut',
+          onUpdate: () => {
+            applyRadius(radiusProxy.val);
+            const p = getSliderThumbPos(radiusProxy.val);
+            gsap.set(ptrEl, { x: p.x, y: p.y });
+          }
+        });
+        tl.to(ptrEl, { scale: 1, duration: 0.12, ease: 'power2.out' });
+
+        // 6. Volta para Urban Noir
+        tl.to(ptrEl, {
+          x: () => getPos('btn-urban').x,
+          y: () => getPos('btn-urban').y,
+          duration: 0.85,
+          ease: 'power2.inOut',
+          delay: 1.15
+        });
+        clickAndRun(tl, ptrEl, rippleEl, () => {
+          applyTheme('urban');
+          applyColor('#F59E0B', '#111111', document.getElementById('swatch-amber'));
+        });
+
+        return tl;
+      }
+
+      // Reconstrói perfeitamente ao trocar entre PC <-> Celular no DevTools ou ao redimensionar!
+      let lastMode = null;
+      function rebuildShowcaseDemo(force = false) {
+        const isMobile = window.innerWidth < 768;
+        const currentMode = isMobile ? 'mobile' : 'desktop';
+        const inClient = !document.getElementById('view-client').classList.contains('hidden');
+
+        if (!force && lastMode === currentMode && demoTimeline) return;
+        lastMode = currentMode;
+
+        if (demoTimeline) {
+          demoTimeline.kill();
+          demoTimeline = null;
+        }
+
+        if (isMobile) {
+          cursor.style.display = 'none';
+          touchPtr.style.display = 'block';
+          gsap.set(touchPtr, { x: 140, y: 120, scale: 1, opacity: demoPaused || !inClient ? 0 : 1 });
+          if (inClient) {
+            demoTimeline = buildSharedTimeline(touchPtr, touchRipple);
+            if (demoPaused) demoTimeline.pause();
+          }
+        } else {
+          touchPtr.style.display = 'none';
+          cursor.style.display = 'flex';
+          gsap.set(cursor, { x: 200, y: 120, scale: 1, opacity: demoPaused || !inClient ? 0 : 1 });
+          if (inClient) {
+            demoTimeline = buildSharedTimeline(cursor, ring);
+            if (demoPaused) demoTimeline.pause();
+          }
+        }
+      }
+
+      window.rebuildShowcaseDemo = () => rebuildShowcaseDemo(true);
+      rebuildShowcaseDemo(true);
+
+      let resizeTimer = null;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+          rebuildShowcaseDemo(true);
+        }, 180);
+      });
+    });
+
+    function filterVitrine(cat, btn) {
+      document.querySelectorAll('.vitrine-filter-btn').forEach(b => {
+        b.className = 'vitrine-filter-btn lp-surface rounded-lg border-0 px-2.5 py-1.5 text-xs font-medium transition';
+        b.style.color = 'var(--lp-muted)';
+      });
+      btn.className = 'vitrine-filter-btn lp-btn-primary rounded-lg px-2.5 py-1.5 text-xs font-semibold transition';
+      btn.style.color = '';
+
+      document.querySelectorAll('.vitrine-card').forEach(card => {
+        const match = cat === 'all' || card.dataset.cat === cat;
+        card.style.opacity = match ? '1' : '0.35';
+      });
+    }
+
+    // Animações dinâmicas de entrada ao rolar a página
+    (function initScrollReveals() {
+      const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const targets = document.querySelectorAll(
+        '#recursos .lp-surface, #vitrine .vitrine-card, #precos .lp-surface, #faq details.faq-item, section:not(#topo):not(#estilos) h2, section:not(#topo):not(#estilos) .lp-soft-surface'
+      );
+      if (prefersReduced || !('IntersectionObserver' in window) || typeof gsap === 'undefined') return;
+
+      targets.forEach(el => el.classList.add('scroll-reveal'));
+
+      const observer = new IntersectionObserver((entries) => {
+        const visible = entries.filter(e => e.isIntersecting);
+        if (!visible.length) return;
+
+        visible.forEach((entry, idx) => {
+          observer.unobserve(entry.target);
+          gsap.fromTo(
+            entry.target,
+            { opacity: 0, y: 22 },
+            {
+              opacity: 1,
+              y: 0,
+              duration: 0.55,
+              delay: Math.min(idx * 0.06, 0.24),
+              ease: 'power3.out',
+              onComplete: () => {
+                entry.target.classList.remove('scroll-reveal');
+                entry.target.style.opacity = '';
+                entry.target.style.transform = '';
+              }
+            }
+          );
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -30px 0px' });
+
+      targets.forEach(el => observer.observe(el));
+    })();
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        const id = this.getAttribute('href');
+        if (id.length > 1) {
+          const target = document.querySelector(id);
+          if (target) {
+            e.preventDefault();
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>
