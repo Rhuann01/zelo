@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Camera, Loader2, RotateCcw } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Camera, Loader2, RotateCcw, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { AVATAR_COMPRESS_CONFIG, compressImageToWebP } from "@/lib/image/compress-webp";
 import { showToast } from "@/components/zelo-toast";
@@ -19,6 +20,7 @@ export function AvatarUploader({
   isCustom,
   displayName,
 }: AvatarUploaderProps) {
+  const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [avatarUrl, setAvatarUrl] = useState(initialUrl);
   const [custom, setCustom] = useState(isCustom);
@@ -56,9 +58,33 @@ export function AvatarUploader({
 
       setAvatarUrl(bustedUrl);
       setCustom(true);
+      router.refresh();
       showToast(`Foto salva (${Math.round(webpBlob.size / 1024)} KB WebP)`, "success");
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Erro ao enviar foto.", "error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleRemoveAvatar() {
+    setLoading(true);
+    try {
+      const supabase = createClient();
+      await supabase.storage.from("avatars").remove([`${userId}/avatar.webp`]).catch(() => null);
+
+      const { error } = await supabase
+        .from("perfis")
+        .update({ avatar_url: null, avatar_customizado: true })
+        .eq("id", userId);
+
+      if (error) throw error;
+      setAvatarUrl(null);
+      setCustom(true);
+      router.refresh();
+      showToast("Foto de perfil removida.", "success");
+    } catch {
+      showToast("Não foi possível remover a foto.", "error");
     } finally {
       setLoading(false);
     }
@@ -84,6 +110,7 @@ export function AvatarUploader({
       if (error) throw error;
       setAvatarUrl(googlePic);
       setCustom(false);
+      router.refresh();
       showToast("Foto do Google restaurada.", "success");
     } catch {
       showToast("Não foi possível restaurar a foto do Google.", "error");
@@ -131,21 +158,36 @@ export function AvatarUploader({
         />
       </div>
 
-      <div className="min-w-0 space-y-1">
+      <div className="min-w-0 space-y-1.5">
         <p className="truncate text-base font-bold">{displayName}</p>
-        {custom ? (
-          <button
-            type="button"
-            onClick={handleRestoreGoogle}
-            disabled={loading}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--zelo-muted)] transition-colors hover:text-[var(--zelo-ink)]"
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-            Restaurar foto do Google
-          </button>
+        {avatarUrl || custom ? (
+          <div className="flex flex-wrap items-center gap-3">
+            {avatarUrl && (
+              <button
+                type="button"
+                onClick={handleRemoveAvatar}
+                disabled={loading}
+                className="inline-flex items-center gap-1 text-xs font-medium text-red-500 transition-colors hover:text-red-600 disabled:opacity-60"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Remover foto
+              </button>
+            )}
+            {custom && (
+              <button
+                type="button"
+                onClick={handleRestoreGoogle}
+                disabled={loading}
+                className="inline-flex items-center gap-1 text-xs font-medium text-[var(--zelo-muted)] transition-colors hover:text-[var(--zelo-ink)] disabled:opacity-60"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                Restaurar Google
+              </button>
+            )}
+          </div>
         ) : (
           <p className="text-xs text-[var(--zelo-muted)]">
-            Toque na câmera para trocar sua foto
+            Toque na câmera para adicionar uma foto
           </p>
         )}
       </div>
