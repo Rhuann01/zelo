@@ -22,19 +22,19 @@
 O projeto conta com **3 subagentes especializados** (salvos em `.agents/agents/` e ativos na sessão atual). O agente principal **NÃO deve fazer tudo sozinho**: deve acionar os subagentes proativamente via `send_message` (se já estiverem ativos na conversa) ou `invoke_subagent` (em novas conversas) nos gatilhos abaixo:
 
 ### 3.1. Mapa do Time de Subagentes
-1. **Security & QA Architect** (`.agents/agents/zelo-security-qa.md` | ID na sessão atual: `5d195eb5-2a40-4829-908e-4ffae9400eb9`)
+1. **Security & QA Architect** (`.agents/agents/zelo-security-qa.md` | ID na sessão atual: `0b964866-41a0-43ce-9ad1-6d0f3e2658f5`)
    - **Foco:** Migrations SQL, políticas RLS (`loja_id`), Storage RLS (`avatars` e `lojas-media`), trava `EXCLUDE USING gist`, segurança de Server Actions/Webhooks (`Zod`, Turnstile, Rate Limit) e execução de testes (`Vitest`, `Playwright`, `Grafana k6`).
    - **Quando acionar obrigatoriamente:**
      - **Antes/Depois de criar qualquer migration SQL ou RPC:** para auditar brechas de RLS, constraints e índices.
      - **Ao criar Server Actions ou rotas de API/Webhook:** para validar schemas `Zod`, proteção `server-only` e idempotência.
      - **Ao final de CADA Etapa do Kanban (Etapas 1 a 7):** para escrever e rodar a bateria de testes daquela etapa (`Vitest` / `Playwright` / `k6`) e emitir o laudo de *Definition of Done (DoD)*.
-2. **Infra & Performance Analyst** (`.agents/agents/zelo-infra-performance.md` | ID na sessão atual: `acc05ff6-eb0b-4ed4-a3f9-beccbba3a715`)
+2. **Infra & Performance Analyst** (`.agents/agents/zelo-infra-performance.md` | ID na sessão atual: `f5e605f6-791e-42ee-826f-e2ee483ee0b0`)
    - **Foco:** Economia de cota gratuita (Supabase 500MB DB / 1GB Storage, Resend 100/dia, Cloudflare Workers), compressão client-side WebP, cache `ISR` + `revalidateTag`, `EXPLAIN ANALYZE` (`<2ms`) e bundle size mobile (`<50ms`).
    - **Quando acionar obrigatoriamente:**
      - **Etapa 1 & 2 (Banco, Auth e Painel):** revisar o compressor WebP no navegador (`<= 40 KB` avatar / `<= 100 KB` capa) e o custo das queries/índices.
      - **Etapa 3 & 4 (Vitrine, `/[slug]` e Agendamento):** configurar `ISR` + `revalidateTag('loja-' + slug)` e auditar o peso do bundle mobile (garantir que o Schedule-X fique restrito ao `/painel` e nunca vaze para o bundle da loja pública `/[slug]`).
      - **Etapa 5 & 7 (Web Push, Resend e Deploy):** validar economia de e-mails Resend via Web Push PWA e configuração de build para Cloudflare Pages/Workers.
-3. **Product Mentor & Growth Strategist** (`.agents/agents/zelo-product-mentor.md` | ID na sessão atual: `b1fe58c9-67f5-48bb-909c-a5a36b67483c`)
+3. **Product Mentor & Growth Strategist** (`.agents/agents/zelo-product-mentor.md` | ID na sessão atual: `10c9b446-c6bb-4115-8544-c98a3c045ec8`)
    - **Foco:** Simplicidade de UX Mobile-First (`360px+`), revisão visual contra `AGENTS.md` (zero emojis, sem excesso de bordas), microcopy de alta conversão e inteligência do `/super-admin`.
    - **Quando acionar obrigatoriamente:**
      - **Ao concluir a UI de qualquer tela (Etapas 2, 3, 4, 6 e 7):** para fazer revisão fina de usabilidade mobile (uso com 1 mão só pelo barbeiro/cliente), checar se nenhum emoji nativo ou excesso de borda escapou e validar os textos/fluxos de ativação.
