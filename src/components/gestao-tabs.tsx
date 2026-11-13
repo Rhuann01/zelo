@@ -212,9 +212,9 @@ export function GestaoTabs({
                 return (
                   <div
                     key={key}
-                    className="flex min-h-[48px] flex-wrap items-center justify-between gap-2 rounded-xl bg-secondary px-3 py-2"
+                    className="flex min-h-[52px] items-center justify-between gap-2 rounded-xl bg-secondary px-3 py-2"
                   >
-                    <label className="flex min-h-[36px] cursor-pointer items-center gap-2.5 text-xs font-semibold">
+                    <label className="flex min-h-[36px] shrink-0 cursor-pointer items-center gap-2 text-xs font-semibold">
                       <Switch
                         disabled={!isOwner}
                         checked={dia.ativo}
@@ -225,10 +225,10 @@ export function GestaoTabs({
                           }))
                         }
                       />
-                      <span>{label}</span>
+                      <span className="w-7">{label}</span>
                     </label>
                     {dia.ativo ? (
-                      <div className="flex items-center gap-1 font-mono-num text-xs">
+                      <div className="flex shrink-0 items-center gap-1.5 font-mono-num text-xs">
                         <Input
                           type="time"
                           disabled={!isOwner}
@@ -239,9 +239,9 @@ export function GestaoTabs({
                               [key]: { ...prev[key], abre: e.target.value },
                             }))
                           }
-                          className="h-9 w-auto rounded-lg border-0 bg-card px-2 text-xs"
+                          className="h-9 w-[92px] shrink-0 rounded-lg border-0 bg-card px-2 text-center text-xs [&::-webkit-calendar-picker-indicator]:ml-0.5 [&::-webkit-calendar-picker-indicator]:opacity-60"
                         />
-                        <span>–</span>
+                        <span className="text-muted-foreground">–</span>
                         <Input
                           type="time"
                           disabled={!isOwner}
@@ -252,43 +252,43 @@ export function GestaoTabs({
                               [key]: { ...prev[key], fecha: e.target.value },
                             }))
                           }
-                          className="h-9 w-auto rounded-lg border-0 bg-card px-2 text-xs"
+                          className="h-9 w-[92px] shrink-0 rounded-lg border-0 bg-card px-2 text-center text-xs [&::-webkit-calendar-picker-indicator]:ml-0.5 [&::-webkit-calendar-picker-indicator]:opacity-60"
                         />
                       </div>
                     ) : (
-                      <span className="text-[11px] text-muted-foreground">Fechado</span>
+                      <span className="px-2 text-xs font-medium text-muted-foreground">Fechado</span>
                     )}
                   </div>
                 );
               })}
             </div>
 
-            <div className="flex min-h-[48px] flex-wrap items-center justify-between gap-2 rounded-xl bg-secondary px-3 py-2">
-              <label className="flex min-h-[36px] cursor-pointer items-center gap-2 text-xs font-semibold">
+            <div className="flex min-h-[52px] flex-wrap items-center justify-between gap-2 rounded-xl bg-secondary px-3 py-2">
+              <label className="flex min-h-[36px] shrink-0 cursor-pointer items-center gap-2 text-xs font-semibold">
                 <Switch
                   disabled={!isOwner}
                   checked={almocoAtivo}
                   onCheckedChange={setAlmocoAtivo}
                 />
                 <Utensils className="h-3.5 w-3.5 text-[#F59E0B]" />
-                <span>Pausa Almoço</span>
+                <span>Almoço</span>
               </label>
               {almocoAtivo && (
-                <div className="flex items-center gap-1 font-mono-num text-xs">
+                <div className="flex shrink-0 items-center gap-1.5 font-mono-num text-xs">
                   <Input
                     type="time"
                     disabled={!isOwner}
                     value={almocoInicio}
                     onChange={(e) => setAlmocoInicio(e.target.value)}
-                    className="h-9 w-auto rounded-lg border-0 bg-card px-2 text-xs"
+                    className="h-9 w-[92px] shrink-0 rounded-lg border-0 bg-card px-2 text-center text-xs [&::-webkit-calendar-picker-indicator]:ml-0.5 [&::-webkit-calendar-picker-indicator]:opacity-60"
                   />
-                  <span>–</span>
+                  <span className="text-muted-foreground">–</span>
                   <Input
                     type="time"
                     disabled={!isOwner}
                     value={almocoFim}
                     onChange={(e) => setAlmocoFim(e.target.value)}
-                    className="h-9 w-auto rounded-lg border-0 bg-card px-2 text-xs"
+                    className="h-9 w-[92px] shrink-0 rounded-lg border-0 bg-card px-2 text-center text-xs [&::-webkit-calendar-picker-indicator]:ml-0.5 [&::-webkit-calendar-picker-indicator]:opacity-60"
                   />
                 </div>
               )}
