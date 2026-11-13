@@ -14,23 +14,59 @@ export interface ViewerPerfil {
   notificacoes_email: boolean;
 }
 
-/**
- * Lê sessão e perfil completo do usuário no navegador sem quebrar ISR de páginas públicas.
- */
-export function useViewerPerfil() {
-  const [viewer, setViewer] = useState<ViewerPerfil | null>(null);
-  const [loaded, setLoaded] = useState(false);
+const STORAGE_KEY = "zelo_viewer_perfil_v1";
+const CACHE_TTL_MS = 30_000;
 
-  const load = useCallback(async () => {
+let memoryCache: { data: ViewerPerfil | null; fetchedAt: number } | null = null;
+let inflightPromise: Promise<ViewerPerfil | null> | null = null;
+const listeners = new Set<(data: ViewerPerfil | null) => void>();
+
+function readSessionCache(): ViewerPerfil | null {
+  if (memoryCache) return memoryCache.data;
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { data: ViewerPerfil | null; fetchedAt: number };
+    memoryCache = parsed;
+    return parsed.data;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(data: ViewerPerfil | null) {
+  const entry = { data, fetchedAt: Date.now() };
+  memoryCache = entry;
+  if (typeof window !== "undefined") {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(entry));
+    } catch {
+      // ignore storage errors
+    }
+  }
+  for (const listener of listeners) {
+    listener(data);
+  }
+}
+
+async function fetchViewerPerfil(force = false): Promise<ViewerPerfil | null> {
+  if (!force && memoryCache && Date.now() - memoryCache.fetchedAt < CACHE_TTL_MS) {
+    return memoryCache.data;
+  }
+  if (!force && inflightPromise) {
+    return inflightPromise;
+  }
+
+  inflightPromise = (async () => {
     const supabase = createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setViewer(null);
-      setLoaded(true);
-      return;
+      writeCache(null);
+      return null;
     }
 
     const { data: perfil } = await supabase
@@ -41,7 +77,7 @@ export function useViewerPerfil() {
       .eq("id", user.id)
       .maybeSingle();
 
-    setViewer({
+    const next: ViewerPerfil = {
       id: user.id,
       nome: perfil?.nome || (user.user_metadata?.full_name as string) || user.email || "Perfil",
       email: perfil?.email || user.email || "",
@@ -54,13 +90,69 @@ export function useViewerPerfil() {
       avatar_customizado: perfil?.avatar_customizado ?? false,
       notificacoes_push: perfil?.notificacoes_push ?? true,
       notificacoes_email: perfil?.notificacoes_email ?? true,
-    });
+    };
+
+    writeCache(next);
+    return next;
+  })().finally(() => {
+    inflightPromise = null;
+  });
+
+  return inflightPromise;
+}
+
+/**
+ * Lê sessão e perfil com cache em memória + sessionStorage (stale-while-revalidate)
+ * para evitar flash visual e requisições duplicadas ao navegar entre telas.
+ */
+export function useViewerPerfil() {
+  const [viewer, setViewer] = useState<ViewerPerfil | null>(() =>
+    typeof window !== "undefined" ? (memoryCache?.data ?? null) : null
+  );
+  const [loaded, setLoaded] = useState<boolean>(() =>
+    typeof window !== "undefined" ? memoryCache !== null : false
+  );
+
+  const refreshViewer = useCallback(async () => {
+    await fetchViewerPerfil(true);
     setLoaded(true);
   }, []);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    const onUpdate = (data: ViewerPerfil | null) => {
+      setViewer(data);
+      setLoaded(true);
+    };
+    listeners.add(onUpdate);
 
-  return { viewer, loaded, refreshViewer: load };
+    if (!memoryCache) {
+      const sessionData = readSessionCache();
+      if (memoryCache) {
+        setViewer(sessionData);
+        setLoaded(true);
+      }
+    }
+
+    void fetchViewerPerfil(false).then(() => {
+      setLoaded(true);
+    });
+
+    const supabase = createClient();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        writeCache(null);
+      } else if (event === "SIGNED_IN" || event === "USER_UPDATED") {
+        void fetchViewerPerfil(true);
+      }
+    });
+
+    return () => {
+      listeners.delete(onUpdate);
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  return { viewer, loaded, refreshViewer };
 }

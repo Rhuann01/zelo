@@ -36,6 +36,9 @@ function formatBRL(centavos: number) {
   return (centavos / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+const agendamentosCache = new Map<string, { items: ClienteAgendamento[]; fetchedAt: number }>();
+const AGENDAMENTOS_TTL_MS = 30_000;
+
 export function ExplorarMeusHorarios({
   viewer,
   loaded,
@@ -45,14 +48,24 @@ export function ExplorarMeusHorarios({
   loaded: boolean;
   onGoExplorar: () => void;
 }) {
-  const [items, setItems] = useState<ClienteAgendamento[]>([]);
-  const [loading, setLoading] = useState(false);
+  const cached = viewer ? agendamentosCache.get(viewer.id) : undefined;
+  const [items, setItems] = useState<ClienteAgendamento[]>(() => cached?.items ?? []);
+  const [loading, setLoading] = useState(() => Boolean(viewer && !cached));
 
   useEffect(() => {
     if (!viewer) return;
-    let active = true;
-    setLoading(true);
+    const entry = agendamentosCache.get(viewer.id);
+    if (entry) {
+      setItems(entry.items);
+      setLoading(false);
+      if (Date.now() - entry.fetchedAt < AGENDAMENTOS_TTL_MS) {
+        return;
+      }
+    } else {
+      setLoading(true);
+    }
 
+    let active = true;
     const supabase = createClient();
     supabase
       .from("agendamentos")
@@ -73,6 +86,7 @@ export function ExplorarMeusHorarios({
             ? (row.profissional[0] ?? null)
             : (row.profissional ?? null),
         }));
+        agendamentosCache.set(viewer.id, { items: normalized, fetchedAt: Date.now() });
         setItems(normalized);
         setLoading(false);
       });
