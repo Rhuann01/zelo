@@ -1,11 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Loader2, Terminal } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
-export function GoogleAuthButton({ nextPath = "/painel" }: { nextPath?: string }) {
+export function GoogleAuthButton({
+  nextPath = "/painel",
+  showDevLogin = false,
+}: {
+  nextPath?: string;
+  showDevLogin?: boolean;
+}) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [devLoading, setDevLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleGoogleLogin() {
@@ -30,6 +39,25 @@ export function GoogleAuthButton({ nextPath = "/painel" }: { nextPath?: string }
     } catch {
       setError("Não foi possível iniciar o login com Google.");
       setLoading(false);
+    }
+  }
+
+  async function handleDevLogin() {
+    setDevLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/dev-login", { method: "POST" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error ?? "Erro no login dev local.");
+        setDevLoading(false);
+        return;
+      }
+      router.push(nextPath);
+      router.refresh();
+    } catch {
+      setError("Não foi possível conectar ao login dev local.");
+      setDevLoading(false);
     }
   }
 
@@ -65,6 +93,21 @@ export function GoogleAuthButton({ nextPath = "/painel" }: { nextPath?: string }
         )}
         <span>{loading ? "Conectando..." : "Continuar com Google"}</span>
       </button>
+      {showDevLogin && (
+        <button
+          type="button"
+          onClick={handleDevLogin}
+          disabled={devLoading}
+          className="flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[var(--zelo-soft)] px-4 text-xs font-semibold text-[var(--zelo-muted)] transition hover:text-[var(--zelo-ink)] disabled:opacity-60"
+        >
+          {devLoading ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Terminal className="h-3.5 w-3.5 text-[#F59E0B]" />
+          )}
+          <span>{devLoading ? "Entrando..." : "Entrar em Modo Dev Local"}</span>
+        </button>
+      )}
       {error && (
         <p className="text-center text-xs text-red-600" role="alert">
           {error}

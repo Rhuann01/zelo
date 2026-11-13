@@ -36,7 +36,10 @@ export default async function EntrarPage({
             </div>
           )}
 
-          <GoogleAuthButton nextPath={nextPath} />
+          <GoogleAuthButton
+            nextPath={nextPath}
+            showDevLogin={process.env.NODE_ENV === "development"}
+          />
 
           <p className="text-center text-xs leading-relaxed text-[var(--zelo-muted)]">
             Acesso único tanto para clientes quanto para profissionais e donos de estabelecimentos.

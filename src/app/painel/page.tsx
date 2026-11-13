@@ -1,119 +1,103 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { Calendar, LogOut, Plus, Store } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
-import { ZeloLogo } from "@/components/zelo-logo";
-import { AvatarUploader } from "@/components/avatar-uploader";
-
-async function signOutAction() {
-  "use server";
-  const supabase = await createClient();
-  await supabase.auth.signOut();
-  redirect("/entrar");
-}
+import { Calendar, LayoutGrid, Palette, Plus, Settings, Sparkles } from "lucide-react";
+import { getPainelContext } from "@/lib/painel/get-painel-context";
+import { PainelShell } from "@/components/painel-shell";
 
 export default async function PainelPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/entrar?next=/painel");
-  }
-
-  const [{ data: perfil }, { data: lojas }] = await Promise.all([
-    supabase
-      .from("perfis")
-      .select("nome, email, avatar_url, avatar_customizado")
-      .eq("id", user.id)
-      .single(),
-    supabase
-      .from("lojas")
-      .select("id, nome, slug, nicho, tema, plano")
-      .eq("owner_id", user.id)
-      .order("created_at", { ascending: true }),
-  ]);
-
-  if (!lojas || lojas.length === 0) {
-    redirect("/onboarding");
-  }
-
-  const lojaAtual = lojas[0];
+  const ctx = await getPainelContext("/painel");
 
   return (
-    <main className="min-h-screen bg-[var(--zelo-bg)] pb-12">
-      <header className="sticky top-0 z-20 flex h-14 items-center justify-between bg-[var(--zelo-card)]/90 px-4 backdrop-blur-md">
-        <ZeloLogo size="sm" />
-        <form action={signOutAction}>
-          <button
-            type="submit"
-            className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[var(--zelo-soft)] px-3 text-xs font-medium text-[var(--zelo-muted)]"
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            Sair
-          </button>
-        </form>
-      </header>
-
-      <div className="mx-auto max-w-[420px] px-4 pt-5 space-y-4">
-        <section className="rounded-2xl bg-[var(--zelo-card)] p-4">
-          <AvatarUploader
-            userId={user.id}
-            initialUrl={perfil?.avatar_url ?? null}
-            isCustom={perfil?.avatar_customizado ?? false}
-            displayName={perfil?.nome || user.email || "Usuário Zelo"}
-          />
-        </section>
-
+    <PainelShell lojas={ctx.lojas} lojaAtual={ctx.lojaAtual} isOwner={ctx.isOwner}>
+      <div className="space-y-4">
         <section className="rounded-2xl bg-[var(--zelo-card)] p-4 space-y-3">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-[var(--zelo-subtle)]">
-                <Store className="h-3.5 w-3.5 text-[#F59E0B]" />
-                Sua Loja Ativa
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                  ctx.lojaAtual.pausada
+                    ? "bg-[#F59E0B]/15 text-[#D97706]"
+                    : "bg-[#10B981]/15 text-[#10B981]"
+                }`}
+              >
+                {ctx.lojaAtual.pausada ? "Loja Pausada" : "Loja Ativa"}
               </span>
-              <h1 className="text-lg font-bold tight-heading">{lojaAtual.nome}</h1>
+              <h1 className="mt-1.5 text-xl font-bold tight-heading">
+                Olá, {ctx.perfil.nome.split(" ")[0]}
+              </h1>
               <p className="font-mono-num text-xs text-[var(--zelo-muted)]">
-                zelo.app/{lojaAtual.slug}
+                zelo.app/{ctx.lojaAtual.slug}
               </p>
             </div>
-            <span className="rounded-full bg-[#10B981]/15 px-2.5 py-1 text-[11px] font-semibold text-[#10B981]">
-              {lojaAtual.plano.toUpperCase()}
+            <span className="rounded-full bg-[var(--zelo-soft)] px-2.5 py-1 font-mono-num text-[11px] font-semibold text-[var(--zelo-muted)]">
+              {ctx.lojaAtual.plano.toUpperCase()}
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 pt-1">
-            <div className="rounded-xl bg-[var(--zelo-soft)] p-3">
-              <p className="text-[11px] text-[var(--zelo-muted)]">Nicho</p>
-              <p className="text-sm font-bold capitalize">{lojaAtual.nicho}</p>
-            </div>
-            <div className="rounded-xl bg-[var(--zelo-soft)] p-3">
-              <p className="text-[11px] text-[var(--zelo-muted)]">Tema</p>
-              <p className="text-sm font-bold capitalize">{lojaAtual.tema}</p>
-            </div>
+          <div className="grid grid-cols-3 gap-2">
+            <Link
+              href="/painel/gestao"
+              className="flex flex-col items-start gap-1.5 rounded-xl bg-[var(--zelo-soft)] p-3 transition hover:opacity-90"
+            >
+              <LayoutGrid className="h-4 w-4 text-[#F59E0B]" />
+              <span className="text-xs font-bold">Gestão</span>
+              <span className="text-[10px] text-[var(--zelo-muted)]">Serviços & Equipe</span>
+            </Link>
+            <Link
+              href="/painel/personalizar"
+              className="flex flex-col items-start gap-1.5 rounded-xl bg-[var(--zelo-soft)] p-3 transition hover:opacity-90"
+            >
+              <Palette className="h-4 w-4 text-[#10B981]" />
+              <span className="text-xs font-bold">Tema</span>
+              <span className="text-[10px] text-[var(--zelo-muted)] capitalize">
+                {ctx.lojaAtual.tema}
+              </span>
+            </Link>
+            <Link
+              href="/painel/configuracoes"
+              className="flex flex-col items-start gap-1.5 rounded-xl bg-[var(--zelo-soft)] p-3 transition hover:opacity-90"
+            >
+              <Settings className="h-4 w-4 text-[var(--zelo-ink)]" />
+              <span className="text-xs font-bold">Perfil</span>
+              <span className="text-[10px] text-[var(--zelo-muted)]">Foto & Conta</span>
+            </Link>
           </div>
         </section>
 
-        <section className="rounded-2xl bg-[var(--zelo-soft)] p-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <Calendar className="h-5 w-5 text-[var(--zelo-ink)]" />
-            <div>
-              <p className="text-sm font-bold">Fundação Etapa 1 pronta</p>
-              <p className="text-xs text-[var(--zelo-muted)]">
-                Na Etapa 2 liberaremos Serviços, Horários e Customizador.
-              </p>
+        <section className="rounded-2xl bg-[var(--zelo-card)] p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-[#F59E0B]" />
+              <h2 className="text-sm font-bold">Agenda Visual (Schedule-X)</h2>
             </div>
+            <span className="rounded-full bg-[#F59E0B]/15 px-2.5 py-0.5 text-[11px] font-semibold text-[#D97706]">
+              Etapa 5
+            </span>
           </div>
+          <p className="text-xs leading-relaxed text-[var(--zelo-muted)]">
+            A linha do tempo interativa com encaixe manual em 3s, baixa de atendimentos e alertas Web Push entra na Etapa 5, após o motor de disponibilidade e reservas.
+          </p>
+        </section>
+
+        {ctx.isOwner && (
           <Link
             href="/onboarding"
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)]"
-            title="Criar outra loja"
+            className="flex items-center justify-between rounded-2xl bg-[var(--zelo-soft)] p-4 transition hover:opacity-90"
           >
-            <Plus className="h-4 w-4" />
+            <div className="flex items-center gap-2.5">
+              <Sparkles className="h-4 w-4 text-[#F59E0B]" />
+              <div>
+                <p className="text-sm font-bold">Criar nova unidade / loja</p>
+                <p className="text-xs text-[var(--zelo-muted)]">
+                  Gerencie múltiplas unidades no mesmo login Google
+                </p>
+              </div>
+            </div>
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)]">
+              <Plus className="h-4 w-4" />
+            </span>
           </Link>
-        </section>
+        )}
       </div>
-    </main>
+    </PainelShell>
   );
 }
