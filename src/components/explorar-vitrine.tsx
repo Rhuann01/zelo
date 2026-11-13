@@ -16,7 +16,9 @@ import {
 } from "lucide-react";
 import { getAccentInk, type VitrineLojaCard } from "@/lib/public/get-loja-publica";
 import { useViewerPerfil } from "@/lib/supabase/use-viewer-perfil";
+import { ZeloLogo } from "@/components/zelo-logo";
 import { ZeloToastViewport } from "@/components/zelo-toast";
+import { ExplorarHeaderAvatar } from "@/components/explorar-header-avatar";
 import { ExplorarMeusHorarios } from "@/components/explorar-meus-horarios";
 import { ExplorarPerfilForm } from "@/components/explorar-perfil-form";
 
@@ -103,7 +105,18 @@ export function ExplorarVitrine({ lojas }: { lojas: VitrineLojaCard[] }) {
   return (
     <>
       <ZeloToastViewport />
-      <div className="mx-auto flex w-full max-w-[480px] flex-col px-4 pb-28">
+      <header className="sticky top-0 z-50 w-full bg-[var(--zelo-bg)]/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.03)]">
+        <div className="mx-auto flex h-16 max-w-[480px] items-center justify-between px-4">
+          <Link href="/" className="shrink-0">
+            <ZeloLogo size="sm" />
+          </Link>
+
+          <ExplorarHeaderAvatar onSelectPerfil={() => setTab("perfil")} />
+        </div>
+      </header>
+
+      <main className="flex flex-1 flex-col pt-2">
+        <div className="mx-auto flex w-full max-w-[480px] flex-col px-4 pb-28">
         {tab === "horarios" && (
           <div className="flex flex-col gap-4 pt-2">
             <div>
@@ -371,7 +384,8 @@ export function ExplorarVitrine({ lojas }: { lojas: VitrineLojaCard[] }) {
         </Link>
           </>
         )}
-      </div>
+        </div>
+      </main>
 
       {/* Fixed Bottom Navigation */}
       <nav className="fixed bottom-0 z-50 w-full bg-[var(--zelo-bg)]/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(0,0,0,0.03)]">
