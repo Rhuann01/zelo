@@ -23,6 +23,12 @@ import {
   saveServicoAction,
   toggleDonoAtendeAction,
 } from "@/app/painel/gestao/actions";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export interface ServicoRow {
   id: string;
@@ -90,7 +96,6 @@ export function GestaoTabs({
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  // Horários
   const [semana, setSemana] = useState<Record<string, DiaConfig>>(() => {
     const out: Record<string, DiaConfig> = {};
     for (const d of DIAS_KEYS) {
@@ -113,19 +118,16 @@ export function GestaoTabs({
     (horariosIniciais.almoco_fim as string) || "13:30"
   );
 
-  // Dia especial / bloqueio
   const [espData, setEspData] = useState("");
   const [espInicio, setEspInicio] = useState("09:00");
   const [espFim, setEspFim] = useState("15:00");
   const [espTipo, setEspTipo] = useState<"dia_especial" | "folga" | "feriado">("dia_especial");
   const [espMotivo, setEspMotivo] = useState("");
 
-  // Novo serviço
   const [srvNome, setSrvNome] = useState("");
   const [srvDuracao, setSrvDuracao] = useState("35");
   const [srvPreco, setSrvPreco] = useState("45,00");
 
-  // Convite equipe
   const [convNome, setConvNome] = useState("");
   const [convEmail, setConvEmail] = useState("");
   const [convCargo, setConvCargo] = useState("Barbeiro");
@@ -144,45 +146,25 @@ export function GestaoTabs({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        <button
-          type="button"
-          onClick={() => setTab("horarios")}
-          className={`inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-xs font-semibold transition ${
-            tab === "horarios"
-              ? "bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)]"
-              : "bg-[var(--zelo-card)] text-[var(--zelo-muted)]"
-          }`}
-        >
+    <Tabs
+      value={tab}
+      onValueChange={(v) => setTab(v as "horarios" | "equipe" | "servicos")}
+      className="space-y-4"
+    >
+      <TabsList className="grid h-12 w-full grid-cols-3 rounded-2xl bg-card p-1">
+        <TabsTrigger value="horarios" className="h-10 gap-1.5 rounded-xl text-xs font-semibold">
           <Clock className="h-3.5 w-3.5" />
           Horários
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("equipe")}
-          className={`inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-xs font-semibold transition ${
-            tab === "equipe"
-              ? "bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)]"
-              : "bg-[var(--zelo-card)] text-[var(--zelo-muted)]"
-          }`}
-        >
+        </TabsTrigger>
+        <TabsTrigger value="equipe" className="h-10 gap-1.5 rounded-xl text-xs font-semibold">
           <Users className="h-3.5 w-3.5" />
           Equipe ({profissionais.filter((p) => p.ativo).length})
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("servicos")}
-          className={`inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-xs font-semibold transition ${
-            tab === "servicos"
-              ? "bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)]"
-              : "bg-[var(--zelo-card)] text-[var(--zelo-muted)]"
-          }`}
-        >
+        </TabsTrigger>
+        <TabsTrigger value="servicos" className="h-10 gap-1.5 rounded-xl text-xs font-semibold">
           <Scissors className="h-3.5 w-3.5" />
           Serviços ({servicos.length})
-        </button>
-      </div>
+        </TabsTrigger>
+      </TabsList>
 
       {!isOwner && (
         <div className="rounded-xl bg-[#F59E0B]/15 px-3.5 py-2.5 text-xs font-medium text-[#D97706]">
@@ -191,42 +173,36 @@ export function GestaoTabs({
       )}
 
       {feedback && (
-        <div className="rounded-xl bg-[var(--zelo-soft)] px-3.5 py-2.5 text-xs font-semibold text-[var(--zelo-ink)]">
+        <div className="rounded-xl bg-secondary px-3.5 py-2.5 text-xs font-semibold">
           {feedback}
         </div>
       )}
 
-      {tab === "horarios" && (
-        <div className="space-y-4">
-          <section className="rounded-2xl bg-[var(--zelo-card)] p-4 space-y-3">
-            <div className="flex items-center justify-between">
+      <TabsContent value="horarios" className="mt-0 space-y-4">
+        <Card className="py-4">
+          <CardContent className="space-y-3 px-4">
+            <div className="flex items-center justify-between gap-2">
               <h2 className="text-sm font-bold">Grade Semanal</h2>
               {isOwner && (
-                <button
+                <Button
                   type="button"
                   disabled={isPending}
                   onClick={() =>
                     runAction(() =>
                       saveHorariosAction({
                         loja_id: lojaId,
-                        seg: semana.seg,
-                        ter: semana.ter,
-                        qua: semana.qua,
-                        qui: semana.qui,
-                        sex: semana.sex,
-                        sab: semana.sab,
-                        dom: semana.dom,
+                        ...semana,
                         almoco_ativo: almocoAtivo,
                         almoco_inicio: almocoInicio,
                         almoco_fim: almocoFim,
                       })
                     )
                   }
-                  className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-[var(--zelo-btn-bg)] px-4 text-xs font-semibold text-[var(--zelo-btn-ink)]"
+                  className="h-11 rounded-xl px-4 text-xs font-semibold"
                 >
                   {isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   Salvar Grade
-                </button>
+                </Button>
               )}
             </div>
 
@@ -236,26 +212,24 @@ export function GestaoTabs({
                 return (
                   <div
                     key={key}
-                    className="flex min-h-[44px] flex-wrap items-center justify-between gap-2 rounded-xl bg-[var(--zelo-soft)] px-3 py-2"
+                    className="flex min-h-[48px] flex-wrap items-center justify-between gap-2 rounded-xl bg-secondary px-3 py-2"
                   >
-                    <label className="flex min-h-[36px] cursor-pointer items-center gap-2 text-xs font-semibold">
-                      <input
-                        type="checkbox"
+                    <label className="flex min-h-[36px] cursor-pointer items-center gap-2.5 text-xs font-semibold">
+                      <Switch
                         disabled={!isOwner}
                         checked={dia.ativo}
-                        onChange={(e) =>
+                        onCheckedChange={(checked) =>
                           setSemana((prev) => ({
                             ...prev,
-                            [key]: { ...prev[key], ativo: e.target.checked },
+                            [key]: { ...prev[key], ativo: checked },
                           }))
                         }
-                        className="h-4 w-4 accent-[#111111]"
                       />
                       <span>{label}</span>
                     </label>
                     {dia.ativo ? (
                       <div className="flex items-center gap-1 font-mono-num text-xs">
-                        <input
+                        <Input
                           type="time"
                           disabled={!isOwner}
                           value={dia.abre}
@@ -265,10 +239,10 @@ export function GestaoTabs({
                               [key]: { ...prev[key], abre: e.target.value },
                             }))
                           }
-                          className="rounded-lg bg-[var(--zelo-card)] px-2 py-1 text-xs outline-none"
+                          className="h-9 w-auto rounded-lg border-0 bg-card px-2 text-xs"
                         />
                         <span>–</span>
-                        <input
+                        <Input
                           type="time"
                           disabled={!isOwner}
                           value={dia.fecha}
@@ -278,53 +252,53 @@ export function GestaoTabs({
                               [key]: { ...prev[key], fecha: e.target.value },
                             }))
                           }
-                          className="rounded-lg bg-[var(--zelo-card)] px-2 py-1 text-xs outline-none"
+                          className="h-9 w-auto rounded-lg border-0 bg-card px-2 text-xs"
                         />
                       </div>
                     ) : (
-                      <span className="text-[11px] text-[var(--zelo-muted)]">Fechado</span>
+                      <span className="text-[11px] text-muted-foreground">Fechado</span>
                     )}
                   </div>
                 );
               })}
             </div>
 
-            <div className="flex items-center justify-between gap-2 rounded-xl bg-[var(--zelo-soft)] px-3 py-2.5">
-              <label className="flex items-center gap-2 text-xs font-semibold">
-                <Utensils className="h-3.5 w-3.5 text-[#F59E0B]" />
-                <span>Pausa Almoço</span>
-                <input
-                  type="checkbox"
+            <div className="flex min-h-[48px] flex-wrap items-center justify-between gap-2 rounded-xl bg-secondary px-3 py-2">
+              <label className="flex min-h-[36px] cursor-pointer items-center gap-2 text-xs font-semibold">
+                <Switch
                   disabled={!isOwner}
                   checked={almocoAtivo}
-                  onChange={(e) => setAlmocoAtivo(e.target.checked)}
-                  className="h-4 w-4 accent-[#111111]"
+                  onCheckedChange={setAlmocoAtivo}
                 />
+                <Utensils className="h-3.5 w-3.5 text-[#F59E0B]" />
+                <span>Pausa Almoço</span>
               </label>
               {almocoAtivo && (
                 <div className="flex items-center gap-1 font-mono-num text-xs">
-                  <input
+                  <Input
                     type="time"
                     disabled={!isOwner}
                     value={almocoInicio}
                     onChange={(e) => setAlmocoInicio(e.target.value)}
-                    className="rounded-lg bg-[var(--zelo-card)] px-2 py-1 outline-none"
+                    className="h-9 w-auto rounded-lg border-0 bg-card px-2 text-xs"
                   />
                   <span>–</span>
-                  <input
+                  <Input
                     type="time"
                     disabled={!isOwner}
                     value={almocoFim}
                     onChange={(e) => setAlmocoFim(e.target.value)}
-                    className="rounded-lg bg-[var(--zelo-card)] px-2 py-1 outline-none"
+                    className="h-9 w-auto rounded-lg border-0 bg-card px-2 text-xs"
                   />
                 </div>
               )}
             </div>
-          </section>
+          </CardContent>
+        </Card>
 
-          {isOwner && (
-            <section className="rounded-2xl bg-[#F59E0B]/10 p-4 space-y-3">
+        {isOwner && (
+          <Card className="bg-[#F59E0B]/10 py-4">
+            <CardContent className="space-y-3 px-4">
               <div className="flex items-center gap-2">
                 <CalendarPlus className="h-4 w-4 text-[#D97706]" />
                 <h2 className="text-sm font-bold">Abrir Dia Especial ou Bloqueio</h2>
@@ -333,39 +307,39 @@ export function GestaoTabs({
                 <select
                   value={espTipo}
                   onChange={(e) => setEspTipo(e.target.value as "dia_especial" | "folga" | "feriado")}
-                  className="h-11 rounded-xl bg-[var(--zelo-card)] px-3 text-xs font-medium outline-none"
+                  className="h-11 rounded-xl bg-card px-3 text-xs font-medium outline-none"
                 >
                   <option value="dia_especial">Dia Especial Aberto</option>
                   <option value="folga">Folga / Bloqueio</option>
                   <option value="feriado">Feriado (Fechado)</option>
                 </select>
-                <input
+                <Input
                   type="date"
                   value={espData}
                   onChange={(e) => setEspData(e.target.value)}
-                  className="h-11 rounded-xl bg-[var(--zelo-card)] px-3 text-xs font-mono-num outline-none"
+                  className="h-11 rounded-xl border-0 bg-card px-3 font-mono-num text-xs"
                 />
-                <input
+                <Input
                   type="time"
                   value={espInicio}
                   onChange={(e) => setEspInicio(e.target.value)}
-                  className="h-11 rounded-xl bg-[var(--zelo-card)] px-3 text-xs font-mono-num outline-none"
+                  className="h-11 rounded-xl border-0 bg-card px-3 font-mono-num text-xs"
                 />
-                <input
+                <Input
                   type="time"
                   value={espFim}
                   onChange={(e) => setEspFim(e.target.value)}
-                  className="h-11 rounded-xl bg-[var(--zelo-card)] px-3 text-xs font-mono-num outline-none"
+                  className="h-11 rounded-xl border-0 bg-card px-3 font-mono-num text-xs"
                 />
               </div>
-              <input
+              <Input
                 type="text"
                 value={espMotivo}
                 onChange={(e) => setEspMotivo(e.target.value)}
                 placeholder="Motivo (ex: Domingo pré-feriado)"
-                className="h-11 w-full rounded-xl bg-[var(--zelo-card)] px-3 text-xs outline-none"
+                className="h-11 rounded-xl border-0 bg-card px-3 text-xs"
               />
-              <button
+              <Button
                 type="button"
                 disabled={isPending || !espData}
                 onClick={() =>
@@ -385,86 +359,80 @@ export function GestaoTabs({
                     return res;
                   })
                 }
-                className="h-11 w-full rounded-xl bg-[var(--zelo-btn-bg)] text-xs font-semibold text-[var(--zelo-btn-ink)] disabled:opacity-50"
+                className="h-11 w-full rounded-xl text-xs font-semibold"
               >
                 Registrar na Agenda
-              </button>
+              </Button>
 
               {bloqueios.length > 0 && (
                 <div className="space-y-1.5 pt-1">
                   {bloqueios.map((b) => (
                     <div
                       key={b.id}
-                      className="flex items-center justify-between rounded-xl bg-[var(--zelo-card)] px-3 py-2 text-xs"
+                      className="flex items-center justify-between rounded-xl bg-card px-3 py-2 text-xs"
                     >
-                      <span className="font-semibold capitalize">{b.tipo.replace("_", " ")}</span>
-                      <span className="font-mono-num text-[var(--zelo-muted)]">
-                        {b.inicio.slice(0, 10)}
+                      <span className="font-medium">
+                        {b.motivo || b.tipo} ({b.tipo})
+                      </span>
+                      <span className="font-mono-num text-[11px] text-muted-foreground">
+                        {new Date(b.inicio).toLocaleDateString("pt-BR")}
                       </span>
                     </div>
                   ))}
                 </div>
               )}
-            </section>
-          )}
-        </div>
-      )}
+            </CardContent>
+          </Card>
+        )}
+      </TabsContent>
 
-      {tab === "equipe" && (
-        <div className="space-y-4">
-          {donoProf && (
-            <section className="rounded-2xl bg-[var(--zelo-card)] p-4 flex items-center justify-between gap-3">
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-1.5 text-sm font-bold">
-                  <UserCheck className="h-4 w-4 text-[#10B981]" />
-                  Também atendo clientes
+      <TabsContent value="equipe" className="mt-0 space-y-4">
+        {donoProf && (
+          <Card className="py-4">
+            <CardContent className="px-4">
+              <label className="flex min-h-[44px] cursor-pointer items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-1.5 text-sm font-bold">
+                    <UserCheck className="h-4 w-4 text-[#10B981]" />
+                    Também atendo clientes
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Exibe ou oculta você na lista de profissionais da loja sem perder seu histórico.
+                  </p>
                 </div>
-                <p className="text-xs text-[var(--zelo-muted)]">
-                  Exibe ou oculta você na lista de profissionais da loja sem perder seu histórico.
-                </p>
-              </div>
-              <button
-                type="button"
-                disabled={!isOwner || isPending}
-                onClick={() =>
-                  runAction(() => toggleDonoAtendeAction(lojaId, donoProf.id, !donoProf.ativo))
-                }
-                className="inline-flex min-h-[44px] shrink-0 items-center px-1"
-                aria-label="Alternar atendimento do proprietário"
-              >
-                <span
-                  className={`flex h-8 w-14 items-center rounded-full p-1 transition ${
-                    donoProf.ativo ? "bg-[#10B981]" : "bg-[var(--zelo-soft)]"
-                  }`}
-                >
-                  <span
-                    className={`block h-6 w-6 rounded-full bg-white shadow-xs transition-transform ${
-                      donoProf.ativo ? "translate-x-6" : "translate-x-0"
-                    }`}
-                  />
-                </span>
-              </button>
-            </section>
-          )}
+                <Switch
+                  disabled={!isOwner || isPending}
+                  checked={donoProf.ativo}
+                  onCheckedChange={() =>
+                    runAction(() => toggleDonoAtendeAction(lojaId, donoProf.id, !donoProf.ativo))
+                  }
+                  aria-label="Alternar atendimento do proprietário"
+                />
+              </label>
+            </CardContent>
+          </Card>
+        )}
 
-          <section className="rounded-2xl bg-[var(--zelo-card)] p-4 space-y-2.5">
+        <Card className="py-4">
+          <CardContent className="space-y-2.5 px-4">
             <h2 className="text-sm font-bold">Membros da Loja</h2>
             {profissionais.map((p) => (
               <div
                 key={p.id}
-                className="flex items-center justify-between gap-2 rounded-xl bg-[var(--zelo-soft)] px-3.5 py-3"
+                className="flex items-center justify-between gap-2 rounded-xl bg-secondary px-3.5 py-3"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-bold">
                     {p.nome} {p.eh_dono ? "(Dono)" : ""}
                   </p>
-                  <p className="text-xs text-[var(--zelo-muted)]">
+                  <p className="text-xs text-muted-foreground">
                     {p.cargo} • {p.comissao_percentual}% • {p.ativo ? "Ativo" : "Inativo"}
                   </p>
                 </div>
                 {isOwner && !p.eh_dono && p.ativo && (
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
                     disabled={isPending}
                     onClick={() =>
                       runAction(async () => {
@@ -473,58 +441,60 @@ export function GestaoTabs({
                         return res.ok ? { message: "Profissional desligado com segurança." } : res;
                       })
                     }
-                    className="inline-flex h-11 items-center gap-1 rounded-xl bg-red-500/10 px-3 text-xs font-semibold text-red-600"
+                    className="h-11 rounded-xl bg-red-500/10 px-3 text-xs font-semibold text-red-600 hover:bg-red-500/15 hover:text-red-600"
                   >
                     <UserMinus className="h-3.5 w-3.5" />
                     Desligar
-                  </button>
+                  </Button>
                 )}
               </div>
             ))}
-          </section>
+          </CardContent>
+        </Card>
 
-          {isOwner && (
-            <section className="rounded-2xl bg-[var(--zelo-card)] p-4 space-y-3">
+        {isOwner && (
+          <Card className="py-4">
+            <CardContent className="space-y-3 px-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm font-bold">
                   <UserPlus className="h-4 w-4 text-[#F59E0B]" />
                   Convidar Profissional
                 </div>
-                <span className="font-mono-num text-[11px] text-[var(--zelo-muted)]">
+                <Badge variant="secondary" className="font-mono-num text-[11px]">
                   Plano {plano.toUpperCase()}
-                </span>
+                </Badge>
               </div>
-              <input
+              <Input
                 type="text"
                 value={convNome}
                 onChange={(e) => setConvNome(e.target.value)}
                 placeholder="Nome (ex: Matheus)"
-                className="h-11 w-full rounded-xl bg-[var(--zelo-soft)] px-3 text-sm outline-none"
+                className="h-11 rounded-xl border-0 bg-secondary px-3 text-sm"
               />
-              <input
+              <Input
                 type="email"
                 value={convEmail}
                 onChange={(e) => setConvEmail(e.target.value)}
                 placeholder="E-mail Google do profissional"
-                className="h-11 w-full rounded-xl bg-[var(--zelo-soft)] px-3 text-sm outline-none"
+                className="h-11 rounded-xl border-0 bg-secondary px-3 text-sm"
               />
               <div className="grid grid-cols-2 gap-2">
-                <input
+                <Input
                   type="text"
                   value={convCargo}
                   onChange={(e) => setConvCargo(e.target.value)}
                   placeholder="Cargo"
-                  className="h-11 rounded-xl bg-[var(--zelo-soft)] px-3 text-sm outline-none"
+                  className="h-11 rounded-xl border-0 bg-secondary px-3 text-sm"
                 />
-                <input
+                <Input
                   type="number"
                   value={convComissao}
                   onChange={(e) => setConvComissao(e.target.value)}
                   placeholder="Comissão %"
-                  className="h-11 rounded-xl bg-[var(--zelo-soft)] px-3 text-sm font-mono-num outline-none"
+                  className="h-11 rounded-xl border-0 bg-secondary px-3 font-mono-num text-sm"
                 />
               </div>
-              <button
+              <Button
                 type="button"
                 disabled={isPending}
                 onClick={() =>
@@ -544,47 +514,47 @@ export function GestaoTabs({
                     return res;
                   })
                 }
-                className="h-11 w-full rounded-xl bg-[var(--zelo-btn-bg)] text-xs font-semibold text-[var(--zelo-btn-ink)]"
+                className="h-11 w-full rounded-xl text-xs font-semibold"
               >
                 Adicionar à Equipe
-              </button>
-            </section>
-          )}
-        </div>
-      )}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+      </TabsContent>
 
-      {tab === "servicos" && (
-        <div className="space-y-4">
-          {isOwner && (
-            <section className="rounded-2xl bg-[var(--zelo-card)] p-4 space-y-3">
+      <TabsContent value="servicos" className="mt-0 space-y-4">
+        {isOwner && (
+          <Card className="py-4">
+            <CardContent className="space-y-3 px-4">
               <div className="flex items-center gap-2 text-sm font-bold">
                 <Plus className="h-4 w-4 text-[#F59E0B]" />
                 Novo Serviço
               </div>
-              <input
+              <Input
                 type="text"
                 value={srvNome}
                 onChange={(e) => setSrvNome(e.target.value)}
                 placeholder="Nome (ex: Corte Navalhado)"
-                className="h-11 w-full rounded-xl bg-[var(--zelo-soft)] px-3 text-sm outline-none"
+                className="h-11 rounded-xl border-0 bg-secondary px-3 text-sm"
               />
               <div className="grid grid-cols-2 gap-2">
-                <input
+                <Input
                   type="number"
                   value={srvDuracao}
                   onChange={(e) => setSrvDuracao(e.target.value)}
                   placeholder="Duração (min)"
-                  className="h-11 rounded-xl bg-[var(--zelo-soft)] px-3 text-sm font-mono-num outline-none"
+                  className="h-11 rounded-xl border-0 bg-secondary px-3 font-mono-num text-sm"
                 />
-                <input
+                <Input
                   type="text"
                   value={srvPreco}
                   onChange={(e) => setSrvPreco(e.target.value)}
                   placeholder="Preço (ex: 45,00)"
-                  className="h-11 rounded-xl bg-[var(--zelo-soft)] px-3 text-sm font-mono-num outline-none"
+                  className="h-11 rounded-xl border-0 bg-secondary px-3 font-mono-num text-sm"
                 />
               </div>
-              <button
+              <Button
                 type="button"
                 disabled={isPending}
                 onClick={() =>
@@ -607,41 +577,42 @@ export function GestaoTabs({
                     return res;
                   })
                 }
-                className="h-11 w-full rounded-xl bg-[var(--zelo-btn-bg)] text-xs font-semibold text-[var(--zelo-btn-ink)]"
+                className="h-11 w-full rounded-xl text-xs font-semibold"
               >
                 Salvar Serviço
-              </button>
-            </section>
-          )}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
-          <section className="space-y-2">
-            {servicos.map((s) => (
-              <div
-                key={s.id}
-                className="flex items-center justify-between gap-2 rounded-2xl bg-[var(--zelo-card)] p-4"
-              >
+        <div className="space-y-2">
+          {servicos.map((s) => (
+            <Card key={s.id} className="py-3">
+              <CardContent className="flex items-center justify-between gap-2 px-4">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-bold">{s.nome}</p>
-                  <p className="font-mono-num text-xs text-[var(--zelo-muted)]">
+                  <p className="font-mono-num text-xs text-muted-foreground">
                     {s.duracao_min} min • R$ {(s.preco_centavos / 100).toFixed(2).replace(".", ",")}
                   </p>
                 </div>
                 {isOwner && (
-                  <button
+                  <Button
                     type="button"
+                    variant="secondary"
+                    size="icon"
                     disabled={isPending}
                     onClick={() => runAction(() => deleteServicoAction(s.id, lojaId))}
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--zelo-soft)] text-red-600"
+                    className="h-11 w-11 rounded-xl text-red-600"
                     aria-label={`Excluir ${s.nome}`}
                   >
                     <Trash2 className="h-4 w-4" />
-                  </button>
+                  </Button>
                 )}
-              </div>
-            ))}
-          </section>
+              </CardContent>
+            </Card>
+          ))}
         </div>
-      )}
-    </div>
+      </TabsContent>
+    </Tabs>
   );
 }

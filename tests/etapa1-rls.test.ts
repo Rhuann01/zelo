@@ -240,7 +240,19 @@ describe("Etapa 1 — Fundação, RLS Multi-Tenant, Auth Google & GiST", () => {
 
     expect(successes).toHaveLength(1);
     expect(errors).toHaveLength(1);
-    expect(errors[0]?.code).toBe("23P01");
+    expect(["23P01", "40P01"]).toContain(errors[0]?.code);
+
+    // Nova tentativa sobreposta após confirmação -> obrigatoriamente SQLSTATE 23P01 (EXCLUDE USING gist)
+    const { error: seqOverlapErr } = await clientA.from("agendamentos").insert({
+      loja_id: lojaAId,
+      profissional_id: profAId,
+      origem: "manual",
+      cliente_nome: "Cliente 3",
+      inicio,
+      fim,
+      status: "confirmado",
+    });
+    expect(seqOverlapErr?.code).toBe("23P01");
 
     // Anônimo tenta ler agendamentos -> bloqueado pela RLS (0 linhas)
     const { data: anonRead } = await anon.from("agendamentos").select("id, cliente_nome");
