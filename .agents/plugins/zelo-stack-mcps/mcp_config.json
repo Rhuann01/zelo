@@ -9,17 +9,6 @@
       "env": {
         "PATH": "/home/rhuann/.local/share/nvm/v24.22.1/bin:/usr/local/bin:/usr/bin:/bin"
       }
-    },
-    "zelo-shadcn": {
-      "command": "/home/rhuann/.local/share/nvm/v24.22.1/bin/npx",
-      "args": [
-        "-y",
-        "shadcn@latest",
-        "mcp"
-      ],
-      "env": {
-        "PATH": "/home/rhuann/.local/share/nvm/v24.22.1/bin:/usr/local/bin:/usr/bin:/bin"
-      }
     }
   }
 }
