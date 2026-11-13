@@ -151,7 +151,7 @@ export function GestaoTabs({
       onValueChange={(v) => setTab(v as "horarios" | "equipe" | "servicos")}
       className="space-y-4"
     >
-      <TabsList className="grid h-12 w-full grid-cols-3 rounded-2xl bg-card p-1">
+      <TabsList className="grid w-full grid-cols-3 rounded-2xl bg-card p-1 group-data-horizontal/tabs:h-12">
         <TabsTrigger value="horarios" className="h-10 gap-1.5 rounded-xl text-xs font-semibold">
           <Clock className="h-3.5 w-3.5" />
           Horários
@@ -239,7 +239,7 @@ export function GestaoTabs({
                               [key]: { ...prev[key], abre: e.target.value },
                             }))
                           }
-                          className="h-9 w-[92px] shrink-0 rounded-lg border-0 bg-card px-2 text-center text-xs [&::-webkit-calendar-picker-indicator]:ml-0.5 [&::-webkit-calendar-picker-indicator]:opacity-60"
+                          className="h-9 w-[92px] shrink-0 rounded-lg border-0 bg-card px-2 text-center text-xs dark:bg-card [&::-webkit-calendar-picker-indicator]:ml-0.5 [&::-webkit-calendar-picker-indicator]:opacity-60"
                         />
                         <span className="text-muted-foreground">–</span>
                         <Input
@@ -252,7 +252,7 @@ export function GestaoTabs({
                               [key]: { ...prev[key], fecha: e.target.value },
                             }))
                           }
-                          className="h-9 w-[92px] shrink-0 rounded-lg border-0 bg-card px-2 text-center text-xs [&::-webkit-calendar-picker-indicator]:ml-0.5 [&::-webkit-calendar-picker-indicator]:opacity-60"
+                          className="h-9 w-[92px] shrink-0 rounded-lg border-0 bg-card px-2 text-center text-xs dark:bg-card [&::-webkit-calendar-picker-indicator]:ml-0.5 [&::-webkit-calendar-picker-indicator]:opacity-60"
                         />
                       </div>
                     ) : (
@@ -280,7 +280,7 @@ export function GestaoTabs({
                     disabled={!isOwner}
                     value={almocoInicio}
                     onChange={(e) => setAlmocoInicio(e.target.value)}
-                    className="h-9 w-[92px] shrink-0 rounded-lg border-0 bg-card px-2 text-center text-xs [&::-webkit-calendar-picker-indicator]:ml-0.5 [&::-webkit-calendar-picker-indicator]:opacity-60"
+                    className="h-9 w-[92px] shrink-0 rounded-lg border-0 bg-card px-2 text-center text-xs dark:bg-card [&::-webkit-calendar-picker-indicator]:ml-0.5 [&::-webkit-calendar-picker-indicator]:opacity-60"
                   />
                   <span className="text-muted-foreground">–</span>
                   <Input
@@ -288,7 +288,7 @@ export function GestaoTabs({
                     disabled={!isOwner}
                     value={almocoFim}
                     onChange={(e) => setAlmocoFim(e.target.value)}
-                    className="h-9 w-[92px] shrink-0 rounded-lg border-0 bg-card px-2 text-center text-xs [&::-webkit-calendar-picker-indicator]:ml-0.5 [&::-webkit-calendar-picker-indicator]:opacity-60"
+                    className="h-9 w-[92px] shrink-0 rounded-lg border-0 bg-card px-2 text-center text-xs dark:bg-card [&::-webkit-calendar-picker-indicator]:ml-0.5 [&::-webkit-calendar-picker-indicator]:opacity-60"
                   />
                 </div>
               )}
@@ -307,7 +307,7 @@ export function GestaoTabs({
                 <select
                   value={espTipo}
                   onChange={(e) => setEspTipo(e.target.value as "dia_especial" | "folga" | "feriado")}
-                  className="h-11 rounded-xl bg-card px-3 text-xs font-medium outline-none"
+                  className="h-11 rounded-xl border-0 bg-card px-3 text-xs font-medium text-foreground outline-none dark:bg-card"
                 >
                   <option value="dia_especial">Dia Especial Aberto</option>
                   <option value="folga">Folga / Bloqueio</option>
@@ -317,19 +317,19 @@ export function GestaoTabs({
                   type="date"
                   value={espData}
                   onChange={(e) => setEspData(e.target.value)}
-                  className="h-11 rounded-xl border-0 bg-card px-3 font-mono-num text-xs"
+                  className="h-11 rounded-xl border-0 bg-card px-3 font-mono-num text-xs dark:bg-card"
                 />
                 <Input
                   type="time"
                   value={espInicio}
                   onChange={(e) => setEspInicio(e.target.value)}
-                  className="h-11 rounded-xl border-0 bg-card px-3 font-mono-num text-xs"
+                  className="h-11 rounded-xl border-0 bg-card px-3 font-mono-num text-xs dark:bg-card"
                 />
                 <Input
                   type="time"
                   value={espFim}
                   onChange={(e) => setEspFim(e.target.value)}
-                  className="h-11 rounded-xl border-0 bg-card px-3 font-mono-num text-xs"
+                  className="h-11 rounded-xl border-0 bg-card px-3 font-mono-num text-xs dark:bg-card"
                 />
               </div>
               <Input
@@ -337,7 +337,7 @@ export function GestaoTabs({
                 value={espMotivo}
                 onChange={(e) => setEspMotivo(e.target.value)}
                 placeholder="Motivo (ex: Domingo pré-feriado)"
-                className="h-11 rounded-xl border-0 bg-card px-3 text-xs"
+                className="h-11 rounded-xl border-0 bg-card px-3 text-xs dark:bg-card"
               />
               <Button
                 type="button"
