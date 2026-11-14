@@ -64,7 +64,7 @@ export async function revalidateLojaMediaAction(lojaId: string) {
     .from("lojas")
     .select("slug")
     .eq("id", lojaId)
-    .eq("dono_id", user.id)
+    .eq("owner_id", user.id)
     .maybeSingle();
 
   if (!data?.slug) return { ok: false };
