@@ -488,10 +488,6 @@ export function ExplorarMeusHorarios({
                     .join(", "),
                 })
               : null;
-            const restanteCentavos = Math.max(
-              0,
-              ag.total_centavos - ag.sinal_centavos
-            );
             const servicoLabel =
               ag.servicos.length > 0
                 ? ag.servicos.map((s) => s.nome).join(" + ")
@@ -589,18 +585,15 @@ export function ExplorarMeusHorarios({
                         </p>
                       </div>
                     </div>
-                    {isActive && (
-                      <span className="shrink-0 rounded-md bg-[#10B981]/15 px-2 py-1 text-[11px] font-bold text-[#047857] dark:text-[#34D399]">
-                        Ativo
-                      </span>
-                    )}
                   </div>
 
                   {/* Financial Breakdown */}
                   <div className="space-y-1.5 border-t border-[var(--zelo-border)]/50 pt-2 text-xs">
-                    <div className="flex items-center justify-between text-[var(--zelo-muted)]">
-                      <span>Total do serviço</span>
-                      <span className="font-mono-num font-semibold text-[var(--zelo-ink)]">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-[var(--zelo-ink)]">
+                        Total do serviço
+                      </span>
+                      <span className="font-mono-num text-sm font-extrabold text-[var(--zelo-ink)]">
                         {formatBRL(ag.total_centavos)}
                       </span>
                     </div>
@@ -613,18 +606,10 @@ export function ExplorarMeusHorarios({
                           </span>
                         </div>
                         <span className="font-mono-num font-semibold text-[#047857] dark:text-[#34D399]">
-                          - {formatBRL(ag.sinal_centavos)}
+                          {formatBRL(ag.sinal_centavos)}
                         </span>
                       </div>
                     )}
-                    <div className="flex items-center justify-between border-t border-dashed border-[var(--zelo-border)] pt-1.5">
-                      <span className="font-semibold text-[var(--zelo-ink)]">
-                        Restante no local
-                      </span>
-                      <span className="font-mono-num text-sm font-extrabold text-[var(--zelo-ink)]">
-                        {formatBRL(restanteCentavos)}
-                      </span>
-                    </div>
                   </div>
                 </div>
 
