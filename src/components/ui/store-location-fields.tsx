@@ -92,6 +92,23 @@ export function StoreLocationFields({
   const [searchError, setSearchError] = useState<string | null>(null);
   const searchAbortRef = useRef<AbortController | null>(null);
 
+  // Refs para evitar abortar o fetch do CEP quando o pai re-renderiza
+  const callbacksRef = useRef({
+    onChangeCidade,
+    onChangeBairro,
+    onChangeEndereco,
+    onChangeCoords,
+  });
+  callbacksRef.current = {
+    onChangeCidade,
+    onChangeBairro,
+    onChangeEndereco,
+    onChangeCoords,
+  };
+
+  const addrPartsRef = useRef({ numero, complemento });
+  addrPartsRef.current = { numero, complemento };
+
   const inputSurfaceClass =
     variant === "card"
       ? "bg-[var(--zelo-card)] shadow-xs"
@@ -101,7 +118,9 @@ export function StoreLocationFields({
   useEffect(() => {
     const digits = cep.replace(/\D/g, "");
     if (digits.length !== 8) {
-      if (digits.length < 8) setCepStatus(null);
+      lastFetchedCepRef.current = "";
+      setCepStatus(null);
+      setCepLoading(false);
       return;
     }
     if (lastFetchedCepRef.current === digits) return;
@@ -171,12 +190,13 @@ export function StoreLocationFields({
           return;
         }
 
-        if (nextCidade) onChangeCidade(nextCidade);
-        if (nextBairro) onChangeBairro(nextBairro);
-        if (nextLogradouro) {
-          setRua(nextLogradouro);
-          onChangeEndereco(joinEndereco(nextLogradouro, numero, complemento));
-        }
+        const cb = callbacksRef.current;
+        const { numero: curNum, complemento: curComp } = addrPartsRef.current;
+
+        cb.onChangeCidade(nextCidade);
+        cb.onChangeBairro(nextBairro);
+        setRua(nextLogradouro);
+        cb.onChangeEndereco(joinEndereco(nextLogradouro, curNum, curComp));
 
         // Posiciona o pino no mapa: primeiro Photon/cascata (rua -> bairro -> cidade), ou BrasilAPI
         const geoHit = await geocodeBrazilCascade({
@@ -188,11 +208,11 @@ export function StoreLocationFields({
         });
 
         if (geoHit && geoHit.precision === "street") {
-          onChangeCoords(geoHit.lat, geoHit.lng);
+          cb.onChangeCoords(geoHit.lat, geoHit.lng);
         } else if (brCoords) {
-          onChangeCoords(brCoords.lat, brCoords.lng);
+          cb.onChangeCoords(brCoords.lat, brCoords.lng);
         } else if (geoHit) {
-          onChangeCoords(geoHit.lat, geoHit.lng);
+          cb.onChangeCoords(geoHit.lat, geoHit.lng);
         }
 
         setCepStatus(
@@ -203,12 +223,14 @@ export function StoreLocationFields({
           setCepStatus("Não foi possível consultar o CEP agora.");
         }
       } finally {
-        setCepLoading(false);
+        if (!controller.signal.aborted) {
+          setCepLoading(false);
+        }
       }
     })();
 
     return () => controller.abort();
-  }, [cep, onChangeBairro, onChangeCidade, onChangeCoords, onChangeEndereco]);
+  }, [cep]);
 
   // Pesquisa fuzzy por nome/rua/referência (Photon + fallback Nominatim)
   useEffect(() => {
@@ -300,7 +322,25 @@ export function StoreLocationFields({
               maxLength={9}
               className="w-full bg-transparent text-sm font-mono-num outline-none"
             />
-            {cepLoading && <Loader2 className="h-4 w-4 animate-spin text-[var(--zelo-muted)] shrink-0" />}
+            {cepLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin text-[var(--zelo-muted)] shrink-0" />
+            ) : (
+              cep &&
+              !disabled && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    lastFetchedCepRef.current = "";
+                    setCep("");
+                    setCepStatus(null);
+                  }}
+                  aria-label="Limpar CEP"
+                  className="text-[var(--zelo-subtle)] hover:text-[var(--zelo-ink)] shrink-0"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )
+            )}
           </div>
         </div>
 
