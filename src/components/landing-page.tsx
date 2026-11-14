@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import gsap from "gsap";
 import {
   Bell,
   Check,
@@ -180,7 +181,6 @@ function ZeloMark() {
 export function LandingPage() {
   const [isDark, setIsDark] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [odoIndex, setOdoIndex] = useState(0);
 
   // Interactive Showcase State
   const [appMode, setAppMode] = useState<AppMode>("client");
@@ -197,67 +197,368 @@ export function LandingPage() {
   // Vitrine preview filter
   const [vitrineFilter, setVitrineFilter] = useState<VitrineFilter>("all");
 
+  // GSAP Refs (Skill: gsap-live-demo)
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const cursorRef = useRef<HTMLDivElement | null>(null);
+  const cursorRingRef = useRef<HTMLDivElement | null>(null);
+  const touchRef = useRef<HTMLDivElement | null>(null);
+  const touchRippleRef = useRef<HTMLDivElement | null>(null);
+  const sliderRef = useRef<HTMLInputElement | null>(null);
+
+  const demoTlRef = useRef<gsap.core.Timeline | null>(null);
+  const inactivityTimerRef = useRef<number | null>(null);
+  const demoPausedRef = useRef(false);
+  const appModeRef = useRef<AppMode>("client");
+
+  useEffect(() => {
+    appModeRef.current = appMode;
+  }, [appMode]);
+
+  // 1. Odômetro Vertical Dígito-a-Dígito com GSAP 3
   useEffect(() => {
     setIsDark(document.documentElement.classList.contains("dark"));
-    const id = window.setInterval(() => {
-      setOdoIndex((prev) => (prev + 1) % ODOMETER_TIMES.length);
+    const prefersReduced =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReduced) return;
+
+    const times = ["1430", "1515", "1600", "0930"];
+    let currentDigits = ["1", "4", "3", "0"];
+    let timeIdx = 0;
+
+    const intervalId = window.setInterval(() => {
+      timeIdx = (timeIdx + 1) % times.length;
+      const nextDigits = times[timeIdx].split("");
+      let changedCount = 0;
+
+      nextDigits.forEach((nextVal, idx) => {
+        if (nextVal !== currentDigits[idx]) {
+          const el = document.getElementById(`odo-${idx}`);
+          if (!el) return;
+          const delay = changedCount * 0.06;
+          changedCount++;
+
+          gsap
+            .timeline({ delay })
+            .to(el, {
+              yPercent: -110,
+              opacity: 0,
+              duration: 0.22,
+              ease: "power2.in",
+              onComplete: () => {
+                el.textContent = nextVal;
+              },
+            })
+            .fromTo(
+              el,
+              { yPercent: 110, opacity: 0 },
+              { yPercent: 0, opacity: 1, duration: 0.34, ease: "power3.out" }
+            );
+        }
+      });
+
+      currentDigits = nextDigits;
     }, 2800);
-    return () => window.clearInterval(id);
+
+    return () => window.clearInterval(intervalId);
   }, []);
 
-  useEffect(() => {
-    if (!demoPlaying) return;
+  const resumeAutoDemo = useCallback((restartFromTop = false) => {
+    if (inactivityTimerRef.current) {
+      window.clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = null;
+    }
+    demoPausedRef.current = false;
+    setDemoPlaying(true);
 
-    const steps: Array<() => void> = [
-      () => {
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+    const ptr = isMobile ? touchRef.current : cursorRef.current;
+    if (ptr) {
+      gsap.to(ptr, { opacity: 1, duration: 0.3 });
+    }
+    if (demoTlRef.current) {
+      if (restartFromTop) demoTlRef.current.restart();
+      else demoTlRef.current.resume();
+    }
+  }, []);
+
+  const pauseDemoWithInactivity = useCallback(() => {
+    if (inactivityTimerRef.current) {
+      window.clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = null;
+    }
+
+    if (!demoPausedRef.current) {
+      demoPausedRef.current = true;
+      setDemoPlaying(false);
+      demoTlRef.current?.pause();
+      if (cursorRef.current) gsap.set(cursorRef.current, { opacity: 0 });
+      if (touchRef.current) gsap.set(touchRef.current, { opacity: 0 });
+    }
+
+    if (appModeRef.current === "client") {
+      inactivityTimerRef.current = window.setTimeout(() => {
+        if (appModeRef.current === "client" && demoPausedRef.current) {
+          resumeAutoDemo(false);
+        }
+      }, 8000);
+    }
+  }, [resumeAutoDemo]);
+
+  const handleTogglePlay = useCallback(() => {
+    if (demoPlaying) {
+      if (inactivityTimerRef.current) {
+        window.clearTimeout(inactivityTimerRef.current);
+        inactivityTimerRef.current = null;
+      }
+      demoPausedRef.current = true;
+      setDemoPlaying(false);
+      demoTlRef.current?.pause();
+      if (cursorRef.current) gsap.set(cursorRef.current, { opacity: 0 });
+      if (touchRef.current) gsap.set(touchRef.current, { opacity: 0 });
+    } else {
+      if (appModeRef.current !== "client") {
         setAppMode("client");
-        setThemeKey("glam");
-        setAccentHex("#BE185D");
-        setAccentInk("#FFFFFF");
-        setRadiusPx(18);
-        setExtraAdded(false);
-        setPreviewConfirmed(false);
-      },
-      () => {
-        setExtraAdded(true);
-        setSelectedBarber("Lucas");
-        setSelectedTime("15:30");
-      },
-      () => {
-        setThemeKey("brutal");
-        setAccentHex("#A3E635");
-        setAccentInk("#111111");
-        setRadiusPx(4);
-      },
-      () => {
-        setThemeKey("slate");
-        setAccentHex("#2563EB");
-        setAccentInk("#FFFFFF");
-        setRadiusPx(12);
-        setSelectedBarber("Matheus");
-        setSelectedTime("14:45");
-      },
-      () => {
-        setAppMode("admin");
-      },
-      () => {
-        setAppMode("client");
+        appModeRef.current = "client";
+      }
+      resumeAutoDemo(false);
+    }
+  }, [demoPlaying, resumeAutoDemo]);
+
+  // 2. Demo Animada Dual-Viewport (Desktop #demo-cursor + Mobile #demo-touch) com GSAP 3
+  useEffect(() => {
+    const prefersReduced =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReduced) return;
+
+    const container = containerRef.current;
+    const cursor = cursorRef.current;
+    const ring = cursorRingRef.current;
+    const touchPtr = touchRef.current;
+    const touchRipple = touchRippleRef.current;
+    if (!container || !cursor || !ring || !touchPtr || !touchRipple) return;
+
+    function getPos(elId: string) {
+      const el = document.getElementById(elId);
+      if (!el || !container) return { x: 140, y: 120 };
+      const cRect = container.getBoundingClientRect();
+      const eRect = el.getBoundingClientRect();
+      return {
+        x: eRect.left - cRect.left + eRect.width / 2,
+        y: eRect.top - cRect.top + eRect.height / 2,
+      };
+    }
+
+    function getSliderThumbPos(val: number) {
+      const el = sliderRef.current;
+      if (!el || !container) return { x: 140, y: 120 };
+      const cRect = container.getBoundingClientRect();
+      const eRect = el.getBoundingClientRect();
+      const thumbPad = 8;
+      const ratio = Math.max(0, Math.min(1, (val - 2) / (24 - 2)));
+      return {
+        x: eRect.left - cRect.left + thumbPad + ratio * (eRect.width - thumbPad * 2),
+        y: eRect.top - cRect.top + eRect.height / 2,
+      };
+    }
+
+    function clickAndRun(
+      tl: gsap.core.Timeline,
+      ptrEl: HTMLElement,
+      rippleEl: HTMLElement,
+      onClickFn: () => void
+    ) {
+      return tl
+        .to(ptrEl, { scale: 0.84, duration: 0.12, ease: "power2.out" })
+        .call(onClickFn)
+        .fromTo(
+          rippleEl,
+          { opacity: 0.95, scale: 0.5 },
+          { opacity: 0, scale: 2.1, duration: 0.4, ease: "power2.out" },
+          "<"
+        )
+        .to(ptrEl, { scale: 1, duration: 0.15, ease: "power2.out" });
+    }
+
+    const radiusProxy = { val: 12 };
+
+    function buildSharedTimeline(ptrEl: HTMLElement, rippleEl: HTMLElement) {
+      const tl = gsap.timeline({ repeat: -1, repeatDelay: 0.8 });
+
+      tl.call(() => {
         setThemeKey("urban");
         setAccentHex("#F59E0B");
         setAccentInk("#111111");
+        radiusProxy.val = 12;
         setRadiusPx(12);
         setExtraAdded(false);
-      },
-    ];
+        setPreviewConfirmed(false);
+      });
 
-    let stepIdx = 0;
-    const id = window.setInterval(() => {
-      steps[stepIdx]();
-      stepIdx = (stepIdx + 1) % steps.length;
-    }, 1900);
+      // 1. Vai até Esmeralda -> Clica
+      tl.to(ptrEl, {
+        x: () => getPos("demo-swatch-10B981").x,
+        y: () => getPos("demo-swatch-10B981").y,
+        duration: 0.85,
+        ease: "power2.inOut",
+        delay: 0.65,
+      });
+      clickAndRun(tl, ptrEl, rippleEl, () => {
+        setAccentHex("#10B981");
+        setAccentInk("#FFFFFF");
+      });
 
-    return () => window.clearInterval(id);
-  }, [demoPlaying]);
+      // 2. Vai exatamente até a bolinha do slider (12px) antes de arrastar -> arrasta junto até 24px
+      tl.to(ptrEl, {
+        x: () => getSliderThumbPos(12).x,
+        y: () => getSliderThumbPos(12).y,
+        duration: 0.75,
+        ease: "power2.inOut",
+        delay: 0.7,
+      });
+      tl.to(ptrEl, { scale: 0.9, duration: 0.12, ease: "power2.out" });
+      tl.to(radiusProxy, {
+        val: 24,
+        duration: 0.9,
+        ease: "power1.inOut",
+        onUpdate: () => {
+          setRadiusPx(Math.round(radiusProxy.val));
+          const p = getSliderThumbPos(radiusProxy.val);
+          gsap.set(ptrEl, { x: p.x, y: p.y });
+        },
+      });
+      tl.to(ptrEl, { scale: 1, duration: 0.12, ease: "power2.out" });
+
+      // 3. Vai até Clean Glam -> Clica -> Muda para Rosé
+      tl.to(ptrEl, {
+        x: () => getPos("demo-btn-glam").x,
+        y: () => getPos("demo-btn-glam").y,
+        duration: 0.8,
+        ease: "power2.inOut",
+        delay: 0.85,
+      });
+      clickAndRun(tl, ptrEl, rippleEl, () => {
+        setThemeKey("glam");
+        setAccentHex("#BE185D");
+        setAccentInk("#FFFFFF");
+      });
+
+      // 4. Vai até Neo-Brutal -> Clica -> Muda para Lima
+      tl.to(ptrEl, {
+        x: () => getPos("demo-btn-brutal").x,
+        y: () => getPos("demo-btn-brutal").y,
+        duration: 0.85,
+        ease: "power2.inOut",
+        delay: 1.1,
+      });
+      clickAndRun(tl, ptrEl, rippleEl, () => {
+        setThemeKey("brutal");
+        setAccentHex("#A3E635");
+        setAccentInk("#111111");
+      });
+
+      // 5. Vai exatamente até onde a bolinha está agora (24px), segura e arrasta junto até 6px
+      tl.to(ptrEl, {
+        x: () => getSliderThumbPos(24).x,
+        y: () => getSliderThumbPos(24).y,
+        duration: 0.8,
+        ease: "power2.inOut",
+        delay: 0.45,
+      });
+      tl.to(ptrEl, { scale: 0.9, duration: 0.12, ease: "power2.out" });
+      tl.to(radiusProxy, {
+        val: 6,
+        duration: 0.85,
+        ease: "power1.inOut",
+        onUpdate: () => {
+          setRadiusPx(Math.round(radiusProxy.val));
+          const p = getSliderThumbPos(radiusProxy.val);
+          gsap.set(ptrEl, { x: p.x, y: p.y });
+        },
+      });
+      tl.to(ptrEl, { scale: 1, duration: 0.12, ease: "power2.out" });
+
+      // 6. Volta para Urban Noir
+      tl.to(ptrEl, {
+        x: () => getPos("demo-btn-urban").x,
+        y: () => getPos("demo-btn-urban").y,
+        duration: 0.85,
+        ease: "power2.inOut",
+        delay: 1.15,
+      });
+      clickAndRun(tl, ptrEl, rippleEl, () => {
+        setThemeKey("urban");
+        setAccentHex("#F59E0B");
+        setAccentInk("#111111");
+      });
+
+      return tl;
+    }
+
+    let lastMode: "mobile" | "desktop" | null = null;
+
+    function rebuildShowcaseDemo(force = false) {
+      if (!cursor || !ring || !touchPtr || !touchRipple) return;
+      const isMobile = window.innerWidth < 768;
+      const currentMode = isMobile ? "mobile" : "desktop";
+      const inClient = appModeRef.current === "client";
+
+      if (!force && lastMode === currentMode && demoTlRef.current) return;
+      lastMode = currentMode;
+
+      if (demoTlRef.current) {
+        demoTlRef.current.kill();
+        demoTlRef.current = null;
+      }
+
+      if (isMobile) {
+        cursor.style.display = "none";
+        touchPtr.style.display = "block";
+        gsap.set(touchPtr, {
+          x: 140,
+          y: 120,
+          scale: 1,
+          opacity: demoPausedRef.current || !inClient ? 0 : 1,
+        });
+        if (inClient) {
+          demoTlRef.current = buildSharedTimeline(touchPtr, touchRipple);
+          if (demoPausedRef.current) demoTlRef.current.pause();
+        }
+      } else {
+        touchPtr.style.display = "none";
+        cursor.style.display = "flex";
+        gsap.set(cursor, {
+          x: 200,
+          y: 120,
+          scale: 1,
+          opacity: demoPausedRef.current || !inClient ? 0 : 1,
+        });
+        if (inClient) {
+          demoTlRef.current = buildSharedTimeline(cursor, ring);
+          if (demoPausedRef.current) demoTlRef.current.pause();
+        }
+      }
+    }
+
+    rebuildShowcaseDemo(true);
+
+    let resizeTimer: number | null = null;
+    function onResize() {
+      if (resizeTimer) window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => {
+        rebuildShowcaseDemo(true);
+      }, 180);
+    }
+
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      if (resizeTimer) window.clearTimeout(resizeTimer);
+      if (inactivityTimerRef.current) window.clearTimeout(inactivityTimerRef.current);
+      demoTlRef.current?.kill();
+    };
+  }, []);
 
   function toggleDarkMode() {
     const next = !isDark;
@@ -271,7 +572,6 @@ export function LandingPage() {
   }
 
   const theme = THEMES[themeKey];
-  const odoStr = ODOMETER_TIMES[odoIndex];
   const basePrice = themeKey === "glam" ? 110 : themeKey === "brutal" ? 55 : themeKey === "slate" ? 60 : 45;
   const extraPrice = themeKey === "glam" ? 65 : themeKey === "brutal" ? 40 : 35;
   const totalPrice = extraAdded ? basePrice + extraPrice : basePrice;
@@ -406,17 +706,19 @@ export function LandingPage() {
           <span className="mx-1 inline-flex items-center rounded-xl sm:rounded-2xl bg-[var(--zelo-card)] px-3 sm:px-3.5 py-1 sm:py-1.5 text-2xl sm:text-4xl font-bold align-middle shadow-sm font-mono-num">
             <span className="mr-2 h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-emerald-500 animate-pulse" />
             <span className="inline-flex items-center overflow-hidden">
-              {odoStr.split("").map((ch, idx) =>
-                ch === ":" ? (
-                  <span key={`sep-${idx}`} className="mx-0.5 opacity-60">
-                    :
-                  </span>
-                ) : (
-                  <span key={`${idx}-${ch}`} className="odo-digit-roll">
-                    {ch}
-                  </span>
-                )
-              )}
+              <span className="inline-flex items-center justify-center h-[1.15em] w-[0.62em] overflow-hidden relative align-top">
+                <span id="odo-0" className="inline-block will-change-[transform,opacity]">1</span>
+              </span>
+              <span className="inline-flex items-center justify-center h-[1.15em] w-[0.62em] overflow-hidden relative align-top">
+                <span id="odo-1" className="inline-block will-change-[transform,opacity]">4</span>
+              </span>
+              <span className="mx-0.5 opacity-60">:</span>
+              <span className="inline-flex items-center justify-center h-[1.15em] w-[0.62em] overflow-hidden relative align-top">
+                <span id="odo-2" className="inline-block will-change-[transform,opacity]">3</span>
+              </span>
+              <span className="inline-flex items-center justify-center h-[1.15em] w-[0.62em] overflow-hidden relative align-top">
+                <span id="odo-3" className="inline-block will-change-[transform,opacity]">0</span>
+              </span>
             </span>
           </span>{" "}
           com a{" "}
@@ -465,7 +767,11 @@ export function LandingPage() {
           <div className="grid grid-cols-2 sm:inline-flex w-full sm:w-auto rounded-xl bg-[var(--zelo-card)] p-1 shadow-sm">
             <button
               type="button"
-              onClick={() => setAppMode("client")}
+              onClick={() => {
+                setAppMode("client");
+                appModeRef.current = "client";
+                pauseDemoWithInactivity();
+              }}
               className={`min-h-[40px] rounded-lg px-3.5 py-2 sm:py-1.5 text-xs font-semibold transition whitespace-nowrap ${
                 appMode === "client"
                   ? "bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)]"
@@ -476,7 +782,19 @@ export function LandingPage() {
             </button>
             <button
               type="button"
-              onClick={() => setAppMode("admin")}
+              onClick={() => {
+                if (inactivityTimerRef.current) {
+                  window.clearTimeout(inactivityTimerRef.current);
+                  inactivityTimerRef.current = null;
+                }
+                demoPausedRef.current = true;
+                setDemoPlaying(false);
+                demoTlRef.current?.pause();
+                if (cursorRef.current) gsap.set(cursorRef.current, { opacity: 0 });
+                if (touchRef.current) gsap.set(touchRef.current, { opacity: 0 });
+                setAppMode("admin");
+                appModeRef.current = "admin";
+              }}
               className={`min-h-[40px] rounded-lg px-3.5 py-2 sm:py-1.5 text-xs font-semibold transition whitespace-nowrap ${
                 appMode === "admin"
                   ? "bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)]"
@@ -495,14 +813,16 @@ export function LandingPage() {
                 }`}
               />
               <span>
-                {demoPlaying
-                  ? "Demo animada rodando (clique para testar)"
-                  : "Demo pausada — testando manualmente"}
+                {appMode === "admin"
+                  ? "Painel Admin ativo"
+                  : demoPlaying
+                    ? "Demo animada rodando (clique para testar)"
+                    : "Você no controle (retoma em 8s se parar)"}
               </span>
             </span>
             <button
               type="button"
-              onClick={() => setDemoPlaying((v) => !v)}
+              onClick={handleTogglePlay}
               className="inline-flex min-h-[34px] items-center gap-1.5 rounded-full bg-[var(--zelo-btn-bg)] px-3 py-1 text-xs font-semibold text-[var(--zelo-btn-ink)] whitespace-nowrap transition hover:bg-[var(--zelo-btn-hover)]"
             >
               {demoPlaying ? (
@@ -521,11 +841,55 @@ export function LandingPage() {
         </div>
 
         <div
+          id="showcase-container"
+          ref={containerRef}
           onPointerDown={() => {
-            if (demoPlaying) setDemoPlaying(false);
+            pauseDemoWithInactivity();
           }}
-          className="overflow-hidden rounded-[20px] bg-[var(--zelo-card)] shadow-[0_24px_60px_-15px_rgba(0,0,0,0.16)]"
+          className="relative overflow-hidden rounded-[20px] bg-[var(--zelo-card)] shadow-[0_24px_60px_-15px_rgba(0,0,0,0.16)]"
         >
+          {/* Ponteiro Desktop (#demo-cursor) */}
+          <div
+            id="demo-cursor"
+            ref={cursorRef}
+            aria-hidden="true"
+            className="pointer-events-none absolute top-0 left-0 z-50 hidden items-start gap-1.5 will-change-[transform,opacity]"
+          >
+            <div className="relative">
+              <div
+                id="cursor-ring"
+                ref={cursorRingRef}
+                className="pointer-events-none absolute -top-1.5 -left-1.5 h-6 w-6 rounded-full border-2 border-[var(--zelo-ink)] opacity-0 scale-[0.4]"
+              />
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="drop-shadow-md">
+                <path
+                  d="M4.5 3.5L19 11.5L12.5 13.5L9.5 20L4.5 3.5Z"
+                  fill="#111111"
+                  stroke="#FFFFFF"
+                  strokeWidth="1.75"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <span className="mt-4 rounded-full bg-[#111111]/90 px-2.5 py-0.5 text-[10px] font-semibold text-white shadow-md whitespace-nowrap">
+              Personalizando loja...
+            </span>
+          </div>
+
+          {/* Ponteiro Mobile (#demo-touch) */}
+          <div
+            id="demo-touch"
+            ref={touchRef}
+            aria-hidden="true"
+            className="pointer-events-none absolute top-0 left-0 z-50 hidden will-change-[transform,opacity]"
+          >
+            <div
+              ref={touchRippleRef}
+              className="pointer-events-none absolute -top-3 -left-3 h-6 w-6 rounded-full border-2 border-emerald-500 opacity-0 scale-[0.6]"
+            />
+            <div className="-ml-3 -mt-3 h-6 w-6 rounded-full border-2 border-[#111111] bg-white/85 shadow-[0_4px_12px_rgba(0,0,0,0.35)]" />
+          </div>
+
           {/* Barra Navegador */}
           <div className="flex items-center justify-between gap-3 bg-[var(--zelo-soft)] px-3 sm:px-4 py-2.5">
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
@@ -551,9 +915,13 @@ export function LandingPage() {
                 return (
                   <button
                     key={key}
+                    id={`demo-btn-${key}`}
                     type="button"
-                    onClick={() => setThemeKey(key)}
-                    className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition whitespace-nowrap ${
+                    onClick={() => {
+                      pauseDemoWithInactivity();
+                      setThemeKey(key);
+                    }}
+                    className={`rounded-lg px-2 sm:px-2.5 py-1.5 text-[11px] sm:text-xs font-semibold transition whitespace-nowrap ${
                       active
                         ? "bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)]"
                         : "bg-[var(--zelo-card)] text-[var(--zelo-ink)] hover:opacity-80"
@@ -574,8 +942,10 @@ export function LandingPage() {
                     return (
                       <button
                         key={swatch.hex}
+                        id={`demo-swatch-${swatch.hex.replace("#", "")}`}
                         type="button"
                         onClick={() => {
+                          pauseDemoWithInactivity();
                           setAccentHex(swatch.hex);
                           setAccentInk(swatch.ink);
                         }}
@@ -594,11 +964,16 @@ export function LandingPage() {
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-[var(--zelo-muted)]">Bordas:</span>
                 <input
+                  id="radius-slider"
+                  ref={sliderRef}
                   type="range"
                   min={2}
                   max={24}
                   value={radiusPx}
-                  onChange={(e) => setRadiusPx(Number(e.target.value))}
+                  onChange={(e) => {
+                    pauseDemoWithInactivity();
+                    setRadiusPx(Number(e.target.value));
+                  }}
                   aria-label="Raio das bordas"
                   className="h-1.5 w-20 sm:w-24 cursor-pointer accent-amber-500"
                 />
