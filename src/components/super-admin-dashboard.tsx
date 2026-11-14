@@ -31,7 +31,7 @@ import {
   TrendingUp,
   Zap,
 } from "lucide-react";
-import { EmptyState, StatusBadge } from "@/components/ui";
+import { EmptyState } from "@/components/ui";
 import {
   superAdminExtendTrialAction,
   superAdminTogglePausaAction,
@@ -202,6 +202,27 @@ export function SuperAdminDashboard({
     : "bg-white shadow-[0_2px_20px_rgba(17,18,22,0.04)]";
   const bgSub = darkMode ? "bg-white/[0.05]" : "bg-[#F7F6F3]";
   const textMuted = darkMode ? "text-[#9CA3AF]" : "text-[#6B6963]";
+  const pillActive = darkMode ? "bg-white text-[#111216]" : "bg-[#111216] text-white";
+  const trackBg = darkMode ? "bg-white/10" : "bg-black/5";
+  const barFill = darkMode ? "bg-[#FF5A1F]" : "bg-[#111216]";
+  const dividerBorder = darkMode ? "border-white/10" : "border-black/5";
+  const badgeEmerald = darkMode ? "bg-emerald-500/15 text-emerald-300" : "bg-emerald-100 text-emerald-800";
+  const badgeAmber = darkMode ? "bg-amber-500/15 text-amber-300" : "bg-amber-100 text-amber-900";
+  const badgeRose = darkMode ? "bg-rose-500/15 text-rose-300" : "bg-rose-100 text-rose-800";
+  const textEmerald = darkMode ? "text-emerald-400" : "text-emerald-700";
+  const textRose = darkMode ? "text-rose-400" : "text-rose-700";
+  const semaforoPill = (tone: "emerald" | "amber" | "rose") =>
+    tone === "emerald"
+      ? badgeEmerald
+      : tone === "amber"
+        ? badgeAmber
+        : badgeRose;
+  const semaforoDot = (tone: "emerald" | "amber" | "rose") =>
+    tone === "emerald"
+      ? "bg-emerald-500"
+      : tone === "amber"
+        ? "bg-amber-500"
+        : "bg-rose-500";
 
   const renderAvatar = (sizeClass = "h-8 w-8") =>
     actorAvatarUrl ? (
@@ -348,7 +369,7 @@ export function SuperAdminDashboard({
               }}
               className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
                 filtroNicho === "todos"
-                  ? "bg-[#111216] text-white dark:bg-white dark:text-[#111216]"
+                  ? pillActive
                   : `${bgSub} ${textMuted}`
               }`}
             >
@@ -364,7 +385,7 @@ export function SuperAdminDashboard({
                 }}
                 className={`rounded-full px-3 py-1 text-[11px] font-semibold capitalize ${
                   filtroNicho === n
-                    ? "bg-[#111216] text-white dark:bg-white dark:text-[#111216]"
+                    ? pillActive
                     : `${bgSub} ${textMuted}`
                 }`}
               >
@@ -387,7 +408,7 @@ export function SuperAdminDashboard({
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr
-                    className={`text-[10px] font-bold uppercase tracking-wider ${textMuted} border-b border-black/5 dark:border-white/8`}
+                    className={`text-[10px] font-bold uppercase tracking-wider ${textMuted} border-b ${dividerBorder}`}
                   >
                     <th className="py-3 px-2.5 w-8">
                       <input
@@ -410,7 +431,7 @@ export function SuperAdminDashboard({
                     <th className="py-3 px-2.5 text-right">Ações</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-black/5 dark:divide-white/8 text-xs">
+                <tbody className={`divide-y ${darkMode ? "divide-white/8" : "divide-black/5"} text-xs`}>
                   {rows.map((loja, i) => {
                     const sem = SEMAFORO_BADGE[loja.semaforo];
                     const codeId = `LZ_${String(startIdx + i + 1).padStart(5, "0")}`;
@@ -426,16 +447,16 @@ export function SuperAdminDashboard({
                           : "";
                     const iconTint =
                       loja.semaforo === "vermelho"
-                        ? "bg-rose-500/12 text-rose-600 dark:text-rose-300"
+                        ? "${badgeRose}"
                         : loja.semaforo === "amarelo"
-                          ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                          ? "${badgeAmber}"
                           : "bg-[#FF5A1F]/10 text-[#FF5A1F]";
                     const isChecked = selectedIds.includes(loja.id);
 
                     return (
                       <tr
                         key={loja.id}
-                        className={`${rowTint} hover:bg-black/[0.02] dark:hover:bg-white/[0.03] transition-colors`}
+                        className={`${rowTint} ${darkMode ? "hover:bg-white/[0.03]" : "hover:bg-black/[0.02]"} transition-colors`}
                       >
                         <td className="py-3.5 px-2.5">
                           <input
@@ -477,7 +498,7 @@ export function SuperAdminDashboard({
                           <span
                             className={`font-bold ${
                               loja.semaforo === "vermelho"
-                                ? "text-rose-600 dark:text-rose-400"
+                                ? "${textRose}"
                                 : ""
                             }`}
                           >
@@ -488,14 +509,21 @@ export function SuperAdminDashboard({
                           </span>
                         </td>
                         <td className="py-3.5 px-2.5">
-                          <StatusBadge tone={sem.tone} dot>
-                            {sem.label} ({loja.semaforoMotivo})
-                          </StatusBadge>
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${semaforoPill(sem.tone)}`}
+                          >
+                            <span
+                              className={`h-1.5 w-1.5 rounded-full ${semaforoDot(sem.tone)}`}
+                            />
+                            <span>
+                              {sem.label} ({loja.semaforoMotivo})
+                            </span>
+                          </span>
                         </td>
                         <td className={`py-3.5 px-2.5 font-mono-num text-[11px] ${textMuted}`}>
                           {formatDateBr(loja.trial_ate)}
                           {loja.indicacoes_confirmadas > 0 && (
-                            <span className="mt-0.5 flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                            <span className={`mt-0.5 flex items-center gap-1 ${textEmerald}`}>
                               <Gift className="h-3 w-3" />
                               {loja.indicacoes_confirmadas} ind.
                             </span>
@@ -517,7 +545,7 @@ export function SuperAdminDashboard({
 
                           {openMenuId === loja.id && (
                             <div
-                              className={`absolute right-2.5 top-12 z-30 w-40 rounded-2xl ${bgCard} p-1.5 shadow-xl border border-black/8 dark:border-white/10 text-left space-y-1`}
+                              className={`absolute right-2.5 top-12 z-30 w-40 rounded-2xl ${bgCard} p-1.5 shadow-xl border ${dividerBorder} text-left space-y-1`}
                             >
                               <button
                                 type="button"
@@ -526,7 +554,7 @@ export function SuperAdminDashboard({
                                   handleExtendTrial(loja.id, 7);
                                   setOpenMenuId(null);
                                 }}
-                                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/8"
+                                className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold ${darkMode ? "hover:bg-white/8" : "hover:bg-black/5"}`}
                               >
                                 <Clock className="h-3.5 w-3.5" />
                                 <span>Estender +7d Trial</span>
@@ -581,17 +609,24 @@ export function SuperAdminDashboard({
                           <span className="text-sm font-bold truncate">
                             {loja.nome}
                           </span>
-                          <StatusBadge tone={sem.tone} dot>
-                            {sem.label}
-                          </StatusBadge>
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${semaforoPill(sem.tone)}`}
+                          >
+                            <span
+                              className={`h-1.5 w-1.5 rounded-full ${semaforoDot(sem.tone)}`}
+                            />
+                            <span>{sem.label}</span>
+                          </span>
                         </div>
                         <p className={`text-xs font-mono-num ${textMuted} mt-0.5`}>
                           /{loja.slug} • {loja.cidade} ({loja.nicho})
                         </p>
                       </div>
-                      <StatusBadge tone="neutral">
+                      <span
+                        className={`rounded-full ${bgCard} px-2.5 py-0.5 text-[10px] font-bold font-mono-num`}
+                      >
                         {loja.plano.toUpperCase()}
-                      </StatusBadge>
+                      </span>
                     </div>
 
                     <div className={`flex flex-wrap items-center gap-2.5 text-[11px] font-mono-num ${textMuted}`}>
@@ -617,8 +652,8 @@ export function SuperAdminDashboard({
                         onClick={() => handleTogglePausa(loja.id, !loja.pausada)}
                         className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-xl px-3 text-xs font-semibold disabled:opacity-50 ${
                           loja.pausada
-                            ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                            : "bg-rose-500/12 text-rose-700 dark:text-rose-300"
+                            ? "${badgeEmerald}"
+                            : "${badgeRose}"
                         }`}
                       >
                         {loja.pausada ? (
@@ -642,7 +677,7 @@ export function SuperAdminDashboard({
         )}
 
         {/* Rodapé com Paginação Real (Idêntico à Foto 4 do Stitch) */}
-        <div className="pt-2 border-t border-black/5 dark:border-white/8 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div className={`pt-2 border-t ${dividerBorder} flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs`}>
           <span className={`font-mono-num ${textMuted}`}>
             Mostrando {totalFiltered === 0 ? 0 : startIdx + 1} a{" "}
             {Math.min(startIdx + rows.length, totalFiltered)} de{" "}
@@ -665,7 +700,7 @@ export function SuperAdminDashboard({
                 onClick={() => setPage(p)}
                 className={`h-8 w-8 rounded-full text-xs font-bold font-mono-num transition-colors ${
                   p === currentPage
-                    ? "bg-[#111216] text-white dark:bg-white dark:text-[#111216]"
+                    ? pillActive
                     : `${bgSub} ${textMuted}`
                 }`}
               >
@@ -732,7 +767,7 @@ export function SuperAdminDashboard({
             </button>
           </div>
 
-          <div className="w-8 h-px bg-black/8 dark:bg-white/10" />
+          <div className={`w-8 h-px ${trackBg}`} />
 
           <nav className="flex flex-col items-center gap-2.5 w-full px-2">
             {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
@@ -750,12 +785,12 @@ export function SuperAdminDashboard({
                       ? darkMode
                         ? "bg-white text-[#111216] shadow-md scale-105"
                         : "bg-[#111216] text-white shadow-md scale-105"
-                      : `${textMuted} hover:bg-black/5 dark:hover:bg-white/8`
+                      : `${textMuted} ${darkMode ? "hover:bg-white/8" : "hover:bg-black/5"}`
                   }`}
                 >
                   <Icon className="h-[19px] w-[19px]" />
                   {id === "lojas" && data.kpis.totalLojas > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[18px] px-1 py-0.5 bg-[#111216] dark:bg-[#FF5A1F] text-white text-[9px] font-bold rounded-full font-mono-num leading-none text-center">
+                    <span className={`absolute -top-1 -right-1 min-w-[18px] px-1 py-0.5 ${barFill} text-white text-[9px] font-bold rounded-full font-mono-num leading-none text-center`}>
                       {data.kpis.totalLojas}
                     </span>
                   )}
@@ -770,7 +805,7 @@ export function SuperAdminDashboard({
             href="/super-admin/export"
             title="Exportar CSV"
             aria-label="Exportar CSV"
-            className={`w-10 h-10 rounded-2xl ${textMuted} hover:bg-black/5 dark:hover:bg-white/8 flex items-center justify-center transition-all`}
+            className={`w-10 h-10 rounded-2xl ${textMuted} ${darkMode ? "hover:bg-white/8" : "hover:bg-black/5"} flex items-center justify-center transition-all`}
           >
             <Download className="h-[18px] w-[18px]" />
           </a>
@@ -778,7 +813,7 @@ export function SuperAdminDashboard({
             href="/painel"
             title="Voltar ao Painel"
             aria-label="Voltar ao Painel"
-            className={`w-10 h-10 rounded-2xl ${textMuted} hover:bg-black/5 dark:hover:bg-white/8 flex items-center justify-center transition-all`}
+            className={`w-10 h-10 rounded-2xl ${textMuted} ${darkMode ? "hover:bg-white/8" : "hover:bg-black/5"} flex items-center justify-center transition-all`}
           >
             <ArrowLeft className="h-[18px] w-[18px]" />
           </Link>
@@ -895,7 +930,7 @@ export function SuperAdminDashboard({
               <div
                 className={`inline-flex items-center gap-2 rounded-full ${bgCard} px-3.5 h-10 text-[11px] font-mono-num`}
               >
-                <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+                <span className={`inline-flex items-center gap-1 ${textEmerald} font-semibold`}>
                   <Lock className="h-3 w-3" />
                   MFA / PIN
                 </span>
@@ -929,17 +964,17 @@ export function SuperAdminDashboard({
 
                 {profileMenuOpen && (
                   <div
-                    className={`absolute right-0 top-12 z-40 w-48 rounded-2xl ${bgCard} p-1.5 shadow-xl border border-black/8 dark:border-white/10 text-left space-y-1`}
+                    className={`absolute right-0 top-12 z-40 w-48 rounded-2xl ${bgCard} p-1.5 shadow-xl border ${dividerBorder} text-left space-y-1`}
                   >
                     <Link
                       href="/painel"
-                      className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/8"
+                      className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold ${darkMode ? "hover:bg-white/8" : "hover:bg-black/5"}`}
                     >
                       <span>Painel da Loja</span>
                     </Link>
                     <Link
                       href="/explorar"
-                      className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/8"
+                      className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold ${darkMode ? "hover:bg-white/8" : "hover:bg-black/5"}`}
                     >
                       <span>Vitrine Pública</span>
                     </Link>
@@ -952,7 +987,7 @@ export function SuperAdminDashboard({
           {/* Desktop Title + Action Buttons */}
           <div className="hidden md:flex items-end justify-between gap-4 pt-1">
             <div>
-              <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+              <div className={`inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider ${textEmerald}`}>
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
                 <span>Operação em Tempo Real</span>
               </div>
@@ -982,7 +1017,7 @@ export function SuperAdminDashboard({
                       onClick={() => setPeriodo(p.id)}
                       className={`h-8 rounded-full px-3.5 text-xs font-semibold transition-all ${
                         periodo === p.id
-                          ? "bg-[#111216] text-white dark:bg-white dark:text-[#111216]"
+                          ? pillActive
                           : `${textMuted} hover:opacity-80`
                       }`}
                     >
@@ -1017,14 +1052,14 @@ export function SuperAdminDashboard({
                 <button
                   type="button"
                   onClick={() => setQuickActionsOpen((v) => !v)}
-                  className="inline-flex h-9 items-center gap-2 rounded-full bg-[#111216] text-white dark:bg-white dark:text-[#111216] px-4 text-xs font-bold shadow-sm hover:opacity-95"
+                  className={`inline-flex h-9 items-center gap-2 rounded-full ${pillActive} px-4 text-xs font-bold shadow-sm hover:opacity-95`}
                 >
                   <Zap className="h-3.5 w-3.5 text-[#FF5A1F]" />
                   <span>Ações Rápidas</span>
                 </button>
                 {quickActionsOpen && (
                   <div
-                    className={`absolute right-0 top-11 z-40 w-52 rounded-2xl ${bgCard} p-1.5 shadow-xl border border-black/8 dark:border-white/10 space-y-1 text-left`}
+                    className={`absolute right-0 top-11 z-40 w-52 rounded-2xl ${bgCard} p-1.5 shadow-xl border ${dividerBorder} space-y-1 text-left`}
                   >
                     <button
                       type="button"
@@ -1033,7 +1068,7 @@ export function SuperAdminDashboard({
                         setTab("lojas");
                         setQuickActionsOpen(false);
                       }}
-                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/8"
+                      className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold ${darkMode ? "hover:bg-white/8" : "hover:bg-black/5"}`}
                     >
                       <AlertTriangle className="h-3.5 w-3.5 text-rose-500" />
                       <span>Ver Lojas Críticas</span>
@@ -1044,7 +1079,7 @@ export function SuperAdminDashboard({
                         setTab("infra");
                         setQuickActionsOpen(false);
                       }}
-                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/8"
+                      className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold ${darkMode ? "hover:bg-white/8" : "hover:bg-black/5"}`}
                     >
                       <Server className="h-3.5 w-3.5 text-[#FF5A1F]" />
                       <span>Ver Infra &amp; Webhooks</span>
@@ -1055,7 +1090,7 @@ export function SuperAdminDashboard({
                         handleCopyForAi();
                         setQuickActionsOpen(false);
                       }}
-                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/8"
+                      className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold ${darkMode ? "hover:bg-white/8" : "hover:bg-black/5"}`}
                     >
                       <Copy className="h-3.5 w-3.5 text-emerald-500" />
                       <span>Copiar Prompt p/ IA</span>
@@ -1067,7 +1102,7 @@ export function SuperAdminDashboard({
           </div>
 
           {feedback && (
-            <div className="rounded-2xl bg-emerald-500/12 text-emerald-800 dark:text-emerald-200 px-4 py-3 text-xs font-semibold flex items-center justify-between gap-2">
+            <div className={`rounded-2xl ${badgeEmerald} px-4 py-3 text-xs font-semibold flex items-center justify-between gap-2`}>
               <span>{feedback}</span>
               <button
                 type="button"
@@ -1156,7 +1191,7 @@ export function SuperAdminDashboard({
                       <span className={`text-xs font-semibold ${textMuted}`}>
                         MRR Bruto Mensal
                       </span>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/12 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 font-mono-num">
+                      <span className={`inline-flex items-center gap-1 rounded-full ${badgeEmerald} px-2.5 py-0.5 text-[10px] font-bold font-mono-num`}>
                         ↑ {data.kpis.conversaoTrialPct}% conv.
                       </span>
                     </div>
@@ -1189,7 +1224,7 @@ export function SuperAdminDashboard({
                     </div>
                   </div>
 
-                  <div className="pt-2.5 border-t border-black/5 dark:border-white/10 flex items-center justify-between gap-2 text-[11px] font-mono-num">
+                  <div className={`pt-2.5 border-t ${dividerBorder} flex items-center justify-between gap-2 text-[11px] font-mono-num`}>
                     <span className={textMuted}>Meta: R$ 20.000</span>
                     <span className="font-bold">{metaPct}% atingido</span>
                   </div>
@@ -1251,9 +1286,9 @@ export function SuperAdminDashboard({
                   </div>
 
                   <div className="space-y-2">
-                    <div className="h-1.5 w-full rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
+                    <div className={`h-1.5 w-full rounded-full ${trackBg} overflow-hidden`}>
                       <div
-                        className="h-full rounded-full bg-[#111216] dark:bg-[#FF5A1F]"
+                        className={`h-full rounded-full ${barFill}`}
                         style={{
                           width: `${Math.max(
                             data.kpis.lojasAtivas > 0 ? 12 : 6,
@@ -1270,7 +1305,7 @@ export function SuperAdminDashboard({
                       <span className={textMuted}>
                         +{novasNoPeriodo} lojas {periodoLabel}
                       </span>
-                      <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                      <span className={`font-bold ${textEmerald}`}>
                         Capacidade Alta
                       </span>
                     </div>
@@ -1287,8 +1322,8 @@ export function SuperAdminDashboard({
                       <span
                         className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold font-mono-num ${
                           data.semaforoResumo.vermelho > 0
-                            ? "bg-rose-500/12 text-rose-600 dark:text-rose-300"
-                            : "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                            ? "${badgeRose}"
+                            : "${badgeAmber}"
                         }`}
                       >
                         • {sobRadar} sob radar
@@ -1305,13 +1340,13 @@ export function SuperAdminDashboard({
                     </div>
                   </div>
 
-                  <div className="pt-2.5 border-t border-black/5 dark:border-white/10 flex items-center justify-between gap-2 text-[11px]">
+                  <div className={`pt-2.5 border-t ${dividerBorder} flex items-center justify-between gap-2 text-[11px]`}>
                     <span className={textMuted}>Inadimplência</span>
                     <span
                       className={`rounded-full px-2 py-0.5 font-mono-num font-bold ${
                         data.kpis.lojasAtrasadas > 0
-                          ? "bg-rose-500/12 text-rose-600 dark:text-rose-300"
-                          : "bg-amber-500/12 text-amber-700 dark:text-amber-300"
+                          ? "${badgeRose}"
+                          : "${badgeAmber}"
                       }`}
                     >
                       {data.kpis.lojasAtrasadas}{" "}
@@ -1372,9 +1407,9 @@ export function SuperAdminDashboard({
                               </span>
                             </span>
                           </div>
-                          <div className="h-1.5 w-full rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
+                          <div className={`h-1.5 w-full rounded-full ${trackBg} overflow-hidden`}>
                             <div
-                              className="h-full rounded-full bg-[#111216] dark:bg-[#FF5A1F]"
+                              className={`h-full rounded-full ${barFill}`}
                               style={{
                                 width: `${Math.max(step.val > 0 ? 8 : 0, pct)}%`,
                               }}
@@ -1443,7 +1478,7 @@ export function SuperAdminDashboard({
                         Uso real Free Tier
                       </p>
                     </div>
-                    <span className="rounded-full bg-emerald-500/12 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                    <span className={`rounded-full ${badgeEmerald} px-2.5 py-0.5 text-[10px] font-bold`}>
                       Custo Zero
                     </span>
                   </div>
@@ -1552,7 +1587,7 @@ export function SuperAdminDashboard({
                           {step.val}
                         </span>
                       </div>
-                      <div className="h-2 w-full rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
+                      <div className={`h-2 w-full rounded-full ${trackBg} overflow-hidden`}>
                         <div
                           className="h-full rounded-full bg-[#FF5A1F]"
                           style={{
@@ -1611,9 +1646,9 @@ export function SuperAdminDashboard({
                               </span>
                             </div>
                           </div>
-                          <div className="h-1.5 w-full rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
+                          <div className={`h-1.5 w-full rounded-full ${trackBg} overflow-hidden`}>
                             <div
-                              className="h-full rounded-full bg-[#111216] dark:bg-[#FF5A1F]"
+                              className={`h-full rounded-full ${barFill}`}
                               style={{ width: `${pct}%` }}
                             />
                           </div>
@@ -1688,12 +1723,12 @@ export function SuperAdminDashboard({
                               {w.id}
                             </span>
                           </div>
-                          <StatusBadge
-                            tone="emerald"
-                            icon={<CheckCircle2 className="h-3 w-3" />}
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${badgeEmerald}`}
                           >
-                            {formatDateBr(w.processed_at)}
-                          </StatusBadge>
+                            <CheckCircle2 className="h-3 w-3" />
+                            <span>{formatDateBr(w.processed_at)}</span>
+                          </span>
                         </div>
                       ))}
                     </div>
