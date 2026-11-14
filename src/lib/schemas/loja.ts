@@ -11,6 +11,7 @@ export const TEMA_OPTIONS = [
 ] as const;
 export const ESTILO_CARD_OPTIONS = ["preenchido", "vidro_borrado"] as const;
 export const ESTILO_BARRA_OPTIONS = ["abas", "dock_flutuante"] as const;
+export const PIX_MODO_OPTIONS = ["loja", "profissional"] as const;
 
 export const servicoPresetSchema = z
   .object({
@@ -36,7 +37,12 @@ export const createLojaSchema = z
     latitude: z.number().min(-90).max(90).nullable().optional(),
     longitude: z.number().min(-180).max(180).nullable().optional(),
     whatsapp_loja: z.string().trim().min(10, "Informe o WhatsApp com DDD").max(20),
+    chave_pix: z.string().trim().max(120).optional().default(""),
+    pix_modo: z.enum(PIX_MODO_OPTIONS).optional().default("loja"),
     tema: z.enum(TEMA_OPTIONS).default("urban"),
+    estilo_card: z.enum(ESTILO_CARD_OPTIONS).optional().default("preenchido"),
+    estilo_barra: z.enum(ESTILO_BARRA_OPTIONS).optional().default("abas"),
+    modo_escuro: z.boolean().optional().default(false),
     servicos: z.array(servicoPresetSchema).min(1, "Selecione pelo menos 1 serviço").max(20),
   })
   .strict();

@@ -9,16 +9,20 @@ import {
   Check,
   Clock,
   Loader2,
-  MapPin,
+  Moon,
   Palette,
   Phone,
   Plus,
+  QrCode,
   Scissors,
   Sparkles,
   Store,
+  Users,
   X,
 } from "lucide-react";
 import {
+  ESTILO_BARRA_OPTIONS,
+  ESTILO_CARD_OPTIONS,
   NICHO_OPTIONS,
   PRESETS_POR_NICHO,
   TEMA_OPTIONS,
@@ -130,7 +134,7 @@ interface ServicoSelectable extends PresetServico {
 }
 
 export function OnboardingWizard() {
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [nome, setNome] = useState("");
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
@@ -151,7 +155,14 @@ export function OnboardingWizard() {
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [whatsapp, setWhatsapp] = useState("");
+  const [chavePix, setChavePix] = useState("");
+  const [pixModo, setPixModo] = useState<"loja" | "profissional">("loja");
   const [tema, setTema] = useState<(typeof TEMA_OPTIONS)[number]>("urban");
+  const [estiloCard, setEstiloCard] =
+    useState<(typeof ESTILO_CARD_OPTIONS)[number]>("preenchido");
+  const [estiloBarra, setEstiloBarra] =
+    useState<(typeof ESTILO_BARRA_OPTIONS)[number]>("abas");
+  const [modoEscuro, setModoEscuro] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -222,6 +233,11 @@ export function OnboardingWizard() {
         return;
       }
       setStep(3);
+      return;
+    }
+
+    if (step === 3) {
+      setStep(4);
     }
   };
 
@@ -247,7 +263,12 @@ export function OnboardingWizard() {
         latitude,
         longitude,
         whatsapp_loja: whatsapp.trim(),
+        chave_pix: chavePix.trim(),
+        pix_modo: pixModo,
         tema,
+        estilo_card: estiloCard,
+        estilo_barra: estiloBarra,
+        modo_escuro: tema === "glam" || tema === "urban" ? false : modoEscuro,
         servicos: servicosAtivos,
       });
       if (res?.error) {
@@ -256,14 +277,27 @@ export function OnboardingWizard() {
     });
   };
 
-  const stepTitles: Record<1 | 2 | 3, string> = {
-    1: "Passo 1 de 3 • Dados do Espaço",
-    2: "Passo 2 de 3 • Endereço e WhatsApp",
-    3: "Passo 3 de 3 • Estilo da Vitrine",
+  const stepTitles: Record<1 | 2 | 3 | 4, string> = {
+    1: "Passo 1 de 4 • Dados do Espaço",
+    2: "Passo 2 de 4 • Endereço e WhatsApp",
+    3: "Passo 3 de 4 • PIX na Loja",
+    4: "Passo 4 de 4 • Estilo da Vitrine",
   };
 
+  const supportsDarkMode = tema !== "glam" && tema !== "urban";
+
   return (
-    <div className="min-h-dvh bg-[var(--zelo-bg)] text-[var(--zelo-ink)] flex flex-col">
+    <div className="relative min-h-dvh bg-[var(--zelo-bg)] text-[var(--zelo-ink)] flex flex-col">
+      {/* Textura sutil de bolinhas no fundo (padrão Stitch) */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 opacity-20"
+        style={{
+          backgroundImage: "radial-gradient(var(--zelo-muted) 0.75px, transparent 0.75px)",
+          backgroundSize: "12px 12px",
+        }}
+      />
+
       {/* Top Bar estilo Stitch Zelo Express */}
       <header className="sticky top-0 z-30 bg-[var(--zelo-bg)]/90 backdrop-blur-md">
         <div className="max-w-[480px] mx-auto px-4 h-14 flex items-center justify-between gap-3">
@@ -272,7 +306,7 @@ export function OnboardingWizard() {
               type="button"
               onClick={() => {
                 setError(null);
-                setStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3) : 1));
+                setStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3 | 4) : 1));
               }}
               className="min-h-[44px] min-w-[44px] -ml-2 inline-flex items-center justify-center rounded-full hover:bg-[var(--zelo-soft)] transition-colors"
               aria-label="Voltar passo"
@@ -309,8 +343,8 @@ export function OnboardingWizard() {
 
         {/* Barra de progresso discreta */}
         <div className="max-w-[480px] mx-auto px-4 pb-2">
-          <div className="grid grid-cols-3 gap-1.5">
-            {[1, 2, 3].map((n) => (
+          <div className="grid grid-cols-4 gap-1.5">
+            {[1, 2, 3, 4].map((n) => (
               <div
                 key={n}
                 className={`h-1 rounded-full transition-colors ${
@@ -323,7 +357,7 @@ export function OnboardingWizard() {
       </header>
 
       {/* Conteúdo principal */}
-      <main className="flex-1 max-w-[480px] w-full mx-auto px-4 pt-3 pb-28 space-y-6">
+      <main className="relative z-10 flex-1 max-w-[480px] w-full mx-auto px-4 pt-3 pb-28 space-y-6">
         {error && (
           <SurfaceCard tone="rose" padding="sm" className="text-xs font-medium">
             {error}
@@ -332,19 +366,35 @@ export function OnboardingWizard() {
 
         {step === 1 && (
           <>
-            <div className="space-y-1.5">
-              <h1 className="text-2xl font-extrabold tight-heading leading-tight">
-                Configure seu espaço em poucos minutos
-              </h1>
-              <p className="text-sm text-[var(--zelo-muted)]">
-                Personalize a vitrine digital que seus clientes verão ao agendar.
-              </p>
-              <Link
-                href="/explorar"
-                className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--zelo-ink)] underline underline-offset-4 pt-1 hover:opacity-80"
-              >
-                Só quero agendar como cliente — Ir para a Vitrine →
-              </Link>
+            <div className="relative overflow-hidden rounded-2xl bg-[var(--zelo-soft)]/80 px-4 pt-5 pb-6">
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 opacity-30"
+                style={{
+                  backgroundImage:
+                    "radial-gradient(var(--zelo-muted) 0.85px, transparent 0.85px)",
+                  backgroundSize: "10px 10px",
+                }}
+              />
+              <div className="relative z-10 space-y-2">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-[var(--zelo-card)] px-2.5 py-1 font-mono-num text-[11px] font-semibold text-[var(--zelo-muted)] shadow-xs">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--zelo-btn-bg)] animate-pulse" />
+                  <span>Passo 1 de 4 • Dados do Espaço</span>
+                </div>
+                <h1 className="text-2xl font-extrabold tight-heading leading-tight">
+                  Configure seu espaço em{" "}
+                  <span className="font-serif italic font-normal">poucos minutos</span>
+                </h1>
+                <p className="text-sm text-[var(--zelo-muted)]">
+                  Personalize a vitrine digital que seus clientes verão ao agendar.
+                </p>
+                <Link
+                  href="/explorar"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--zelo-ink)] underline underline-offset-4 pt-0.5 hover:opacity-80"
+                >
+                  Só quero agendar como cliente — Ir para a Vitrine →
+                </Link>
+              </div>
             </div>
 
             {/* Nome do Estabelecimento + Link preview */}
@@ -581,13 +631,28 @@ export function OnboardingWizard() {
 
         {step === 2 && (
           <div className="space-y-5">
-            <div className="space-y-1.5">
-              <h1 className="text-2xl font-extrabold tight-heading leading-tight">
-                Onde seus clientes te encontram?
-              </h1>
-              <p className="text-sm text-[var(--zelo-muted)]">
-                Usamos sua cidade e bairro na vitrine do Zelo e enviamos seu contato para clientes confirmados.
-              </p>
+            <div className="relative overflow-hidden rounded-2xl bg-[var(--zelo-soft)]/80 px-4 pt-5 pb-5">
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 opacity-30"
+                style={{
+                  backgroundImage:
+                    "radial-gradient(var(--zelo-muted) 0.85px, transparent 0.85px)",
+                  backgroundSize: "10px 10px",
+                }}
+              />
+              <div className="relative z-10 space-y-1.5">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-[var(--zelo-card)] px-2.5 py-1 font-mono-num text-[11px] font-semibold text-[var(--zelo-muted)] shadow-xs">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--zelo-btn-bg)] animate-pulse" />
+                  <span>Passo 2 de 4 • Localização</span>
+                </div>
+                <h1 className="text-2xl font-extrabold tight-heading leading-tight">
+                  Onde seus clientes te encontram?
+                </h1>
+                <p className="text-sm text-[var(--zelo-muted)]">
+                  Usamos sua cidade e bairro na vitrine do Zelo e enviamos seu contato para clientes confirmados.
+                </p>
+              </div>
             </div>
 
             <div className="space-y-4">
@@ -630,13 +695,134 @@ export function OnboardingWizard() {
 
         {step === 3 && (
           <div className="space-y-5">
-            <div className="space-y-1.5">
-              <h1 className="text-2xl font-extrabold tight-heading leading-tight">
-                Escolha o estilo da sua página
-              </h1>
-              <p className="text-sm text-[var(--zelo-muted)]">
-                Sua página já nasce pronta em <span className="font-mono-num font-semibold">zelo.app/{effectiveSlug}</span>. Você pode personalizar tudo depois.
-              </p>
+            <div className="relative overflow-hidden rounded-2xl bg-[var(--zelo-soft)]/80 px-4 pt-5 pb-5">
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 opacity-30"
+                style={{
+                  backgroundImage:
+                    "radial-gradient(var(--zelo-muted) 0.85px, transparent 0.85px)",
+                  backgroundSize: "10px 10px",
+                }}
+              />
+              <div className="relative z-10 space-y-1.5">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-[var(--zelo-card)] px-2.5 py-1 font-mono-num text-[11px] font-semibold text-[var(--zelo-muted)] shadow-xs">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--zelo-btn-bg)] animate-pulse" />
+                  <span>Passo 3 de 4 • Opcional</span>
+                </div>
+                <h1 className="text-2xl font-extrabold tight-heading leading-tight">
+                  Facilite o pagamento na loja via PIX
+                </h1>
+                <p className="text-sm text-[var(--zelo-muted)]">
+                  Todo pagamento é feito diretamente com você na loja, sem taxas ou intermediação do Zelo. A chave abaixo serve só para o cliente copiar fácil na hora de pagar.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--zelo-muted)]">
+                  Chave PIX da Loja (opcional)
+                </label>
+                <div className="flex items-center gap-2.5 rounded-xl bg-[var(--zelo-card)] px-3.5 h-12 shadow-xs">
+                  <QrCode className="h-4 w-4 text-[var(--zelo-subtle)] shrink-0" />
+                  <input
+                    type="text"
+                    value={chavePix}
+                    onChange={(e) => setChavePix(e.target.value)}
+                    placeholder="CPF, CNPJ, e-mail, celular ou aleatória"
+                    className="w-full bg-transparent text-sm font-mono-num outline-none placeholder:text-[var(--zelo-subtle)]"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <span className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--zelo-muted)]">
+                  Quem recebe o PIX dos atendimentos?
+                </span>
+                <div className="grid grid-cols-1 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setPixModo("loja")}
+                    className={`flex items-start gap-3 p-3.5 rounded-2xl text-left transition-all ${
+                      pixModo === "loja"
+                        ? "bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)] shadow-md"
+                        : "bg-[var(--zelo-card)] text-[var(--zelo-ink)] shadow-xs"
+                    }`}
+                  >
+                    <Store className="h-4 w-4 mt-0.5 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold">
+                        Somente chave PIX da loja
+                      </span>
+                      <span
+                        className={`block text-xs mt-0.5 ${
+                          pixModo === "loja" ? "opacity-80" : "text-[var(--zelo-muted)]"
+                        }`}
+                      >
+                        Todos os agendamentos exibem apenas a chave principal da loja.
+                      </span>
+                    </div>
+                    {pixModo === "loja" && <Check className="h-4 w-4 shrink-0 mt-0.5" />}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPixModo("profissional")}
+                    className={`flex items-start gap-3 p-3.5 rounded-2xl text-left transition-all ${
+                      pixModo === "profissional"
+                        ? "bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)] shadow-md"
+                        : "bg-[var(--zelo-card)] text-[var(--zelo-ink)] shadow-xs"
+                    }`}
+                  >
+                    <Users className="h-4 w-4 mt-0.5 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold">
+                        Cada profissional pode usar seu próprio PIX
+                      </span>
+                      <span
+                        className={`block text-xs mt-0.5 ${
+                          pixModo === "profissional" ? "opacity-80" : "text-[var(--zelo-muted)]"
+                        }`}
+                      >
+                        Barbeiros cadastram a própria chave; se não tiverem, usa a da loja.
+                      </span>
+                    </div>
+                    {pixModo === "profissional" && (
+                      <Check className="h-4 w-4 shrink-0 mt-0.5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {step === 4 && (
+          <div className="space-y-5">
+            <div className="relative overflow-hidden rounded-2xl bg-[var(--zelo-soft)]/80 px-4 pt-5 pb-5">
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 opacity-30"
+                style={{
+                  backgroundImage:
+                    "radial-gradient(var(--zelo-muted) 0.85px, transparent 0.85px)",
+                  backgroundSize: "10px 10px",
+                }}
+              />
+              <div className="relative z-10 space-y-1.5">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-[var(--zelo-card)] px-2.5 py-1 font-mono-num text-[11px] font-semibold text-[var(--zelo-muted)] shadow-xs">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--zelo-btn-bg)] animate-pulse" />
+                  <span>Passo 4 de 4 • Aparência</span>
+                </div>
+                <h1 className="text-2xl font-extrabold tight-heading leading-tight">
+                  Escolha o estilo da sua página
+                </h1>
+                <p className="text-sm text-[var(--zelo-muted)]">
+                  Sua página já nasce pronta em{" "}
+                  <span className="font-mono-num font-semibold">zelo.app/{effectiveSlug}</span>. Você pode personalizar tudo depois.
+                </p>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-2.5">
@@ -680,6 +866,91 @@ export function OnboardingWizard() {
                 );
               })}
             </div>
+
+            {/* Opções extras de aparência da vitrine */}
+            <div className="space-y-3 pt-1">
+              <div className="flex items-center justify-between gap-3 rounded-2xl bg-[var(--zelo-card)] p-3.5 shadow-xs">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Moon className="h-4 w-4 text-[var(--zelo-muted)] shrink-0" />
+                  <div className="min-w-0">
+                    <span className="block text-xs font-semibold">Modo escuro na vitrine</span>
+                    <span className="block text-[11px] text-[var(--zelo-muted)]">
+                      {supportsDarkMode
+                        ? "Fundo escuro elegante na loja pública"
+                        : tema === "urban"
+                          ? "Urban Noir já é escuro por padrão"
+                          : "Clean Glam usa paleta clara exclusiva"}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={supportsDarkMode ? modoEscuro : tema === "urban"}
+                  disabled={!supportsDarkMode}
+                  onClick={() => setModoEscuro((v) => !v)}
+                  className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-40 ${
+                    (supportsDarkMode ? modoEscuro : tema === "urban")
+                      ? "bg-[var(--zelo-btn-bg)]"
+                      : "bg-[var(--zelo-soft)]"
+                  }`}
+                >
+                  <span
+                    className={`block h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                      (supportsDarkMode ? modoEscuro : tema === "urban")
+                        ? "translate-x-5"
+                        : "translate-x-0.5"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="rounded-2xl bg-[var(--zelo-card)] p-3 shadow-xs space-y-2">
+                  <span className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--zelo-muted)]">
+                    Cards
+                  </span>
+                  <div className="grid grid-cols-1 gap-1.5">
+                    {ESTILO_CARD_OPTIONS.map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => setEstiloCard(opt)}
+                        className={`h-8 rounded-lg px-2.5 text-xs font-semibold text-left transition-colors ${
+                          estiloCard === opt
+                            ? "bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)]"
+                            : "bg-[var(--zelo-soft)] text-[var(--zelo-muted)]"
+                        }`}
+                      >
+                        {opt === "preenchido" ? "Preenchido" : "Vidro borrado"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl bg-[var(--zelo-card)] p-3 shadow-xs space-y-2">
+                  <span className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--zelo-muted)]">
+                    Navegação
+                  </span>
+                  <div className="grid grid-cols-1 gap-1.5">
+                    {ESTILO_BARRA_OPTIONS.map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => setEstiloBarra(opt)}
+                        className={`h-8 rounded-lg px-2.5 text-xs font-semibold text-left transition-colors ${
+                          estiloBarra === opt
+                            ? "bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)]"
+                            : "bg-[var(--zelo-soft)] text-[var(--zelo-muted)]"
+                        }`}
+                      >
+                        {opt === "abas" ? "Abas no topo" : "Dock flutuante"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </main>
@@ -687,13 +958,19 @@ export function OnboardingWizard() {
       {/* Bottom CTA Bar fixo estilo Stitch */}
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-[var(--zelo-bg)]/95 backdrop-blur-md pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <div className="max-w-[480px] mx-auto px-4 pt-2 pb-1">
-          {step < 3 ? (
+          {step < 4 ? (
             <button
               type="button"
               onClick={handleNextStep}
               className="w-full h-12 rounded-xl bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)] font-semibold text-sm flex items-center justify-center gap-2 shadow-md active:scale-[0.99] transition-transform"
             >
-              <span>{step === 1 ? "Continuar para Localização" : "Continuar para Estilo"}</span>
+              <span>
+                {step === 1
+                  ? "Continuar para Localização"
+                  : step === 2
+                    ? "Continuar para PIX na Loja"
+                    : "Continuar para Estilo"}
+              </span>
               <ArrowRight className="h-4 w-4" />
             </button>
           ) : (

@@ -57,7 +57,13 @@ export async function createLojaAction(rawInput: CreateLojaInput): Promise<Onboa
       latitude: input.latitude ?? null,
       longitude: input.longitude ?? null,
       whatsapp_loja: input.whatsapp_loja,
+      chave_pix: input.chave_pix?.trim() || null,
+      pix_modo: input.pix_modo,
       tema: input.tema,
+      estilo_card: input.estilo_card,
+      estilo_barra: input.estilo_barra,
+      modo_escuro:
+        input.tema === "glam" || input.tema === "urban" ? false : Boolean(input.modo_escuro),
       cor_primaria: COR_PADRAO_POR_TEMA[input.tema],
       raio_borda_px: RAIO_PADRAO_POR_TEMA[input.tema],
       horarios_loja: {
