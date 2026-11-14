@@ -30,6 +30,7 @@ import { compressImageToWebP, STORE_MEDIA_COMPRESS_CONFIG } from "@/lib/image/co
 import { showToast } from "@/components/zelo-toast";
 import { StoreBannerMedia } from "@/components/ui/store-banner-media";
 import { StoreLocationFields } from "@/components/ui/store-location-fields";
+import { StockPhotoSearch } from "@/components/ui/stock-photo-search";
 import { UnsavedChangesGuard } from "@/components/ui/unsaved-changes-guard";
 import { getBannersForNicho } from "@/lib/banners/catalog";
 import type { LojaResumo } from "@/lib/painel/get-painel-context";
@@ -156,6 +157,7 @@ export function CustomizadorLoja({
   const [uploading, setUploading] = useState(false);
   const [uploadingCapa, setUploadingCapa] = useState(false);
   const [bannerModalOpen, setBannerModalOpen] = useState(false);
+  const [bannerTab, setBannerTab] = useState<"prontos" | "pexels">("prontos");
   const [savingPresetBanner, setSavingPresetBanner] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [savedSnapshot, setSavedSnapshot] = useState({
@@ -1196,53 +1198,88 @@ export function CustomizadorLoja({
                 </button>
               </div>
 
-              <div>
-                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--zelo-muted)]">
-                  Banners disponíveis para sua loja
-                </p>
-                <div className="grid grid-cols-2 gap-2.5">
-                  {getBannersForNicho(loja.nicho).map((banner) => {
-                    const selected = capaUrl === banner.src;
-                    return (
-                      <button
-                        key={banner.id}
-                        type="button"
-                        disabled={uploadingCapa || savingPresetBanner}
-                        onClick={() => handleSelectPresetBanner(banner.src)}
-                        className={`group relative overflow-hidden rounded-xl bg-[var(--zelo-soft)] text-left transition-all ${
-                          selected
-                            ? "ring-2 ring-[#10B981]"
-                            : "hover:opacity-90"
-                        }`}
-                      >
-                        <div className="relative h-24 w-full overflow-hidden">
-                          {/* eslint-disable-next-line @next/next/next-img-element */}
-                          <img
-                            src={banner.src}
-                            alt={banner.label}
-                            loading="lazy"
-                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
-                          {selected && (
-                            <span className="absolute right-2 top-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#10B981] text-white shadow">
-                              <Check className="h-3.5 w-3.5" />
-                            </span>
-                          )}
-                          <div className="absolute inset-x-2 bottom-1.5">
-                            <p className="truncate text-[11px] font-semibold text-white">
-                              {banner.label}
-                            </p>
-                            <p className="text-[10px] text-white/75">
-                              {banner.nicho === "outro" ? "Universal" : "Do seu nicho"}
-                            </p>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
+              <div className="flex items-center gap-1.5 rounded-xl bg-[var(--zelo-soft)] p-1">
+                <button
+                  type="button"
+                  onClick={() => setBannerTab("prontos")}
+                  className={`flex-1 rounded-lg py-2 text-xs font-semibold transition-colors ${
+                    bannerTab === "prontos"
+                      ? "bg-[var(--zelo-card)] text-[var(--zelo-ink)] shadow-sm"
+                      : "text-[var(--zelo-muted)]"
+                  }`}
+                >
+                  Prontos
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBannerTab("pexels")}
+                  className={`flex-1 rounded-lg py-2 text-xs font-semibold transition-colors ${
+                    bannerTab === "pexels"
+                      ? "bg-[var(--zelo-card)] text-[var(--zelo-ink)] shadow-sm"
+                      : "text-[var(--zelo-muted)]"
+                  }`}
+                >
+                  Buscar grátis
+                </button>
               </div>
+
+              {bannerTab === "prontos" ? (
+                <div>
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--zelo-muted)]">
+                    Banners disponíveis para sua loja
+                  </p>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {getBannersForNicho(loja.nicho).map((banner) => {
+                      const selected = capaUrl === banner.src;
+                      return (
+                        <button
+                          key={banner.id}
+                          type="button"
+                          disabled={uploadingCapa || savingPresetBanner}
+                          onClick={() => handleSelectPresetBanner(banner.src)}
+                          className={`group relative overflow-hidden rounded-xl bg-[var(--zelo-soft)] text-left transition-all ${
+                            selected
+                              ? "ring-2 ring-[#10B981]"
+                              : "hover:opacity-90"
+                          }`}
+                        >
+                          <div className="relative h-24 w-full overflow-hidden">
+                            {/* eslint-disable-next-line @next/next/next-img-element */}
+                            <img
+                              src={banner.src}
+                              alt={banner.label}
+                              loading="lazy"
+                              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
+                            {selected && (
+                              <span className="absolute right-2 top-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#10B981] text-white shadow">
+                                <Check className="h-3.5 w-3.5" />
+                              </span>
+                            )}
+                            <div className="absolute inset-x-2 bottom-1.5">
+                              <p className="truncate text-[11px] font-semibold text-white">
+                                {banner.label}
+                              </p>
+                              <p className="text-[10px] text-white/75">
+                                {banner.nicho === "outro" ? "Universal" : "Do seu nicho"}
+                              </p>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <StockPhotoSearch
+                  tipo="banner"
+                  nicho={loja.nicho}
+                  selectedUrl={capaUrl}
+                  disabled={uploadingCapa || savingPresetBanner}
+                  onSelect={(url) => void handleSelectPresetBanner(url)}
+                />
+              )}
             </div>
           </div>
         </div>

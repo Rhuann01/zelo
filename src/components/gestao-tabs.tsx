@@ -8,6 +8,7 @@ import {
   Loader2,
   Plus,
   Scissors,
+  Search,
   Star,
   Store,
   Trash2,
@@ -30,6 +31,7 @@ import {
 } from "@/app/painel/gestao/actions";
 import { createClient } from "@/lib/supabase/client";
 import { compressImageToWebP, STORE_MEDIA_COMPRESS_CONFIG } from "@/lib/image/compress-webp";
+import { StockPhotoSearch } from "@/components/ui/stock-photo-search";
 import { showToast } from "@/components/zelo-toast";
 
 export interface ServicoRow {
@@ -133,6 +135,7 @@ export function GestaoTabs({
   const [srvImagemUrl, setSrvImagemUrl] = useState<string | null>(null);
   const [srvExibirImagem, setSrvExibirImagem] = useState(false);
   const [uploadingSrvId, setUploadingSrvId] = useState<string | null>(null);
+  const [stockModalTarget, setStockModalTarget] = useState<"new" | string | null>(null);
 
   const [convNome, setConvNome] = useState("");
   const [convEmail, setConvEmail] = useState("");
@@ -784,6 +787,15 @@ export function GestaoTabs({
                       className="hidden"
                     />
                   </label>
+                  <button
+                    type="button"
+                    disabled={uploadingSrvId === "new"}
+                    onClick={() => setStockModalTarget("new")}
+                    className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg bg-[var(--zelo-card)] px-3 text-xs font-semibold text-[var(--zelo-ink)] shadow-sm transition-opacity hover:opacity-90"
+                  >
+                    <Search className="h-3.5 w-3.5 text-[#F59E0B]" />
+                    <span>Buscar grátis</span>
+                  </button>
                 </div>
 
                 {srvImagemUrl && (
@@ -912,6 +924,15 @@ export function GestaoTabs({
                           className="hidden"
                         />
                       </label>
+                      <button
+                        type="button"
+                        disabled={uploadingSrvId === s.id || isPending}
+                        onClick={() => setStockModalTarget(s.id)}
+                        className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg bg-[var(--zelo-soft)] px-2.5 text-[11px] font-semibold text-[var(--zelo-ink)] transition-colors hover:bg-[var(--zelo-border)]"
+                      >
+                        <Search className="h-3.5 w-3.5 text-[#F59E0B]" />
+                        <span>Buscar grátis</span>
+                      </button>
                       {s.imagem_url && (
                         <button
                           type="button"
@@ -966,6 +987,66 @@ export function GestaoTabs({
               </div>
             ))}
           </section>
+        </div>
+      )}
+
+      {stockModalTarget !== null && (
+        <div
+          className="zelo-fade-in fixed inset-0 z-[120] flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="stock-service-modal-title"
+          onClick={() => setStockModalTarget(null)}
+        >
+          <div
+            className="zelo-sheet-up flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-[var(--zelo-card)] shadow-2xl sm:rounded-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-[var(--zelo-border)]/60 px-4 py-3.5">
+              <div>
+                <h3 id="stock-service-modal-title" className="text-sm font-semibold text-[var(--zelo-ink)]">
+                  Buscar Foto Grátis para Serviço
+                </h3>
+                <p className="text-[11px] text-[var(--zelo-muted)]">
+                  Escolha uma foto pronta da Pexels API para usar na vitrine.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStockModalTarget(null)}
+                aria-label="Fechar busca de fotos"
+                className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--zelo-soft)] text-[var(--zelo-ink)] transition-colors hover:bg-[var(--zelo-border)]"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              <StockPhotoSearch
+                tipo="servico"
+                selectedUrl={
+                  stockModalTarget === "new"
+                    ? srvImagemUrl
+                    : servicos.find((srv) => srv.id === stockModalTarget)?.imagem_url ?? null
+                }
+                disabled={isPending}
+                onSelect={(url) => {
+                  const target = stockModalTarget;
+                  setStockModalTarget(null);
+                  if (target === "new") {
+                    setSrvImagemUrl(url);
+                    setSrvExibirImagem(true);
+                    showToast("Foto selecionada para o serviço!", "success");
+                  } else if (target) {
+                    runAction(async () => {
+                      const res = await updateServicoImagemAction(target, lojaId, url, true);
+                      if (res.ok) return { message: "Foto do serviço atualizada." };
+                      return res;
+                    });
+                  }
+                }}
+              />
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -86,7 +86,11 @@ export async function savePresetBannerAction(
   lojaId: string,
   capaUrl: string | null,
 ): Promise<{ ok: boolean; error?: string }> {
-  if (capaUrl !== null && !capaUrl.startsWith("/banners/")) {
+  const isValidBannerUrl =
+    capaUrl === null ||
+    capaUrl.startsWith("/banners/") ||
+    capaUrl.startsWith("https://images.pexels.com/");
+  if (!isValidBannerUrl) {
     return { ok: false, error: "Banner inválido." };
   }
 
