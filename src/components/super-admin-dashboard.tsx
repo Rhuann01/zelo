@@ -742,104 +742,202 @@ export function SuperAdminDashboard({
             </div>
           )}
 
-          {tab === "visao" && (
+          {tab === "visao" && (() => {
+            const custoGatewayCentavos = Math.max(
+              0,
+              data.kpis.mrrBrutoCentavos - data.kpis.mrrLiquidoCentavos
+            );
+            const margemPct =
+              data.kpis.mrrBrutoCentavos > 0
+                ? (
+                    (data.kpis.mrrLiquidoCentavos /
+                      data.kpis.mrrBrutoCentavos) *
+                    100
+                  ).toFixed(1)
+                : "0.0";
+            const metaMensalCentavos = 2_000_000; // R$ 20.000
+            const metaPct = (
+              (data.kpis.mrrBrutoCentavos / metaMensalCentavos) *
+              100
+            ).toFixed(1);
+            const novasSemana = data.lojas.filter(
+              (l) => Date.now() - Date.parse(l.created_at) <= 7 * 86_400_000
+            ).length;
+            const sobRadar =
+              data.semaforoResumo.vermelho + data.semaforoResumo.amarelo;
+
+            return (
             <div className="space-y-4">
-              {/* Row 1: 4 KPI Cards (Estilo Finexy) */}
+              {/* Row 1: 4 KPI Cards (Idêntico ao Stitch Finexy) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
                 {/* 1. MRR Bruto Mensal */}
                 <div className={`rounded-3xl ${bgCard} p-5 flex flex-col justify-between gap-3`}>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className={`text-xs font-semibold ${textMuted}`}>
-                      MRR Bruto Mensal
-                    </span>
-                    <span className="rounded-full bg-emerald-500/12 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 font-mono-num">
-                      Conv. {data.kpis.conversaoTrialPct}%
-                    </span>
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`text-xs font-semibold ${textMuted}`}>
+                        MRR Bruto Mensal
+                      </span>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/12 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 font-mono-num">
+                        ↑ {data.kpis.conversaoTrialPct}% conv.
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <div className="font-mono-num text-2xl sm:text-3xl font-extrabold tracking-tight">
+                          {formatBRL(data.kpis.mrrBrutoCentavos)}
+                        </div>
+                        <p className={`text-[11px] ${textMuted} mt-0.5`}>
+                          m/m fechamento
+                        </p>
+                      </div>
+                      <svg
+                        viewBox="0 0 64 26"
+                        className="h-7 w-14 shrink-0 text-emerald-500"
+                        fill="none"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M2 22 L16 18 L26 20 L38 11 L49 13 L62 4"
+                          stroke="currentColor"
+                          strokeWidth="2.4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
                   </div>
-                  <div className="font-mono-num text-2xl sm:text-3xl font-extrabold tracking-tight">
-                    {formatBRL(data.kpis.mrrBrutoCentavos)}
-                  </div>
-                  <div className={`text-[11px] ${textMuted} font-mono-num`}>
-                    Receita bruta de assinaturas ativas
+
+                  <div className="pt-2.5 border-t border-black/5 dark:border-white/10 flex items-center justify-between gap-2 text-[11px] font-mono-num">
+                    <span className={textMuted}>Meta: R$ 20.000</span>
+                    <span className="font-bold">{metaPct}% atingido</span>
                   </div>
                 </div>
 
-                {/* 2. Lucro / MRR Líquido (Hero Laranja) */}
-                <div className="rounded-3xl bg-gradient-to-br from-[#FF5A1F] to-[#FF7844] p-5 text-white shadow-[0_10px_28px_rgba(255,90,31,0.22)] flex flex-col justify-between gap-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold text-white/90">
-                      MRR Líquido Real
-                    </span>
-                    <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold font-mono-num">
-                      Pós gateway
-                    </span>
+                {/* 2. Lucro Líquido Real (Hero Laranja) */}
+                <div className="rounded-3xl bg-gradient-to-br from-[#FF5A1F] to-[#FF6D2F] p-5 text-white shadow-[0_10px_28px_rgba(255,90,31,0.22)] flex flex-col justify-between gap-3">
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-semibold text-white/95">
+                        Lucro Líquido Real
+                      </span>
+                      <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-[10px] font-bold font-mono-num">
+                        Margem {margemPct}%
+                      </span>
+                    </div>
+
+                    <div>
+                      <div className="font-mono-num text-2xl sm:text-3xl font-extrabold tracking-tight">
+                        {formatBRL(data.kpis.mrrLiquidoCentavos)}
+                      </div>
+                      <p className="text-[11px] text-white/85 mt-0.5">
+                        Pós Gateway Asaas (R$ 1,99/tx) &amp; Infra
+                      </p>
+                    </div>
                   </div>
-                  <div className="font-mono-num text-2xl sm:text-3xl font-extrabold tracking-tight">
-                    {formatBRL(data.kpis.mrrLiquidoCentavos)}
-                  </div>
-                  <div className="text-[11px] text-white/85 font-mono-num">
-                    {data.kpis.lojasAtivas} assinantes ativos • {data.kpis.lojasTrial} em trial
+
+                  <div className="pt-2.5 border-t border-white/20 grid grid-cols-2 gap-2 text-[11px] font-mono-num text-white/95">
+                    <span>
+                      Custo Gateway: {formatBRL(custoGatewayCentavos)}
+                    </span>
+                    <span className="text-right">Infra: R$ 0</span>
                   </div>
                 </div>
 
                 {/* 3. Base de Lojas */}
                 <div className={`rounded-3xl ${bgCard} p-5 flex flex-col justify-between gap-3`}>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className={`text-xs font-semibold ${textMuted}`}>
-                      Base de Lojas
-                    </span>
-                    <span className={`rounded-full ${bgSub} px-2 py-0.5 text-[10px] font-bold font-mono-num`}>
-                      {data.kpis.totalLojas} total
-                    </span>
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`text-xs font-semibold ${textMuted}`}>
+                        Base de Lojas
+                      </span>
+                      <span className={`rounded-full ${bgSub} px-2.5 py-0.5 text-[10px] font-bold font-mono-num`}>
+                        Conv. {data.kpis.conversaoTrialPct}%
+                      </span>
+                    </div>
+
+                    <div className="flex items-baseline gap-1.5 font-mono-num pt-1">
+                      <span className="text-2xl sm:text-3xl font-extrabold">
+                        {data.kpis.lojasAtivas}
+                      </span>
+                      <span className={`text-xs ${textMuted}`}>ativas</span>
+                      <span className={`text-xs ${textMuted}`}>/</span>
+                      <span className="text-xl font-bold">
+                        {data.kpis.lojasTrial}
+                      </span>
+                      <span className={`text-xs ${textMuted}`}>trial</span>
+                    </div>
                   </div>
-                  <div className="flex items-baseline gap-1.5 font-mono-num">
-                    <span className="text-2xl sm:text-3xl font-extrabold">
-                      {data.kpis.lojasAtivas}
-                    </span>
-                    <span className={`text-xs ${textMuted}`}>ativas</span>
-                    <span className={`text-xs ${textMuted}`}>/</span>
-                    <span className="text-lg font-bold">{data.kpis.lojasTrial}</span>
-                    <span className={`text-xs ${textMuted}`}>trial</span>
-                  </div>
-                  <div className="h-1.5 w-full rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-[#111216] dark:bg-[#FF5A1F]"
-                      style={{
-                        width: `${Math.max(
-                          8,
-                          Math.round(
-                            (data.kpis.lojasAtivas /
-                              Math.max(1, data.kpis.totalLojas)) *
-                              100
-                          )
-                        )}%`,
-                      }}
-                    />
+
+                  <div className="space-y-2">
+                    <div className="h-1.5 w-full rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-[#111216] dark:bg-[#FF5A1F]"
+                        style={{
+                          width: `${Math.max(
+                            data.kpis.lojasAtivas > 0 ? 12 : 6,
+                            Math.round(
+                              (data.kpis.lojasAtivas /
+                                Math.max(1, data.kpis.totalLojas)) *
+                                100
+                            )
+                          )}%`,
+                        }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between gap-2 text-[11px] font-mono-num">
+                      <span className={textMuted}>
+                        +{novasSemana} lojas nesta semana
+                      </span>
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                        Capacidade Alta
+                      </span>
+                    </div>
                   </div>
                 </div>
 
-                {/* 4. Churn & Atrasadas */}
+                {/* 4. Churn Mensal */}
                 <div className={`rounded-3xl ${bgCard} p-5 flex flex-col justify-between gap-3`}>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className={`text-xs font-semibold ${textMuted}`}>
-                      Churn Mensal
-                    </span>
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`text-xs font-semibold ${textMuted}`}>
+                        Churn Mensal
+                      </span>
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold font-mono-num ${
+                          data.semaforoResumo.vermelho > 0
+                            ? "bg-rose-500/12 text-rose-600 dark:text-rose-300"
+                            : "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                        }`}
+                      >
+                        • {sobRadar} sob radar
+                      </span>
+                    </div>
+
+                    <div>
+                      <div className="font-mono-num text-2xl sm:text-3xl font-extrabold tracking-tight">
+                        {data.kpis.churnPct}%
+                      </div>
+                      <p className={`text-[11px] ${textMuted} mt-0.5`}>
+                        Benchmark seguro (&lt; 2,5%)
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="pt-2.5 border-t border-black/5 dark:border-white/10 flex items-center justify-between gap-2 text-[11px]">
+                    <span className={textMuted}>Inadimplência</span>
                     <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-bold font-mono-num ${
-                        data.semaforoResumo.vermelho > 0
+                      className={`rounded-full px-2 py-0.5 font-mono-num font-bold ${
+                        data.kpis.lojasAtrasadas > 0
                           ? "bg-rose-500/12 text-rose-600 dark:text-rose-300"
                           : "bg-amber-500/12 text-amber-700 dark:text-amber-300"
                       }`}
                     >
-                      {data.semaforoResumo.vermelho + data.semaforoResumo.amarelo} sob radar
+                      {data.kpis.lojasAtrasadas}{" "}
+                      {data.kpis.lojasAtrasadas === 1
+                        ? "fatura pendente"
+                        : "faturas pendentes"}
                     </span>
-                  </div>
-                  <div className="font-mono-num text-2xl sm:text-3xl font-extrabold tracking-tight">
-                    {data.kpis.churnPct}%
-                  </div>
-                  <div className={`text-[11px] font-mono-num ${textMuted}`}>
-                    Atrasadas: <strong>{data.kpis.lojasAtrasadas}</strong> • Críticas:{" "}
-                    <strong>{data.semaforoResumo.vermelho}</strong>
                   </div>
                 </div>
               </div>
@@ -1040,7 +1138,8 @@ export function SuperAdminDashboard({
                 </button>
               </div>
             </div>
-          )}
+            );
+          })()}
 
           {tab === "lojas" && renderSemaforoTable()}
 
