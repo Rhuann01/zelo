@@ -622,7 +622,7 @@ export function LojaPublicaView({
 
       {/* Floating Concentric Booking Capsule (Apple HIG / Stitch) */}
       {selecionados.length > 0 && !loja.pausada && (
-        <div className="pointer-events-none fixed inset-x-0 bottom-[max(14px,env(safe-area-inset-bottom))] z-40 flex justify-center px-3.5">
+        <div className="pointer-events-none fixed inset-x-0 bottom-[max(24px,calc(env(safe-area-inset-bottom)+12px))] z-40 flex justify-center px-3.5">
           {isLiquidGlass ? (
             <LiquidGlassSurface
               tone={isDarkStore ? "dark" : "light"}

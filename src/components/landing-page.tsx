@@ -13,8 +13,6 @@ import {
   MapPin,
   Menu,
   Moon,
-  Pause,
-  Play,
   QrCode,
   SlidersHorizontal,
   Sun,
@@ -192,7 +190,6 @@ export function LandingPage() {
   const [selectedTime, setSelectedTime] = useState("14:45");
   const [extraAdded, setExtraAdded] = useState(false);
   const [previewConfirmed, setPreviewConfirmed] = useState(false);
-  const [demoPlaying, setDemoPlaying] = useState(true);
 
   // Vitrine preview filter
   const [vitrineFilter, setVitrineFilter] = useState<VitrineFilter>("all");
@@ -269,7 +266,6 @@ export function LandingPage() {
       inactivityTimerRef.current = null;
     }
     demoPausedRef.current = false;
-    setDemoPlaying(true);
 
     const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
     const ptr = isMobile ? touchRef.current : cursorRef.current;
@@ -290,7 +286,6 @@ export function LandingPage() {
 
     if (!demoPausedRef.current) {
       demoPausedRef.current = true;
-      setDemoPlaying(false);
       demoTlRef.current?.pause();
       if (cursorRef.current) gsap.set(cursorRef.current, { opacity: 0 });
       if (touchRef.current) gsap.set(touchRef.current, { opacity: 0 });
@@ -304,26 +299,6 @@ export function LandingPage() {
       }, 8000);
     }
   }, [resumeAutoDemo]);
-
-  const handleTogglePlay = useCallback(() => {
-    if (demoPlaying) {
-      if (inactivityTimerRef.current) {
-        window.clearTimeout(inactivityTimerRef.current);
-        inactivityTimerRef.current = null;
-      }
-      demoPausedRef.current = true;
-      setDemoPlaying(false);
-      demoTlRef.current?.pause();
-      if (cursorRef.current) gsap.set(cursorRef.current, { opacity: 0 });
-      if (touchRef.current) gsap.set(touchRef.current, { opacity: 0 });
-    } else {
-      if (appModeRef.current !== "client") {
-        setAppMode("client");
-        appModeRef.current = "client";
-      }
-      resumeAutoDemo(false);
-    }
-  }, [demoPlaying, resumeAutoDemo]);
 
   // 2. Demo Animada Dual-Viewport (Desktop #demo-cursor + Mobile #demo-touch) com GSAP 3
   useEffect(() => {
@@ -841,7 +816,6 @@ export function LandingPage() {
                   inactivityTimerRef.current = null;
                 }
                 demoPausedRef.current = true;
-                setDemoPlaying(false);
                 demoTlRef.current?.pause();
                 if (cursorRef.current) gsap.set(cursorRef.current, { opacity: 0 });
                 if (touchRef.current) gsap.set(touchRef.current, { opacity: 0 });
@@ -857,47 +831,16 @@ export function LandingPage() {
               Painel do Dono
             </button>
           </div>
-
-          <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--zelo-card)] px-3 py-1.5 text-xs font-medium text-[var(--zelo-muted)] shadow-sm">
-              <span
-                className={`h-2 w-2 rounded-full shrink-0 ${
-                  demoPlaying ? "bg-emerald-500 animate-pulse" : "bg-amber-500"
-                }`}
-              />
-              <span>
-                {appMode === "admin"
-                  ? "Painel Admin ativo"
-                  : demoPlaying
-                    ? "Demo animada rodando (clique para testar)"
-                    : "Você no controle (retoma em 8s se parar)"}
-              </span>
-            </span>
-            <button
-              type="button"
-              onClick={handleTogglePlay}
-              className="inline-flex min-h-[34px] items-center gap-1.5 rounded-full bg-[var(--zelo-btn-bg)] px-3 py-1 text-xs font-semibold text-[var(--zelo-btn-ink)] whitespace-nowrap transition hover:bg-[var(--zelo-btn-hover)]"
-            >
-              {demoPlaying ? (
-                <>
-                  <Pause className="h-3 w-3" />
-                  <span>Pausar</span>
-                </>
-              ) : (
-                <>
-                  <Play className="h-3 w-3" />
-                  <span>Retomar</span>
-                </>
-              )}
-            </button>
-          </div>
         </div>
 
         <div
           id="showcase-container"
           ref={containerRef}
-          onPointerDown={() => {
-            pauseDemoWithInactivity();
+          onClick={(e) => {
+            const target = e.target as HTMLElement | null;
+            if (target?.closest("button, input, select, textarea, a, [role='button']")) {
+              pauseDemoWithInactivity();
+            }
           }}
           className="relative overflow-hidden rounded-[20px] bg-[var(--zelo-card)] shadow-[0_24px_60px_-15px_rgba(0,0,0,0.16)]"
         >

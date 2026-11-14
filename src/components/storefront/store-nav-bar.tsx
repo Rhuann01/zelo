@@ -116,7 +116,7 @@ export function StoreNavBar({
     );
 
     return (
-      <div className="pointer-events-none fixed inset-x-0 bottom-[max(14px,env(safe-area-inset-bottom))] z-40 flex justify-center px-4">
+      <div className="pointer-events-none fixed inset-x-0 bottom-[max(24px,calc(env(safe-area-inset-bottom)+12px))] z-40 flex justify-center px-4">
         {isLiquidGlass ? (
           <nav aria-label="Navegação da loja" className="zelo-sheet-up pointer-events-auto">
             <LiquidGlassSurface tone={isDark ? "dark" : "light"} className="rounded-[32px] p-1.5">
@@ -149,7 +149,7 @@ export function StoreNavBar({
   return (
     <nav
       aria-label="Seções da loja"
-      className="fixed inset-x-0 bottom-0 z-40 pb-[max(0.25rem,env(safe-area-inset-bottom))] backdrop-blur-xl"
+      className="fixed inset-x-0 bottom-0 z-40 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-xl"
       style={{
         backgroundColor: "var(--t-surface)",
         borderTop: isBrutal ? "2px solid #000000" : "1px solid var(--t-border)",
