@@ -625,6 +625,8 @@ function PremiumLojaCard({
             <img
               src={loja.capa_url}
               alt={loja.nome}
+              loading="lazy"
+              decoding="async"
               className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
             />
           ) : (
@@ -687,6 +689,8 @@ function PremiumLojaCard({
               <img
                 src={loja.logo_url}
                 alt={loja.nome}
+                loading="lazy"
+                decoding="async"
                 className="h-10 w-10 shrink-0 rounded-xl object-cover shadow-xs"
               />
             ) : (

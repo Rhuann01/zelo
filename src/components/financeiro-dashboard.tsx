@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { atualizarMetaSemanalAction } from "@/app/painel/financeiro/actions";
+import { sanitizeCsvCell } from "@/lib/security/sanitize-next";
 
 export interface FinanceiroAgendamentoItem {
   id: string;
@@ -276,7 +277,7 @@ export function FinanceiroDashboard({
         String(ag.profissional_comissao_pct),
       ]),
     ];
-    const csv = rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(";")).join("\n");
+    const csv = rows.map((r) => r.map((c) => sanitizeCsvCell(c)).join(";")).join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -360,6 +361,7 @@ export function FinanceiroDashboard({
         </div>
       </div>
 
+      <div key={`${view}-${periodo}`} className="zelo-panel-enter flex flex-col gap-4">
       {view === "bolso" ? (
         <>
           {/* Hero Dark Card: Ganhos Líquidos */}
@@ -707,6 +709,7 @@ export function FinanceiroDashboard({
           </section>
         </>
       )}
+      </div>
 
       {/* Secondary Action: Export CSV */}
       <button

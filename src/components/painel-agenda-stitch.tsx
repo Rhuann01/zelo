@@ -602,7 +602,7 @@ export function PainelAgendaStitch({
                                 className="fixed inset-0 z-30"
                                 onClick={() => setOpenMenuId(null)}
                               />
-                              <div className="absolute right-0 bottom-full mb-1.5 z-40 w-48 rounded-2xl bg-[var(--zelo-card)] p-1.5 shadow-xl ring-1 ring-black/10 dark:ring-white/10 space-y-0.5">
+                              <div className="zelo-pop-in absolute right-0 bottom-full mb-1.5 z-40 w-48 rounded-2xl bg-[var(--zelo-card)] p-1.5 shadow-xl ring-1 ring-black/10 dark:ring-white/10 space-y-0.5">
                                 {whatsappUrl && (
                                   <a
                                     href={whatsappUrl}

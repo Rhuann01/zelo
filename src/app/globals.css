@@ -139,3 +139,72 @@ body {
   display: inline-block;
   animation: odoRollIn 0.36s cubic-bezier(0.22, 1, 0.36, 1);
 }
+
+@keyframes zeloFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes zeloSheetUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes zeloPanelEnter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes zeloPopIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.zelo-fade-in {
+  animation: zeloFadeIn 180ms ease-out both;
+}
+
+.zelo-sheet-up {
+  animation: zeloSheetUp 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.zelo-panel-enter {
+  animation: zeloPanelEnter 180ms ease-out both;
+}
+
+.zelo-pop-in {
+  animation: zeloPopIn 150ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zelo-fade-in,
+  .zelo-sheet-up,
+  .zelo-panel-enter,
+  .zelo-pop-in,
+  .odo-digit-roll {
+    animation: none !important;
+    transition: none !important;
+  }
+}

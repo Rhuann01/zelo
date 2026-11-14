@@ -808,8 +808,8 @@ function RemarcarDrawer({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 backdrop-blur-xs sm:items-center sm:p-4">
-      <div className="flex max-h-[90dvh] w-full max-w-[480px] flex-col overflow-hidden rounded-t-3xl bg-[var(--zelo-card)] shadow-2xl sm:rounded-3xl">
+    <div className="zelo-fade-in fixed inset-0 z-50 flex items-end justify-center bg-black/55 backdrop-blur-xs sm:items-center sm:p-4">
+      <div className="zelo-sheet-up flex max-h-[90dvh] w-full max-w-[480px] flex-col overflow-hidden rounded-t-3xl bg-[var(--zelo-card)] shadow-2xl sm:rounded-3xl">
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3">
           <div>

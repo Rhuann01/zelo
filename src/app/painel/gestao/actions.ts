@@ -16,6 +16,26 @@ export interface ActionResult {
   message?: string;
 }
 
+async function revalidateLojaCache(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  lojaId?: string | null
+) {
+  revalidatePath("/painel/gestao");
+  revalidateTag("vitrine-explorar");
+  revalidatePath("/explorar");
+
+  if (!lojaId) return;
+  const { data } = await supabase
+    .from("lojas")
+    .select("slug")
+    .eq("id", lojaId)
+    .maybeSingle();
+  if (data?.slug) {
+    revalidateTag(`loja-${data.slug}`);
+    revalidatePath(`/${data.slug}`);
+  }
+}
+
 export async function saveServicoAction(raw: unknown): Promise<ActionResult> {
   const parsed = servicoSchema.safeParse(raw);
   if (!parsed.success) {
@@ -62,9 +82,7 @@ export async function saveServicoAction(raw: unknown): Promise<ActionResult> {
     }
   }
 
-  revalidatePath("/painel/gestao");
-  revalidateTag("vitrine-explorar");
-  revalidatePath("/explorar");
+  await revalidateLojaCache(supabase, parsed.data.loja_id);
   return { ok: true };
 }
 
@@ -91,9 +109,7 @@ export async function deleteServicoAction(servicoId: string, lojaId: string): Pr
   if (error) {
     return { error: "Não foi possível excluir o serviço." };
   }
-  revalidatePath("/painel/gestao");
-  revalidateTag("vitrine-explorar");
-  revalidatePath("/explorar");
+  await revalidateLojaCache(supabase, ids.data.lojaId);
   return { ok: true };
 }
 
@@ -117,9 +133,7 @@ export async function saveHorariosAction(raw: unknown): Promise<ActionResult> {
     return { error: "Apenas o proprietário pode alterar os horários da loja." };
   }
 
-  revalidatePath("/painel/gestao");
-  revalidateTag("vitrine-explorar");
-  revalidatePath("/explorar");
+  await revalidateLojaCache(supabase, loja_id);
   return { ok: true, message: "Grade semanal salva." };
 }
 
@@ -151,9 +165,7 @@ export async function createBloqueioAction(raw: unknown): Promise<ActionResult> 
     return { error: "Não foi possível registrar o dia especial/bloqueio." };
   }
 
-  revalidatePath("/painel/gestao");
-  revalidateTag("vitrine-explorar");
-  revalidatePath("/explorar");
+  await revalidateLojaCache(supabase, parsed.data.loja_id);
   return { ok: true };
 }
 
@@ -188,9 +200,7 @@ export async function toggleDonoAtendeAction(
     return { error: "Não foi possível atualizar a chave de atendimento do proprietário." };
   }
 
-  revalidatePath("/painel/gestao");
-  revalidateTag("vitrine-explorar");
-  revalidatePath("/explorar");
+  await revalidateLojaCache(supabase, parsed.data.lojaId);
   return { ok: true };
 }
 
@@ -239,9 +249,7 @@ export async function convidarProfissionalAction(raw: unknown): Promise<ActionRe
     return { error: "Sem permissão ou erro ao convidar profissional." };
   }
 
-  revalidatePath("/painel/gestao");
-  revalidateTag("vitrine-explorar");
-  revalidatePath("/explorar");
+  await revalidateLojaCache(supabase, parsed.data.loja_id);
   return { ok: true };
 }
 
@@ -265,6 +273,12 @@ export async function desligarProfissionalAction(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Sessão expirada." };
 
+  const { data: profInfo } = await supabase
+    .from("profissionais")
+    .select("loja_id")
+    .eq("id", parsed.data.profissionalId)
+    .maybeSingle();
+
   const { error } = await supabase.rpc("desligar_profissional", {
     p_profissional_id: parsed.data.profissionalId,
     p_transferir_para_id: parsed.data.transferirParaId,
@@ -274,8 +288,6 @@ export async function desligarProfissionalAction(
     return { error: error.message || "Falha ao desligar profissional." };
   }
 
-  revalidatePath("/painel/gestao");
-  revalidateTag("vitrine-explorar");
-  revalidatePath("/explorar");
+  await revalidateLojaCache(supabase, profInfo?.loja_id);
   return { ok: true };
 }

@@ -315,7 +315,7 @@ export function LojaPublicaView({
         </nav>
 
         {/* Content Area */}
-        <div className="px-4 pt-5">
+        <div key={tab} className="zelo-panel-enter px-4 pt-5">
           {/* TAB 1: SERVIÇOS */}
           {tab === "servicos" && (
             <section className="flex flex-col gap-3">
@@ -573,7 +573,7 @@ export function LojaPublicaView({
       {/* Sticky Bottom Drawer Bar (Stitch) */}
       {selecionados.length > 0 && !loja.pausada && (
         <div
-          className="fixed right-0 bottom-0 left-0 z-40 px-4 py-3 backdrop-blur-md"
+          className="zelo-sheet-up fixed right-0 bottom-0 left-0 z-40 px-4 py-3 backdrop-blur-md"
           style={{
             backgroundColor: "color-mix(in srgb, var(--t-surface) 95%, transparent)",
             borderTop: "1px solid var(--t-border)",

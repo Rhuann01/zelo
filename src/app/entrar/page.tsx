@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { ZeloLogo } from "@/components/zelo-logo";
 import { GoogleAuthButton } from "@/components/google-auth-button";
+import { sanitizeNextPath } from "@/lib/security/sanitize-next";
 
 export default async function EntrarPage({
   searchParams,
@@ -9,7 +10,7 @@ export default async function EntrarPage({
   searchParams: Promise<{ next?: string; erro?: string }>;
 }) {
   const params = await searchParams;
-  const nextPath = params.next && params.next.startsWith("/") ? params.next : "/painel";
+  const nextPath = sanitizeNextPath(params.next, "/painel");
 
   return (
     <main className="relative min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-[var(--zelo-bg)] overflow-hidden">

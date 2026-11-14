@@ -276,9 +276,9 @@ export function ReservaDrawer({
   const firstSlot = slots[0] ?? null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 backdrop-blur-xs sm:items-center sm:p-4">
+    <div className="zelo-fade-in fixed inset-0 z-50 flex items-end justify-center bg-black/55 backdrop-blur-xs sm:items-center sm:p-4">
       <div
-        className="relative max-h-[92dvh] w-full max-w-[480px] overflow-y-auto overscroll-contain shadow-2xl"
+        className="zelo-sheet-up relative max-h-[92dvh] w-full max-w-[480px] overflow-y-auto overscroll-contain shadow-2xl"
         style={{
           backgroundColor: "var(--t-bg)",
           color: "var(--t-ink)",

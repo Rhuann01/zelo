@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sanitizeCsvCell } from "@/lib/security/sanitize-next";
 
 export type SemaforoCor = "verde" | "amarelo" | "vermelho";
 
@@ -338,8 +339,7 @@ export function generateSuperAdminCsv(lojas: SuperAdminLojaRow[]): string {
     "created_at",
   ].join(",");
 
-  const esc = (v: string | number | boolean) =>
-    `"${String(v).replace(/"/g, '""')}"`;
+  const esc = sanitizeCsvCell;
 
   const rows = lojas.map((l) =>
     [

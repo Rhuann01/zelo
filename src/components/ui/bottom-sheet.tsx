@@ -43,7 +43,7 @@ export function BottomSheet({
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50 backdrop-blur-xs sm:items-center sm:p-4"
+      className="zelo-fade-in fixed inset-0 z-[70] flex items-end justify-center bg-black/50 backdrop-blur-xs sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-label={title}
@@ -52,7 +52,7 @@ export function BottomSheet({
       }}
     >
       <div
-        className={`w-full ${MAX_WIDTH_CLASSES[maxWidth]} max-h-[90dvh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-[var(--zelo-card)] text-[var(--zelo-ink)] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl`}
+        className={`zelo-sheet-up w-full ${MAX_WIDTH_CLASSES[maxWidth]} max-h-[90dvh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-[var(--zelo-card)] text-[var(--zelo-ink)] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl`}
       >
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="min-w-0">
