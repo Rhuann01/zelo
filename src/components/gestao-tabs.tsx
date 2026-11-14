@@ -3,12 +3,18 @@
 import { useState, useTransition } from "react";
 import {
   CalendarPlus,
+  Check,
   Clock,
+  Copy,
   ImagePlus,
+  Link2,
   Loader2,
+  LogOut,
   Plus,
   Scissors,
   Search,
+  Share2,
+  ShieldCheck,
   Star,
   Store,
   Trash2,
@@ -19,10 +25,12 @@ import {
   X,
 } from "lucide-react";
 import {
-  convidarProfissionalAction,
   createBloqueioAction,
   deleteServicoAction,
   desligarProfissionalAction,
+  gerarConviteEquipeAction,
+  revogarConviteEquipeAction,
+  sairDaEquipeAction,
   saveHorariosAction,
   saveServicoAction,
   toggleDonoAtendeAction,
@@ -47,12 +55,21 @@ export interface ServicoRow {
 
 export interface ProfissionalRow {
   id: string;
+  user_id: string | null;
   nome: string;
   cargo: string;
   eh_dono: boolean;
   ativo: boolean;
-  email_convite: string | null;
+  avatar_url: string | null;
   comissao_percentual: number;
+}
+
+export interface ConvitePendenteRow {
+  id: string;
+  cargo: string;
+  comissao_percentual: number;
+  expires_at: string;
+  created_at: string;
 }
 
 export interface BloqueioRow {
@@ -83,9 +100,11 @@ interface GestaoTabsProps {
   lojaId: string;
   plano: string;
   isOwner: boolean;
+  currentUserId: string;
   horariosIniciais: Record<string, unknown>;
   servicos: ServicoRow[];
   profissionais: ProfissionalRow[];
+  convitesPendentes: ConvitePendenteRow[];
   bloqueios: BloqueioRow[];
 }
 
@@ -93,9 +112,11 @@ export function GestaoTabs({
   lojaId,
   plano,
   isOwner,
+  currentUserId,
   horariosIniciais,
   servicos,
   profissionais,
+  convitesPendentes,
   bloqueios,
 }: GestaoTabsProps) {
   const [tab, setTab] = useState<"horarios" | "equipe" | "servicos">("horarios");
@@ -137,10 +158,12 @@ export function GestaoTabs({
   const [uploadingSrvId, setUploadingSrvId] = useState<string | null>(null);
   const [stockModalTarget, setStockModalTarget] = useState<"new" | string | null>(null);
 
-  const [convNome, setConvNome] = useState("");
-  const [convEmail, setConvEmail] = useState("");
   const [convCargo, setConvCargo] = useState("Barbeiro");
   const [convComissao, setConvComissao] = useState("50");
+  const [linkGerado, setLinkGerado] = useState<string | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [confirmDesligarId, setConfirmDesligarId] = useState<string | null>(null);
+  const [confirmSair, setConfirmSair] = useState(false);
 
   const donoProf = profissionais.find((p) => p.eh_dono);
   const ativosCount = profissionais.filter((p) => p.ativo).length;
@@ -589,14 +612,25 @@ export function GestaoTabs({
 
             {profissionais.map((p) => {
               const inicial = (p.nome.trim()[0] || "P").toUpperCase();
+              const isSelfMember = !p.eh_dono && p.ativo && p.user_id === currentUserId;
+              const isConfirmingDesligar = confirmDesligarId === p.id;
               return (
                 <div
                   key={p.id}
-                  className="flex items-center justify-between gap-3 rounded-2xl bg-[var(--zelo-card)] p-4 shadow-sm"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[var(--zelo-card)] p-4 shadow-sm"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--zelo-soft)] text-sm font-bold">
-                      {inicial}
+                      {p.avatar_url ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          src={p.avatar_url}
+                          alt={p.nome}
+                          className="h-11 w-11 rounded-full object-cover"
+                        />
+                      ) : (
+                        inicial
+                      )}
                       {p.eh_dono ? (
                         <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)]">
                           <Star className="h-2.5 w-2.5 fill-current" />
@@ -613,7 +647,7 @@ export function GestaoTabs({
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <p className="truncate text-sm font-bold">{p.nome}</p>
                         <span className="rounded-full bg-[var(--zelo-soft)] px-2 py-0.5 font-mono-num text-[10px] font-bold uppercase tracking-wider text-[var(--zelo-muted)]">
-                          {p.eh_dono ? "Dono" : "Equipe"}
+                          {p.eh_dono ? "Dono" : isSelfMember ? "Você" : "Equipe"}
                         </span>
                       </div>
                       <p className="text-xs text-[var(--zelo-muted)]">
@@ -624,22 +658,74 @@ export function GestaoTabs({
                   </div>
 
                   {isOwner && !p.eh_dono && p.ativo && (
-                    <button
-                      type="button"
-                      disabled={isPending}
-                      onClick={() =>
-                        runAction(async () => {
-                          const destino =
-                            outrosAtivos.find((o) => o.id !== p.id)?.id ?? donoProf?.id ?? null;
-                          const res = await desligarProfissionalAction(p.id, destino);
-                          return res.ok ? { message: "Profissional desligado com segurança." } : res;
-                        })
-                      }
-                      className="inline-flex h-10 shrink-0 items-center gap-1 rounded-xl bg-red-500/10 px-3 text-xs font-semibold text-red-500 transition hover:bg-red-500/15"
-                    >
-                      <UserMinus className="h-3.5 w-3.5" />
-                      Desligar
-                    </button>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {isConfirmingDesligar && (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDesligarId(null)}
+                          className="inline-flex h-10 items-center rounded-xl bg-[var(--zelo-soft)] px-2.5 text-xs font-semibold text-[var(--zelo-muted)]"
+                        >
+                          Cancelar
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        disabled={isPending}
+                        onClick={() => {
+                          if (!isConfirmingDesligar) {
+                            setConfirmDesligarId(p.id);
+                            return;
+                          }
+                          setConfirmDesligarId(null);
+                          runAction(async () => {
+                            const destino =
+                              outrosAtivos.find((o) => o.id !== p.id)?.id ?? donoProf?.id ?? null;
+                            const res = await desligarProfissionalAction(p.id, destino);
+                            return res.ok ? { message: "Profissional desligado com segurança." } : res;
+                          });
+                        }}
+                        className="inline-flex h-10 shrink-0 items-center gap-1 rounded-xl bg-red-500/10 px-3 text-xs font-semibold text-red-500 transition hover:bg-red-500/15"
+                      >
+                        <UserMinus className="h-3.5 w-3.5" />
+                        {isConfirmingDesligar ? "Confirmar desligamento" : "Desligar"}
+                      </button>
+                    </div>
+                  )}
+
+                  {!isOwner && isSelfMember && (
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {confirmSair && (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmSair(false)}
+                          className="inline-flex h-10 items-center rounded-xl bg-[var(--zelo-soft)] px-2.5 text-xs font-semibold text-[var(--zelo-muted)]"
+                        >
+                          Cancelar
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        disabled={isPending}
+                        onClick={() => {
+                          if (!confirmSair) {
+                            setConfirmSair(true);
+                            return;
+                          }
+                          setConfirmSair(false);
+                          runAction(async () => {
+                            const res = await sairDaEquipeAction({ loja_id: lojaId });
+                            if (res.ok) {
+                              window.location.href = "/painel";
+                            }
+                            return res;
+                          });
+                        }}
+                        className="inline-flex h-10 shrink-0 items-center gap-1 rounded-xl bg-red-500/10 px-3 text-xs font-semibold text-red-500 transition hover:bg-red-500/15"
+                      >
+                        <LogOut className="h-3.5 w-3.5" />
+                        {confirmSair ? "Confirmar saída" : "Sair da equipe"}
+                      </button>
+                    </div>
                   )}
                 </div>
               );
@@ -647,72 +733,175 @@ export function GestaoTabs({
           </section>
 
           {isOwner && (
-            <section className="rounded-2xl bg-[var(--zelo-card)] p-4 shadow-sm space-y-3">
+            <section className="rounded-2xl bg-[var(--zelo-card)] p-4 shadow-sm space-y-3.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm font-bold">
                   <UserPlus className="h-4 w-4 text-[#F59E0B]" />
-                  Convidar Profissional
+                  Convidar via Link Único
                 </div>
                 <span className="font-mono-num text-[11px] text-[var(--zelo-muted)]">
                   Plano {plano.toUpperCase()}
                 </span>
               </div>
-              <input
-                type="text"
-                value={convNome}
-                onChange={(e) => setConvNome(e.target.value)}
-                placeholder="Nome (ex: Matheus)"
-                className="h-11 w-full rounded-xl bg-[var(--zelo-soft)] px-3 text-sm outline-none"
-              />
-              <input
-                type="email"
-                value={convEmail}
-                onChange={(e) => setConvEmail(e.target.value)}
-                placeholder="E-mail Google do profissional"
-                className="h-11 w-full rounded-xl bg-[var(--zelo-soft)] px-3 text-sm outline-none"
-              />
+
+              <p className="text-xs leading-relaxed text-[var(--zelo-muted)]">
+                Defina o cargo e a comissão e envie o link exclusivo para o barbeiro. Nome e foto virão automaticamente do perfil Google dele ao aceitar.
+              </p>
+
               <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="text"
-                  value={convCargo}
-                  onChange={(e) => setConvCargo(e.target.value)}
-                  placeholder="Cargo"
-                  className="h-11 rounded-xl bg-[var(--zelo-soft)] px-3 text-sm outline-none"
-                />
-                <input
-                  type="number"
-                  value={convComissao}
-                  onChange={(e) => setConvComissao(e.target.value)}
-                  placeholder="Comissão %"
-                  className="h-11 rounded-xl bg-[var(--zelo-soft)] px-3 text-sm font-mono-num outline-none"
-                />
+                <div>
+                  <label className="mb-1 block text-[11px] font-semibold text-[var(--zelo-muted)]">
+                    Cargo
+                  </label>
+                  <input
+                    type="text"
+                    value={convCargo}
+                    onChange={(e) => setConvCargo(e.target.value)}
+                    maxLength={40}
+                    placeholder="Barbeiro"
+                    className="h-11 w-full rounded-xl bg-[var(--zelo-soft)] px-3 text-sm outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] font-semibold text-[var(--zelo-muted)]">
+                    Comissão (%)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={convComissao}
+                    onChange={(e) => setConvComissao(e.target.value)}
+                    placeholder="50"
+                    className="h-11 w-full rounded-xl bg-[var(--zelo-soft)] px-3 text-sm font-mono-num outline-none"
+                  />
+                </div>
               </div>
+
               <button
                 type="button"
                 disabled={isPending}
-                onClick={() =>
+                onClick={() => {
+                  const cargoClean = convCargo.trim();
+                  const comissaoNum = Number(convComissao);
+                  if (cargoClean.length < 2 || cargoClean.length > 40) {
+                    showToast("Informe um cargo entre 2 e 40 caracteres.", "error");
+                    return;
+                  }
+                  if (!Number.isInteger(comissaoNum) || comissaoNum < 0 || comissaoNum > 100) {
+                    showToast(
+                      "A comissão deve ser um número inteiro de 0 a 100%.",
+                      "error"
+                    );
+                    return;
+                  }
+
                   runAction(async () => {
-                    const res = await convidarProfissionalAction({
+                    const res = await gerarConviteEquipeAction({
                       loja_id: lojaId,
-                      nome: convNome,
-                      email_convite: convEmail,
-                      cargo: convCargo,
-                      comissao_percentual: Number(convComissao) || 50,
+                      cargo: cargoClean,
+                      comissao_percentual: comissaoNum,
                     });
-                    if (res.ok) {
-                      setConvNome("");
-                      setConvEmail("");
+                    if (res.ok && res.token) {
+                      const origin =
+                        typeof window !== "undefined" ? window.location.origin : "";
+                      setLinkGerado(`${origin}/convite/${res.token}`);
+                      setCopiedLink(false);
                       return {
-                        message: "Convite salvo! Assim que entrar com Google o vínculo é automático.",
+                        message: "Link único gerado! Envie para o profissional aceitar.",
                       };
                     }
                     return res;
-                  })
-                }
-                className="h-11 w-full rounded-xl bg-[var(--zelo-btn-bg)] text-xs font-semibold text-[var(--zelo-btn-ink)] transition active:scale-[0.99]"
+                  });
+                }}
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--zelo-btn-bg)] text-xs font-semibold text-[var(--zelo-btn-ink)] transition active:scale-[0.99]"
               >
-                Adicionar à Equipe
+                <Link2 className="h-4 w-4" />
+                <span>Gerar link único de convite</span>
               </button>
+
+              {linkGerado && (
+                <div className="space-y-2.5 rounded-xl bg-[var(--zelo-soft)] p-3">
+                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                    <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
+                    <span>Link de uso único válido por 7 dias</span>
+                  </div>
+                  <p className="break-all rounded-lg bg-[var(--zelo-card)] px-2.5 py-2 font-mono-num text-[11px]">
+                    {linkGerado}
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(linkGerado);
+                          setCopiedLink(true);
+                          showToast("Link copiado!", "success");
+                        } catch {
+                          showToast("Não foi possível copiar.", "error");
+                        }
+                      }}
+                      className="flex h-10 items-center justify-center gap-1.5 rounded-xl bg-[var(--zelo-card)] text-xs font-semibold shadow-xs"
+                    >
+                      {copiedLink ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                      <span>{copiedLink ? "Copiado" : "Copiar link"}</span>
+                    </button>
+                    <a
+                      href={`https://wa.me/?text=${encodeURIComponent(
+                        `Oi! Te convidei para entrar na nossa equipe no Zelo. Acesse com sua conta Google por este link único: ${linkGerado}`
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-10 items-center justify-center gap-1.5 rounded-xl bg-[#10B981] text-xs font-semibold text-white"
+                    >
+                      <Share2 className="h-3.5 w-3.5" />
+                      <span>WhatsApp</span>
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {convitesPendentes.length > 0 && (
+                <div className="space-y-2 pt-2">
+                  <span className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--zelo-muted)]">
+                    Convites pendentes ({convitesPendentes.length})
+                  </span>
+                  <div className="space-y-1.5">
+                    {convitesPendentes.map((c) => (
+                      <div
+                        key={c.id}
+                        className="flex items-center justify-between gap-2 rounded-xl bg-[var(--zelo-soft)] px-3 py-2 text-xs"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold">
+                            {c.cargo} • <span className="font-mono-num">{c.comissao_percentual}%</span>
+                          </p>
+                          <p className="text-[11px] text-[var(--zelo-muted)]">
+                            Expira em{" "}
+                            {new Date(c.expires_at).toLocaleDateString("pt-BR")}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={isPending}
+                          onClick={() =>
+                            runAction(() =>
+                              revogarConviteEquipeAction({
+                                loja_id: lojaId,
+                                convite_id: c.id,
+                              })
+                            )
+                          }
+                          className="h-8 shrink-0 rounded-lg bg-red-500/10 px-2.5 text-[11px] font-semibold text-red-500 transition hover:bg-red-500/15"
+                        >
+                          Revogar
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </section>
           )}
         </div>

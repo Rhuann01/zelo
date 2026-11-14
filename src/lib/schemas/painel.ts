@@ -57,10 +57,35 @@ export const diaEspecialSchema = z
 export const conviteProfissionalSchema = z
   .object({
     loja_id: z.string().uuid(),
-    nome: z.string().trim().min(2, "Informe o nome do profissional").max(80),
-    email_convite: z.string().trim().email("E-mail Google inválido").toLowerCase(),
-    cargo: z.string().trim().min(2).max(50).default("Profissional"),
-    comissao_percentual: z.number().min(0).max(100).default(50),
+    cargo: z.string().trim().min(2, "Informe o cargo (mín. 2 letras)").max(40, "Cargo muito longo").default("Barbeiro"),
+    comissao_percentual: z
+      .number()
+      .int("Comissão deve ser um número inteiro")
+      .min(0, "Comissão mínima é 0%")
+      .max(100, "Comissão máxima é 100%")
+      .default(50),
+  })
+  .strict();
+
+export const revogarConviteSchema = z
+  .object({
+    loja_id: z.string().uuid(),
+    convite_id: z.string().uuid(),
+  })
+  .strict();
+
+export const tokenConviteSchema = z
+  .object({
+    token: z
+      .string()
+      .trim()
+      .regex(/^[A-Za-z0-9_-]{32,128}$/, "Link de convite inválido ou corrompido."),
+  })
+  .strict();
+
+export const sairEquipeSchema = z
+  .object({
+    loja_id: z.string().uuid(),
   })
   .strict();
 
