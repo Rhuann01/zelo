@@ -106,14 +106,14 @@ export function ServiceCard({
             </span>
 
             <span
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full shadow-md transition-transform group-active:scale-90"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full shadow-md transition-transform group-active:scale-90"
               style={{
                 backgroundColor: selected ? "var(--t-accent)" : "rgba(255, 255, 255, 0.22)",
                 color: selected ? "var(--t-accent-ink)" : "#FFFFFF",
                 border: selected ? "none" : "1px solid rgba(255, 255, 255, 0.38)",
               }}
             >
-              {selected ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+              {selected ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
             </span>
           </div>
         </div>
@@ -192,14 +192,14 @@ export function ServiceCard({
           </span>
 
           <span
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full shadow-sm transition-transform group-active:scale-90"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full shadow-sm transition-transform group-active:scale-90"
             style={{
               backgroundColor: "var(--t-accent)",
               color: "var(--t-accent-ink)",
               ...(isBrutal ? { border: "1.5px solid #000000" } : {}),
             }}
           >
-            {selected ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+            {selected ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
           </span>
         </div>
       </div>
