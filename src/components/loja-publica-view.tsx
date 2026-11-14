@@ -4,21 +4,20 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
-  Check,
   ChevronLeft,
   Clock,
   ExternalLink,
-  List,
   MapPin,
   MessageCircle,
-  Plus,
   Scissors,
   Share2,
   ShieldCheck,
-  Users,
+  X,
   Zap,
 } from "lucide-react";
 import { ReservaDrawer } from "@/components/reserva-drawer";
+import { ServiceCard } from "@/components/storefront/service-card";
+import { StoreNavBar } from "@/components/storefront/store-nav-bar";
 import { StoreMapEmbed, buildExternalMapUrl } from "@/components/ui";
 import { StoreBannerMedia } from "@/components/ui/store-banner-media";
 import {
@@ -74,6 +73,9 @@ export function LojaPublicaView({
 
   const accentInk = getAccentInk(loja.cor_primaria);
   const isBrutal = loja.tema === "brutal";
+  const isLiquidGlass = loja.tema === "liquid_glass";
+  const estiloBarra = loja.estilo_barra ?? "abas";
+  const estiloCard = loja.estilo_card ?? "preenchido";
   const initials = getInitials(loja.nome);
 
   const selecionados = useMemo(
@@ -281,46 +283,16 @@ export function LojaPublicaView({
           </div>
         </section>
 
-        {/* Horizontal Underline Navigation Tabs (Stitch) */}
-        <nav
-          aria-label="Seções da loja"
-          className="no-scrollbar w-full overflow-x-auto"
-          style={{
-            backgroundColor: "var(--t-surface)",
-            borderTop: "1px solid var(--t-border)",
-            borderBottom: "1px solid var(--t-border)",
-          }}
-        >
-          <div className="flex min-w-max items-center gap-4 px-4">
-            {(
-              [
-                { key: "servicos", label: "Serviços", icon: List },
-                { key: "equipe", label: "Equipe & Horários", icon: Users },
-                { key: "detalhes", label: "Detalhes & Mapa", icon: MapPin },
-              ] as const
-            ).map(({ key, label, icon: Icon }) => {
-              const active = tab === key;
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setTab(key)}
-                  className="relative flex min-h-[46px] shrink-0 items-center gap-1.5 whitespace-nowrap py-3 text-[13px] font-semibold transition-colors"
-                  style={{ color: active ? "var(--t-accent)" : "var(--t-muted)" }}
-                >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  <span>{label}</span>
-                  {active && (
-                    <span
-                      className="absolute right-0 bottom-0 left-0 h-0.5 rounded-full"
-                      style={{ backgroundColor: "var(--t-accent)" }}
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </nav>
+        {/* Navegação: Abas clássicas no topo OU Dock Flutuante no rodapé */}
+        {estiloBarra === "abas" && (
+          <StoreNavBar
+            tab={tab}
+            onChangeTab={setTab}
+            estiloBarra="abas"
+            isBrutal={isBrutal}
+            isLiquidGlass={isLiquidGlass}
+          />
+        )}
 
         {/* Content Area */}
         <div key={tab} className="zelo-panel-enter px-4 pt-5">
@@ -336,99 +308,20 @@ export function LojaPublicaView({
                   </p>
                 </div>
               ) : (
-                servicos.map((s) => {
-                  const selected = selectedIds.includes(s.id);
-                  return (
-                    <div
+                <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+                  {servicos.map((s) => (
+                    <ServiceCard
                       key={s.id}
-                      className="relative flex items-center justify-between gap-3 overflow-hidden px-3.5 py-3 transition-all"
-                      style={{
-                        ...cardSurfaceStyle,
-                        ...(selected
-                          ? {
-                              outline: "1.5px solid var(--t-accent)",
-                              outlineOffset: "-1.5px",
-                            }
-                          : {}),
-                      }}
-                    >
-                      {selected && (
-                        <div
-                          className="absolute top-0 bottom-0 left-0 w-1"
-                          style={{ backgroundColor: "var(--t-accent)" }}
-                        />
-                      )}
-
-                      <div className={`flex min-w-0 flex-1 items-center gap-3 ${selected ? "pl-1.5" : ""}`}>
-                        {s.exibir_imagem && s.imagem_url && (
-                          /* eslint-disable-next-line @next/next/no-img-element */
-                          <img
-                            src={s.imagem_url}
-                            alt={s.nome}
-                            loading="lazy"
-                            decoding="async"
-                            className="h-14 w-14 sm:h-16 sm:w-16 shrink-0 object-cover"
-                            style={{
-                              borderRadius: "calc(var(--t-radius) * 0.72)",
-                              backgroundColor: "var(--t-inner)",
-                            }}
-                          />
-                        )}
-                        <div className="flex min-w-0 flex-1 flex-col gap-1">
-                          <h2 className="text-[15px] font-semibold leading-snug break-words">
-                            {s.nome}
-                          </h2>
-                          {s.descricao && (
-                            <p className="text-xs leading-snug line-clamp-2" style={{ color: "var(--t-muted)" }}>
-                              {s.descricao}
-                            </p>
-                          )}
-                          <div className="flex items-center gap-2 pt-0.5">
-                            <span className="font-mono-num text-[15px] font-bold">
-                              {formatPrice(s.preco_centavos)}
-                            </span>
-                            <span className="text-[11px]" style={{ color: "var(--t-muted)" }}>
-                              •
-                            </span>
-                            <span
-                              className="inline-flex items-center gap-1 font-mono-num text-xs"
-                              style={{ color: "var(--t-muted)" }}
-                            >
-                              <Clock className="h-3 w-3 shrink-0" />
-                              {s.duracao_min} min
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        disabled={loja.pausada}
-                        onClick={() => toggleServico(s.id)}
-                        aria-label={selected ? `Remover ${s.nome}` : `Adicionar ${s.nome}`}
-                        className="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-1 px-3.5 text-xs font-semibold transition-transform active:scale-95 disabled:opacity-50"
-                        style={{
-                          borderRadius: "calc(var(--t-radius) * 0.72)",
-                          backgroundColor: selected ? "var(--t-inner)" : "var(--t-accent)",
-                          color: selected ? "var(--t-accent)" : "var(--t-accent-ink)",
-                          ...(isBrutal ? { border: "2px solid #000000" } : {}),
-                        }}
-                      >
-                        {selected ? (
-                          <>
-                            <Check className="h-4 w-4" />
-                            <span>Selecionado</span>
-                          </>
-                        ) : (
-                          <>
-                            <Plus className="h-4 w-4" />
-                            <span>Adicionar</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  );
-                })
+                      servico={s}
+                      selected={selectedIds.includes(s.id)}
+                      disabled={loja.pausada}
+                      estiloCard={estiloCard}
+                      isBrutal={isBrutal}
+                      isLiquidGlass={isLiquidGlass}
+                      onToggle={toggleServico}
+                    />
+                  ))}
+                </div>
               )}
             </section>
           )}
@@ -585,18 +478,45 @@ export function LojaPublicaView({
         </div>
       </main>
 
+      {/* Dock Flutuante quando configurado (oculto se houver serviços selecionados para não empilhar barras) */}
+      {estiloBarra === "dock_flutuante" && (
+        <StoreNavBar
+          tab={tab}
+          onChangeTab={setTab}
+          estiloBarra="dock_flutuante"
+          hidden={selecionados.length > 0 && !loja.pausada}
+          isBrutal={isBrutal}
+          isLiquidGlass={isLiquidGlass}
+        />
+      )}
+
       {/* Sticky Bottom Drawer Bar (Stitch) */}
       {selecionados.length > 0 && !loja.pausada && (
         <div
-          className="zelo-sheet-up fixed right-0 bottom-0 left-0 z-40 px-4 py-3 backdrop-blur-md"
+          className={`zelo-sheet-up fixed right-0 bottom-0 left-0 z-40 px-4 py-3 backdrop-blur-md ${
+            isLiquidGlass ? "store-glass-surface" : ""
+          }`}
           style={{
             backgroundColor: "color-mix(in srgb, var(--t-surface) 95%, transparent)",
             borderTop: "1px solid var(--t-border)",
             boxShadow: "0 -4px 24px rgba(0,0,0,0.18)",
           }}
         >
-          <div className="mx-auto flex max-w-[480px] items-center justify-between gap-4">
-            <div className="flex min-w-0 flex-col">
+          <div className="mx-auto flex max-w-[480px] items-center justify-between gap-2.5">
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              aria-label="Limpar serviços selecionados"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors active:scale-95"
+              style={{
+                backgroundColor: "var(--t-inner)",
+                color: "var(--t-muted)",
+              }}
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            <div className="flex min-w-0 flex-1 flex-col">
               <span className="truncate text-xs" style={{ color: "var(--t-muted)" }}>
                 {selecionados.length === 1
                   ? `1 serviço • ${totalDuracao} min`

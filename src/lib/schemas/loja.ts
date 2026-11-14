@@ -1,7 +1,16 @@
 import { z } from "zod";
 
 export const NICHO_OPTIONS = ["barbearia", "manicure", "salao", "estetica", "outro"] as const;
-export const TEMA_OPTIONS = ["urban", "glam", "brutal", "slate"] as const;
+export const TEMA_OPTIONS = [
+  "urban",
+  "glam",
+  "brutal",
+  "slate",
+  "liquid_glass",
+  "material_you",
+] as const;
+export const ESTILO_CARD_OPTIONS = ["preenchido", "vidro_borrado"] as const;
+export const ESTILO_BARRA_OPTIONS = ["abas", "dock_flutuante"] as const;
 
 export const servicoPresetSchema = z
   .object({

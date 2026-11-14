@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { TEMA_OPTIONS } from "@/lib/schemas/loja";
+import {
+  ESTILO_BARRA_OPTIONS,
+  ESTILO_CARD_OPTIONS,
+  TEMA_OPTIONS,
+} from "@/lib/schemas/loja";
 
 export const servicoSchema = z
   .object({
@@ -66,6 +70,8 @@ export const customizacaoLojaSchema = z
     tema: z.enum(TEMA_OPTIONS),
     cor_primaria: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Cor hexadecimal inválida"),
     raio_borda_px: z.number().int().min(2).max(24),
+    estilo_card: z.enum(ESTILO_CARD_OPTIONS).default("preenchido"),
+    estilo_barra: z.enum(ESTILO_BARRA_OPTIONS).default("abas"),
     chave_pix: z.string().trim().max(120).nullable().default(null),
     sinal_centavos: z.number().int().min(0).max(5_000_000).default(0),
     cidade: z.string().trim().min(2).max(80).optional(),

@@ -775,7 +775,7 @@ export function GestaoTabs({
                     ) : (
                       <ImagePlus className="h-3.5 w-3.5 text-[#10B981]" />
                     )}
-                    <span>{srvImagemUrl ? "Trocar Foto" : "Adicionar Foto (opcional)"}</span>
+                    <span>{srvImagemUrl ? "Trocar Foto" : "Foto do Serviço (obrigatória)"}</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -815,6 +815,9 @@ export function GestaoTabs({
                 disabled={isPending || uploadingSrvId === "new"}
                 onClick={() =>
                   runAction(async () => {
+                    if (!srvImagemUrl) {
+                      return { error: "Adicione uma foto do serviço para manter sua vitrine organizada." };
+                    }
                     const centavos = Math.round(
                       Number(srvPreco.replace(/[^\d,.-]/g, "").replace(",", ".")) * 100
                     );
@@ -826,7 +829,7 @@ export function GestaoTabs({
                       preco_centavos: Number.isFinite(centavos) ? centavos : 0,
                       ativo: true,
                       imagem_url: srvImagemUrl,
-                      exibir_imagem: srvImagemUrl ? srvExibirImagem : false,
+                      exibir_imagem: true,
                     });
                     if (res.ok) {
                       setSrvNome("");

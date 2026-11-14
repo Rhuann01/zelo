@@ -13,6 +13,8 @@ const COR_PADRAO_POR_TEMA: Record<CreateLojaInput["tema"], string> = {
   glam: "#BE185D",
   brutal: "#A3E635",
   slate: "#2563EB",
+  liquid_glass: "#38BDF8",
+  material_you: "#6750A4",
 };
 
 const RAIO_PADRAO_POR_TEMA: Record<CreateLojaInput["tema"], number> = {
@@ -20,6 +22,8 @@ const RAIO_PADRAO_POR_TEMA: Record<CreateLojaInput["tema"], number> = {
   glam: 20,
   brutal: 4,
   slate: 8,
+  liquid_glass: 20,
+  material_you: 18,
 };
 
 export async function createLojaAction(rawInput: CreateLojaInput): Promise<OnboardingResult> {

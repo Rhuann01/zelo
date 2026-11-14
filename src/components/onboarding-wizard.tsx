@@ -104,6 +104,19 @@ const TEMA_META: Record<
     bg: "#FFFFFF",
     accent: "#2563EB",
   },
+  liquid_glass: {
+    label: "Liquid Glass",
+    desc: "Apple iOS 26 translúcido",
+    bg: "#090C16",
+    accent: "#38BDF8",
+    darkCard: true,
+  },
+  material_you: {
+    label: "Material You",
+    desc: "Google Material 3 tonal",
+    bg: "#FAF9FD",
+    accent: "#6750A4",
+  },
 };
 
 function formatBRL(centavos: number) {

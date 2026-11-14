@@ -77,6 +77,28 @@ const TEMAS = [
     defaultCor: "#2563EB",
     defaultRaio: 12,
   },
+  {
+    key: "liquid_glass",
+    label: "Liquid Glass",
+    desc: "Apple iOS 26",
+    barBg: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
+    dot: "#38BDF8",
+    tag: "Glass",
+    tagColor: "#E0F2FE",
+    defaultCor: "#38BDF8",
+    defaultRaio: 20,
+  },
+  {
+    key: "material_you",
+    label: "Material You",
+    desc: "Google Material 3",
+    barBg: "#ECE6F0",
+    dot: "#6750A4",
+    tag: "MD3",
+    tagColor: "#21005D",
+    defaultCor: "#6750A4",
+    defaultRaio: 18,
+  },
 ] as const;
 
 const SWATCHES = [
@@ -103,6 +125,12 @@ export function CustomizadorLoja({
   const [tema, setTema] = useState<LojaResumo["tema"]>(loja.tema);
   const [cor, setCor] = useState(loja.cor_primaria);
   const [raio, setRaio] = useState(loja.raio_borda_px);
+  const [estiloCard, setEstiloCard] = useState<LojaResumo["estilo_card"]>(
+    loja.estilo_card ?? "preenchido"
+  );
+  const [estiloBarra, setEstiloBarra] = useState<LojaResumo["estilo_barra"]>(
+    loja.estilo_barra ?? "abas"
+  );
   const [chavePix, setChavePix] = useState(loja.chave_pix ?? "");
   const [sinalReais, setSinalReais] = useState(
     (loja.sinal_centavos / 100).toFixed(2).replace(".", ",")
@@ -131,6 +159,8 @@ export function CustomizadorLoja({
     tema: loja.tema,
     cor: loja.cor_primaria,
     raio: loja.raio_borda_px,
+    estiloCard: loja.estilo_card ?? "preenchido",
+    estiloBarra: loja.estilo_barra ?? "abas",
     chavePix: loja.chave_pix ?? "",
     sinalReais: (loja.sinal_centavos / 100).toFixed(2).replace(".", ","),
     cep: initialLocalizacao?.cep ?? "",
@@ -146,6 +176,8 @@ export function CustomizadorLoja({
     (tema !== savedSnapshot.tema ||
       cor !== savedSnapshot.cor ||
       raio !== savedSnapshot.raio ||
+      estiloCard !== savedSnapshot.estiloCard ||
+      estiloBarra !== savedSnapshot.estiloBarra ||
       chavePix !== savedSnapshot.chavePix ||
       sinalReais !== savedSnapshot.sinalReais ||
       cep !== savedSnapshot.cep ||
@@ -311,6 +343,8 @@ export function CustomizadorLoja({
           tema,
           cor_primaria: cor,
           raio_borda_px: raio,
+          estilo_card: estiloCard,
+          estilo_barra: estiloBarra,
           chave_pix: chavePix.trim() || null,
           sinal_centavos: sinalCentavos,
           cidade: cidade.trim(),
@@ -328,6 +362,8 @@ export function CustomizadorLoja({
             tema,
             cor,
             raio,
+            estiloCard,
+            estiloBarra,
             chavePix,
             sinalReais,
             cep,
@@ -437,32 +473,116 @@ export function CustomizadorLoja({
               </span>
             </div>
 
-            {/* Dynamic Mock Booking Pill */}
-            <div
-              className="flex items-center justify-between p-2.5 transition-all"
-              style={{
-                backgroundColor: "var(--t-inner)",
-                borderRadius: `${Math.max(4, raio - 4)}px`,
-                border: isBrutal ? "1.5px solid #000000" : undefined,
-              }}
-            >
-              <div className="flex flex-col">
-                <span className="text-[12px] font-semibold" style={{ color: "var(--t-ink)" }}>
-                  Corte Clássico & Barba
-                </span>
-                <span className="font-mono-num text-[11px]" style={{ color: "var(--t-muted)" }}>
-                  45 min • Quarta, 14:30
-                </span>
+            {estiloBarra === "abas" && (
+              <div
+                className="flex items-center gap-3 border-b pb-1.5 text-[10px] font-semibold"
+                style={{ borderColor: "var(--t-border)", color: "var(--t-muted)" }}
+              >
+                <span style={{ color: cor }}>Serviços</span>
+                <span>Equipe</span>
+                <span>Mapa</span>
               </div>
-              <div className="text-right">
-                <span className="block font-mono-num text-[13px] font-bold" style={{ color: cor }}>
-                  R$ 75,00
+            )}
+
+            {/* Dynamic Mock Service Grid (Preenchido vs Vidro Borrado) */}
+            <div className="grid grid-cols-2 gap-2">
+              {estiloCard === "vidro_borrado" ? (
+                <div
+                  className="relative flex h-24 flex-col justify-end overflow-hidden p-2"
+                  style={{
+                    borderRadius: `${Math.max(6, raio)}px`,
+                    background: `linear-gradient(135deg, ${cor}55 0%, #11131A 100%)`,
+                    border: isBrutal ? "1.5px solid #000000" : "1px solid var(--t-border)",
+                  }}
+                >
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/85 to-transparent backdrop-blur-sm" />
+                  <div className="relative z-10 flex items-end justify-between gap-1 text-white">
+                    <div className="min-w-0">
+                      <p className="truncate text-[10px] font-semibold">Corte Clássico</p>
+                      <p className="font-mono-num text-[10px] font-bold">R$ 45,00</p>
+                    </div>
+                    <span
+                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
+                      style={{ backgroundColor: cor, color: accentInk }}
+                    >
+                      +
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className="overflow-hidden"
+                  style={{
+                    backgroundColor: "var(--t-inner)",
+                    borderRadius: `${Math.max(6, raio)}px`,
+                    border: isBrutal ? "1.5px solid #000000" : "1px solid var(--t-border)",
+                  }}
+                >
+                  <div
+                    className="h-10 w-full"
+                    style={{ background: `linear-gradient(135deg, ${cor}44 0%, var(--t-surface) 100%)` }}
+                  />
+                  <div className="flex items-center justify-between gap-1 p-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-[10px] font-semibold" style={{ color: "var(--t-ink)" }}>
+                        Corte Clássico
+                      </p>
+                      <p className="font-mono-num text-[10px] font-bold" style={{ color: cor }}>
+                        R$ 45,00
+                      </p>
+                    </div>
+                    <span
+                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
+                      style={{ backgroundColor: cor, color: accentInk }}
+                    >
+                      +
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <div
+                className="flex flex-col justify-between p-2"
+                style={{
+                  backgroundColor: "var(--t-inner)",
+                  borderRadius: `${Math.max(6, raio)}px`,
+                  border: isBrutal ? "1.5px solid #000000" : "1px solid var(--t-border)",
+                }}
+              >
+                <span className="text-[10px] font-semibold" style={{ color: "var(--t-ink)" }}>
+                  Barba Completa
                 </span>
-                <span className="font-mono-num text-[10px]" style={{ color: "var(--t-muted)" }}>
-                  {sinalReais && sinalReais !== "0,00" ? `Sinal R$ ${sinalReais}` : "Sem sinal"}
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="font-mono-num text-[10px]" style={{ color: "var(--t-muted)" }}>
+                    30 min
+                  </span>
+                  <span className="font-mono-num text-[10px] font-bold" style={{ color: cor }}>
+                    R$ 35
+                  </span>
+                </div>
               </div>
             </div>
+
+            {estiloBarra === "dock_flutuante" && (
+              <div className="flex justify-center pt-0.5">
+                <div
+                  className="inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-[9px] font-semibold shadow"
+                  style={{
+                    backgroundColor: "var(--t-inner)",
+                    border: "1px solid var(--t-border)",
+                  }}
+                >
+                  <span
+                    className="rounded-full px-2 py-0.5"
+                    style={{ backgroundColor: cor, color: accentInk }}
+                  >
+                    Serviços
+                  </span>
+                  <span style={{ color: "var(--t-muted)" }}>Equipe</span>
+                  <span style={{ color: "var(--t-muted)" }}>Mapa</span>
+                </div>
+              </div>
+            )}
 
             {/* Micro CTA */}
             <div
@@ -507,7 +627,7 @@ export function CustomizadorLoja({
       <section>
         <div className="mb-2 flex items-center justify-between">
           <h3 className="text-base font-semibold text-[var(--zelo-ink)]">Temas Pré-definidos</h3>
-          <span className="font-mono-num text-xs text-[var(--zelo-muted)]">4 estilos</span>
+          <span className="font-mono-num text-xs text-[var(--zelo-muted)]">6 estilos</span>
         </div>
         <div className="grid grid-cols-2 gap-2">
           {TEMAS.map((t) => {
@@ -522,7 +642,7 @@ export function CustomizadorLoja({
               >
                 <div
                   className="mb-2 flex h-8 w-full items-center justify-between rounded px-2"
-                  style={{ backgroundColor: t.barBg }}
+                  style={{ background: t.barBg }}
                 >
                   <span
                     className="h-2.5 w-2.5 rounded-full"
@@ -549,6 +669,91 @@ export function CustomizadorLoja({
               </button>
             );
           })}
+        </div>
+      </section>
+
+      {/* Storefront Layout Choices (Card Style & Nav Bar Style) */}
+      <section className="flex flex-col gap-4 rounded-xl bg-[var(--zelo-card)] p-4 shadow-sm">
+        <div>
+          <h3 className="text-sm font-semibold text-[var(--zelo-ink)]">Estilo dos Cards de Serviço</h3>
+          <p className="mb-2.5 text-[11px] text-[var(--zelo-muted)]">
+            Defina como os serviços aparecem na sua loja.
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {(
+              [
+                {
+                  key: "preenchido",
+                  label: "Preenchido",
+                  desc: "Foto em cima e base sólida",
+                },
+                {
+                  key: "vidro_borrado",
+                  label: "Vidro Borrado",
+                  desc: "Foto inteira com blur no rodapé",
+                },
+              ] as const
+            ).map((opt) => {
+              const active = estiloCard === opt.key;
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  disabled={!isOwner}
+                  onClick={() => setEstiloCard(opt.key)}
+                  className={`flex min-h-[58px] flex-col justify-between rounded-xl p-3 text-left transition-all ${
+                    active
+                      ? "bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)] shadow-sm"
+                      : "bg-[var(--zelo-soft)] text-[var(--zelo-ink)] hover:bg-[var(--zelo-border)]"
+                  }`}
+                >
+                  <span className="text-xs font-bold">{opt.label}</span>
+                  <span className="text-[10px] opacity-80">{opt.desc}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="border-t border-[var(--zelo-border)]/50 pt-3">
+          <h3 className="text-sm font-semibold text-[var(--zelo-ink)]">Barra de Navegação</h3>
+          <p className="mb-2.5 text-[11px] text-[var(--zelo-muted)]">
+            Escolha entre abas tradicionais ou dock flutuante estilo app.
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {(
+              [
+                {
+                  key: "abas",
+                  label: "Abas Clássicas",
+                  desc: "Menu fixo no topo da vitrine",
+                },
+                {
+                  key: "dock_flutuante",
+                  label: "Dock Flutuante",
+                  desc: "Pílula moderna no rodapé",
+                },
+              ] as const
+            ).map((opt) => {
+              const active = estiloBarra === opt.key;
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  disabled={!isOwner}
+                  onClick={() => setEstiloBarra(opt.key)}
+                  className={`flex min-h-[58px] flex-col justify-between rounded-xl p-3 text-left transition-all ${
+                    active
+                      ? "bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)] shadow-sm"
+                      : "bg-[var(--zelo-soft)] text-[var(--zelo-ink)] hover:bg-[var(--zelo-border)]"
+                  }`}
+                >
+                  <span className="text-xs font-bold">{opt.label}</span>
+                  <span className="text-[10px] opacity-80">{opt.desc}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </section>
 
