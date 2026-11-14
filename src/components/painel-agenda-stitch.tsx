@@ -25,9 +25,9 @@ import {
   Users,
   UserX,
   Utensils,
-  X,
   XCircle,
 } from "lucide-react";
+import { BottomSheet } from "@/components/ui";
 import {
   atualizarStatusAgendamentoAction,
   criarEncaixeManualAction,
@@ -653,27 +653,21 @@ export function PainelAgendaStitch({
       </button>
 
       {/* Modal de Ações do Agendamento */}
-      {selectedEvent && (
-        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50 backdrop-blur-xs sm:items-center sm:p-4">
-          <div className="w-full max-w-[440px] space-y-4 rounded-t-2xl bg-[var(--zelo-card)] p-5 shadow-xl sm:rounded-2xl">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <h3 className="text-base font-bold">{selectedEvent.cliente_nome}</h3>
-                <p className="mt-0.5 font-mono-num text-xs text-[var(--zelo-muted)]">
-                  {selectedEvent.servicos_resumo} • {selectedEvent.profissional_nome} •{" "}
-                  {formatBRL(selectedEvent.total_centavos)}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedEvent(null)}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--zelo-soft)]"
-                aria-label="Fechar"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
+      <BottomSheet
+        open={Boolean(selectedEvent)}
+        onClose={() => setSelectedEvent(null)}
+        title={selectedEvent?.cliente_nome ?? ""}
+        subtitle={
+          selectedEvent
+            ? `${selectedEvent.servicos_resumo} • ${selectedEvent.profissional_nome} • ${formatBRL(
+                selectedEvent.total_centavos
+              )}`
+            : undefined
+        }
+        maxWidth="md"
+      >
+        {selectedEvent && (
+          <div className="space-y-4">
             {selectedEvent.cliente_whatsapp && (
               <a
                 href={`https://wa.me/55${selectedEvent.cliente_whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(
@@ -718,27 +712,17 @@ export function PainelAgendaStitch({
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </BottomSheet>
 
       {/* Modal de Encaixe Manual (Balcão) */}
-      {encaixeOpen && (
-        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50 backdrop-blur-xs sm:items-center sm:p-4">
-          <form
-            onSubmit={handleCriarEncaixe}
-            className="max-h-[90vh] w-full max-w-[440px] space-y-3 overflow-y-auto rounded-t-2xl bg-[var(--zelo-card)] p-5 shadow-xl sm:rounded-2xl"
-          >
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold">Encaixe Rápido (Balcão)</h3>
-              <button
-                type="button"
-                onClick={() => setEncaixeOpen(false)}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--zelo-soft)]"
-                aria-label="Fechar"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
+      <BottomSheet
+        open={encaixeOpen}
+        onClose={() => setEncaixeOpen(false)}
+        title="Encaixe Rápido (Balcão)"
+        maxWidth="md"
+      >
+        <form onSubmit={handleCriarEncaixe} className="space-y-3">
 
             <input
               type="text"
@@ -821,9 +805,8 @@ export function PainelAgendaStitch({
               {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
               <span>Salvar Encaixe</span>
             </button>
-          </form>
-        </div>
-      )}
+        </form>
+      </BottomSheet>
     </div>
   );
 }
