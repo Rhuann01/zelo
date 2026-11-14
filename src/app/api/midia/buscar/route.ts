@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import {
+  checkRateLimit,
+  rateLimitHeaders,
+} from "@/lib/security/rate-limit";
 
 export interface StockPhotoItem {
   id: string;
@@ -47,6 +51,14 @@ export async function GET(req: NextRequest) {
 
   if (!user) {
     return NextResponse.json({ ok: false, error: "Não autorizado." }, { status: 401 });
+  }
+
+  const rl = checkRateLimit(`midia:buscar:${user.id}`, 30, 60_000);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { ok: false, error: "Muitas buscas em sequência. Aguarde alguns segundos." },
+      { status: 429, headers: rateLimitHeaders(rl) }
+    );
   }
 
   const rawQuery = req.nextUrl.searchParams.get("q") ?? "";

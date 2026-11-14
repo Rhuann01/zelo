@@ -12,6 +12,7 @@ import {
   Compass,
   Heart,
   LayoutGrid,
+  Loader2,
   MapPin,
   Palette,
   Scissors,
@@ -25,7 +26,7 @@ import {
 import type { VitrineLojaCard } from "@/lib/public/get-loja-publica";
 import { useViewerPerfil } from "@/lib/supabase/use-viewer-perfil";
 import { ZeloLogo } from "@/components/zelo-logo";
-import { ZeloToastViewport } from "@/components/zelo-toast";
+import { ZeloToastViewport, showToast } from "@/components/zelo-toast";
 import { ExplorarHeaderAvatar } from "@/components/explorar-header-avatar";
 import { ExplorarMeusHorarios } from "@/components/explorar-meus-horarios";
 import { StoreBannerMedia } from "@/components/ui/store-banner-media";
@@ -65,7 +66,20 @@ function formatPrecoReais(centavos: number) {
   });
 }
 
-export function ExplorarVitrine({ lojas }: { lojas: VitrineLojaCard[] }) {
+export function ExplorarVitrine({
+  lojas,
+  initialNextCursor = null,
+  initialHasMore = false,
+}: {
+  lojas: VitrineLojaCard[];
+  initialNextCursor?: string | null;
+  initialHasMore?: boolean;
+}) {
+  const [lojasList, setLojasList] = useState<VitrineLojaCard[]>(lojas);
+  const [nextCursor, setNextCursor] = useState<string | null>(initialNextCursor);
+  const [hasMore, setHasMore] = useState<boolean>(initialHasMore);
+  const [loadingMore, setLoadingMore] = useState(false);
+
   const [tab, setTab] = useState<"explorar" | "favoritos" | "horarios" | "perfil">("explorar");
   const [busca, setBusca] = useState("");
   const [nicho, setNicho] = useState<string>("todos");
@@ -107,17 +121,52 @@ export function ExplorarVitrine({ lojas }: { lojas: VitrineLojaCard[] }) {
     });
   }
 
+  async function handleCarregarMais() {
+    if (!hasMore || !nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const qs = new URLSearchParams({
+        cursor: nextCursor,
+        limit: "24",
+      });
+      const res = await fetch(`/api/vitrine?${qs.toString()}`);
+      const json = await res.json();
+      if (!res.ok || !json.ok) {
+        showToast(json.error || "Não foi possível carregar mais lojas.", "error");
+        return;
+      }
+      const incoming = (json.items as VitrineLojaCard[]) ?? [];
+      setLojasList((prev) => {
+        const seen = new Set(prev.map((l) => l.id));
+        const merged = [...prev];
+        for (const item of incoming) {
+          if (!seen.has(item.id)) {
+            seen.add(item.id);
+            merged.push(item);
+          }
+        }
+        return merged;
+      });
+      setNextCursor(json.nextCursor ?? null);
+      setHasMore(Boolean(json.hasMore));
+    } catch {
+      showToast("Erro de conexão ao carregar mais lojas.", "error");
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
   const cidades = useMemo(() => {
     const set = new Set<string>();
-    for (const l of lojas) {
+    for (const l of lojasList) {
       if (l.cidade.trim()) set.add(l.cidade.trim());
     }
     return Array.from(set).sort((a, b) => a.localeCompare(b, "pt-BR"));
-  }, [lojas]);
+  }, [lojasList]);
 
   const lojasFiltradas = useMemo(() => {
     const q = busca.trim().toLowerCase();
-    return lojas.filter((l) => {
+    return lojasList.filter((l) => {
       if (tab === "favoritos" && !favoritos.includes(l.id)) return false;
       if (tab === "explorar" && somenteFavoritosFilter && !favoritos.includes(l.id)) {
         return false;
@@ -132,7 +181,7 @@ export function ExplorarVitrine({ lojas }: { lojas: VitrineLojaCard[] }) {
       }
       return true;
     });
-  }, [lojas, busca, nicho, cidade, tab, favoritos, somenteFavoritosFilter]);
+  }, [lojasList, busca, nicho, cidade, tab, favoritos, somenteFavoritosFilter]);
 
   const showHero =
     tab === "explorar" &&
@@ -477,6 +526,26 @@ export function ExplorarVitrine({ lojas }: { lojas: VitrineLojaCard[] }) {
                       onToggleFav={() => toggleFavorito(loja.id)}
                     />
                   ))}
+                  {hasMore && (
+                    <button
+                      type="button"
+                      onClick={handleCarregarMais}
+                      disabled={loadingMore}
+                      className="mt-1 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--zelo-soft)] px-4 py-3 text-sm font-bold text-[var(--zelo-ink)] transition-colors hover:opacity-90 disabled:opacity-60"
+                    >
+                      {loadingMore ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Carregando mais lojas...
+                        </>
+                      ) : (
+                        <>
+                          Carregar mais lojas
+                          <ChevronDown className="h-4 w-4" />
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               )}
 

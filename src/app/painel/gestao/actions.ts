@@ -4,6 +4,7 @@ import crypto from "node:crypto";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { checkRateLimit } from "@/lib/security/rate-limit";
 import {
   conviteProfissionalSchema,
   diaEspecialSchema,
@@ -315,6 +316,11 @@ export async function gerarConviteEquipeAction(raw: unknown): Promise<ActionResu
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "Sessão expirada." };
+
+  const rl = checkRateLimit(`convite:gerar:${user.id}`, 20, 60 * 60_000);
+  if (!rl.allowed) {
+    return { error: "Limite de convites por hora atingido. Aguarde um pouco." };
+  }
 
   const input = parsed.data;
 

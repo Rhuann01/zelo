@@ -5,11 +5,20 @@ import {
   generateSuperAdminCsv,
   loadSuperAdminDashboardData,
 } from "@/lib/super-admin/metrics";
+import { checkRateLimit, rateLimitHeaders } from "@/lib/security/rate-limit";
 
 export async function GET() {
   const guard = await verifySuperAdminAccess();
   if (!guard.ok) {
     return NextResponse.json({ error: "Acesso negado" }, { status: guard.status });
+  }
+
+  const rl = checkRateLimit(`super-admin:export:${guard.session.userId}`, 10, 60_000);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "Muitas exportações. Aguarde um minuto." },
+      { status: 429, headers: rateLimitHeaders(rl) }
+    );
   }
 
   const data = await loadSuperAdminDashboardData();

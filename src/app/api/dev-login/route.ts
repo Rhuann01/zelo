@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  checkRateLimit,
+  getClientIpFromHeaders,
+  rateLimitHeaders,
+} from "@/lib/security/rate-limit";
 
 const DEV_EMAIL = "leon.dev@zelo.local";
 const DEV_PASSWORD = "ZeloLocalDevPassword123!";
@@ -9,9 +14,23 @@ const DEV_PASSWORD = "ZeloLocalDevPassword123!";
  * Rota exclusiva de desenvolvimento local para testar /onboarding e /painel
  * no navegador sem depender de Client ID/Secret do Google OAuth.
  */
-export async function POST() {
+export async function POST(request: Request) {
   if (process.env.NODE_ENV !== "development") {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const host = (request.headers.get("host") ?? "").split(":")[0].toLowerCase();
+  if (host !== "localhost" && host !== "127.0.0.1") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const ip = getClientIpFromHeaders(request.headers);
+  const rl = checkRateLimit(`dev-login:${ip}`, 10, 60_000);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "Muitas tentativas" },
+      { status: 429, headers: rateLimitHeaders(rl) }
+    );
   }
 
   try {

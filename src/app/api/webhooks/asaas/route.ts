@@ -6,8 +6,24 @@ import {
   processAsaasWebhookEvent,
   verifyAsaasWebhookToken,
 } from "@/lib/asaas/webhook";
+import {
+  checkRateLimit,
+  getClientIpFromHeaders,
+  rateLimitHeaders,
+} from "@/lib/security/rate-limit";
+
+const MAX_WEBHOOK_BYTES = 65_536;
 
 export async function POST(request: Request) {
+  const ip = getClientIpFromHeaders(request.headers);
+  const rl = checkRateLimit(`webhook:asaas:${ip}`, 120, 60_000);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "Muitas requisições" },
+      { status: 429, headers: rateLimitHeaders(rl) }
+    );
+  }
+
   const receivedToken = request.headers.get("asaas-access-token");
   const expectedToken = process.env.ASAAS_WEBHOOK_TOKEN;
 
@@ -15,9 +31,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
 
+  const contentLength = Number(request.headers.get("content-length") ?? "0");
+  if (Number.isFinite(contentLength) && contentLength > MAX_WEBHOOK_BYTES) {
+    return NextResponse.json({ error: "Payload muito grande" }, { status: 413 });
+  }
+
   let body: unknown;
   try {
-    body = await request.json();
+    const rawText = await request.text();
+    if (Buffer.byteLength(rawText, "utf8") > MAX_WEBHOOK_BYTES) {
+      return NextResponse.json({ error: "Payload muito grande" }, { status: 413 });
+    }
+    body = JSON.parse(rawText);
   } catch {
     return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
   }

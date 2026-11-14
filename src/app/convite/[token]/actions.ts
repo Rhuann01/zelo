@@ -3,6 +3,7 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { tokenConviteSchema } from "@/lib/schemas/painel";
+import { checkRateLimit } from "@/lib/security/rate-limit";
 
 export interface AceitarConviteResult {
   ok?: boolean;
@@ -24,6 +25,11 @@ export async function aceitarConviteAction(rawToken: string): Promise<AceitarCon
 
   if (!user) {
     return { error: "Você precisa entrar com sua conta Google antes de aceitar." };
+  }
+
+  const rl = checkRateLimit(`convite:aceitar:${user.id}`, 15, 5 * 60_000);
+  if (!rl.allowed) {
+    return { error: "Muitas tentativas. Aguarde alguns minutos." };
   }
 
   const { data, error } = await supabase.rpc("aceitar_convite_equipe", {

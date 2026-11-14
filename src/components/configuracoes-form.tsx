@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  AlertTriangle,
   ArrowLeft,
   ArrowLeftRight,
   BellRing,
@@ -11,6 +12,7 @@ import {
   CreditCard,
   Download,
   Info,
+  KeyRound,
   Loader2,
   Lock,
   LogOut,
@@ -21,6 +23,7 @@ import {
   Plus,
   ShieldCheck,
   Store,
+  Trash2,
   Umbrella,
   Wallet,
 } from "lucide-react";
@@ -28,6 +31,8 @@ import { AvatarUploader } from "@/components/avatar-uploader";
 import { showToast } from "@/components/zelo-toast";
 import { UnsavedChangesGuard } from "@/components/ui/unsaved-changes-guard";
 import {
+  definirSenhaSegurancaAction,
+  excluirLojaAction,
   saveConfiguracoesAction,
   signOutConfigAction,
 } from "@/app/painel/configuracoes/actions";
@@ -37,10 +42,12 @@ export function ConfiguracoesForm({
   ctx,
   initialMinhaChavePix = "",
   canEditProfPix = false,
+  initialTemSenhaSeguranca = false,
 }: {
   ctx: PainelContext;
   initialMinhaChavePix?: string;
   canEditProfPix?: boolean;
+  initialTemSenhaSeguranca?: boolean;
 }) {
   const router = useRouter();
   const [nome, setNome] = useState(ctx.perfil.nome);
@@ -54,6 +61,14 @@ export function ConfiguracoesForm({
     ctx.lojaAtual.pix_modo === "profissional" && canEditProfPix;
   const [dark, setDark] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [temSenhaSeguranca, setTemSenhaSeguranca] = useState(initialTemSenhaSeguranca);
+  const [senhaAtual, setSenhaAtual] = useState("");
+  const [novaSenha, setNovaSenha] = useState("");
+  const [pinPending, startPinTransition] = useTransition();
+  const [mostrarZonaPerigo, setMostrarZonaPerigo] = useState(false);
+  const [confirmSlug, setConfirmSlug] = useState("");
+  const [senhaExclusao, setSenhaExclusao] = useState("");
+  const [deletePending, startDeleteTransition] = useTransition();
   const [savedSnapshot, setSavedSnapshot] = useState({
     nome: ctx.perfil.nome,
     whatsapp: ctx.perfil.whatsapp ?? "",
@@ -491,6 +506,185 @@ export function ConfiguracoesForm({
           Salvar Alterações
         </button>
       </form>
+
+      {/* Senha de Segurança da Conta */}
+      <section className="flex flex-col gap-1.5">
+        <span className="px-1 text-xs font-semibold text-[var(--zelo-muted)]">
+          Segurança da Conta
+        </span>
+        <div className="flex flex-col gap-3 rounded-xl bg-[var(--zelo-card)] p-3 shadow-sm">
+          <div className="flex items-start gap-2.5">
+            <KeyRound className="mt-0.5 h-5 w-5 shrink-0 text-[var(--zelo-muted)]" />
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <span className="text-sm font-semibold text-[var(--zelo-ink)]">
+                Senha de Segurança para Ações Críticas
+              </span>
+              <span className="text-xs text-[var(--zelo-muted)]">
+                {temSenhaSeguranca
+                  ? "Ativa. Exigida para apagar lojas permanentemente."
+                  : "Defina uma senha (mín. 6 caracteres) para proteger ações destrutivas como apagar uma loja."}
+              </span>
+            </div>
+          </div>
+
+          {temSenhaSeguranca && (
+            <input
+              type="password"
+              value={senhaAtual}
+              onChange={(e) => setSenhaAtual(e.target.value)}
+              placeholder="Senha de segurança atual"
+              autoComplete="current-password"
+              className="h-11 w-full rounded-xl bg-[var(--zelo-soft)] px-3 text-sm text-[var(--zelo-ink)] outline-none placeholder:text-[var(--zelo-muted)]"
+            />
+          )}
+
+          <input
+            type="password"
+            value={novaSenha}
+            onChange={(e) => setNovaSenha(e.target.value)}
+            placeholder={
+              temSenhaSeguranca
+                ? "Nova senha de segurança (mín. 6 caracteres)"
+                : "Criar senha de segurança (mín. 6 caracteres)"
+            }
+            autoComplete="new-password"
+            className="h-11 w-full rounded-xl bg-[var(--zelo-soft)] px-3 text-sm text-[var(--zelo-ink)] outline-none placeholder:text-[var(--zelo-muted)]"
+          />
+
+          <button
+            type="button"
+            disabled={pinPending || novaSenha.length < 6}
+            onClick={() => {
+              startPinTransition(async () => {
+                const res = await definirSenhaSegurancaAction({
+                  senha_atual: temSenhaSeguranca ? senhaAtual : undefined,
+                  nova_senha: novaSenha,
+                });
+                if (res.error) {
+                  showToast(res.error, "error");
+                  return;
+                }
+                setTemSenhaSeguranca(true);
+                setSenhaAtual("");
+                setNovaSenha("");
+                showToast(res.message ?? "Senha de segurança salva.", "success");
+              });
+            }}
+            className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-[var(--zelo-soft)] px-4 text-sm font-semibold text-[var(--zelo-ink)] transition-colors hover:opacity-90 disabled:opacity-50"
+          >
+            {pinPending && <Loader2 className="h-4 w-4 animate-spin" />}
+            {temSenhaSeguranca ? "Atualizar Senha de Segurança" : "Ativar Senha de Segurança"}
+          </button>
+        </div>
+      </section>
+
+      {/* Zona de Perigo — Apagar Loja (apenas dono) */}
+      {ctx.isOwner && (
+        <section className="flex flex-col gap-1.5">
+          <span className="px-1 text-xs font-semibold text-red-600 dark:text-red-400">
+            Zona de Perigo
+          </span>
+          <div className="flex flex-col gap-3 rounded-xl bg-[var(--zelo-card)] p-3 shadow-sm">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-start gap-2.5 min-w-0">
+                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
+                <div className="flex flex-col gap-0.5 min-w-0">
+                  <span className="text-sm font-semibold text-[var(--zelo-ink)]">
+                    Apagar Loja ({ctx.lojaAtual.nome})
+                  </span>
+                  <span className="text-xs text-[var(--zelo-muted)]">
+                    Remove permanentemente serviços, equipe, convites e histórico de agendamentos desta unidade.
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {!mostrarZonaPerigo ? (
+              <button
+                type="button"
+                onClick={() => setMostrarZonaPerigo(true)}
+                className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-red-500/10 px-4 text-sm font-semibold text-red-600 transition-colors hover:bg-red-500/15 dark:text-red-400"
+              >
+                <Trash2 className="h-4 w-4" />
+                Apagar esta loja...
+              </button>
+            ) : (
+              <div className="flex flex-col gap-2.5 rounded-xl bg-red-500/5 p-3">
+                {!temSenhaSeguranca ? (
+                  <p className="text-xs font-medium text-red-600 dark:text-red-400">
+                    Para sua proteção, ative uma Senha de Segurança na seção acima antes de apagar a loja.
+                  </p>
+                ) : (
+                  <>
+                    <p className="text-xs text-[var(--zelo-muted)]">
+                      Digite <strong className="font-mono-num text-[var(--zelo-ink)]">{ctx.lojaAtual.slug}</strong> e sua senha de segurança para confirmar:
+                    </p>
+                    <input
+                      type="text"
+                      value={confirmSlug}
+                      onChange={(e) => setConfirmSlug(e.target.value)}
+                      placeholder={`Digite "${ctx.lojaAtual.slug}"`}
+                      className="h-11 w-full rounded-xl bg-[var(--zelo-card)] px-3 font-mono-num text-sm text-[var(--zelo-ink)] outline-none placeholder:text-[var(--zelo-muted)]"
+                    />
+                    <input
+                      type="password"
+                      value={senhaExclusao}
+                      onChange={(e) => setSenhaExclusao(e.target.value)}
+                      placeholder="Sua senha de segurança"
+                      autoComplete="current-password"
+                      className="h-11 w-full rounded-xl bg-[var(--zelo-card)] px-3 text-sm text-[var(--zelo-ink)] outline-none placeholder:text-[var(--zelo-muted)]"
+                    />
+                  </>
+                )}
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMostrarZonaPerigo(false);
+                      setConfirmSlug("");
+                      setSenhaExclusao("");
+                    }}
+                    className="flex min-h-[44px] flex-1 items-center justify-center rounded-xl bg-[var(--zelo-soft)] px-3 text-xs font-semibold text-[var(--zelo-ink)]"
+                  >
+                    Cancelar
+                  </button>
+                  {temSenhaSeguranca && (
+                    <button
+                      type="button"
+                      disabled={
+                        deletePending ||
+                        confirmSlug.trim() !== ctx.lojaAtual.slug ||
+                        !senhaExclusao
+                      }
+                      onClick={() => {
+                        startDeleteTransition(async () => {
+                          const res = await excluirLojaAction({
+                            loja_id: ctx.lojaAtual.id,
+                            confirm_slug: confirmSlug.trim(),
+                            senha_seguranca: senhaExclusao,
+                          });
+                          if (res.error) {
+                            showToast(res.error, "error");
+                            return;
+                          }
+                          showToast(res.message ?? "Loja apagada.", "success");
+                          router.push("/painel");
+                          router.refresh();
+                        });
+                      }}
+                      className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-xl bg-red-600 px-3 text-xs font-semibold text-white transition-opacity disabled:opacity-50"
+                    >
+                      {deletePending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                      Confirmar Exclusão
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Privacidade & Sessão (LGPD) */}
       <section className="flex flex-col gap-1.5">

@@ -128,20 +128,96 @@ export async function getLojaPublicaBySlug(slug: string): Promise<LojaPublicaCom
   return cached();
 }
 
-export async function getVitrineLojas(): Promise<VitrineLojaCard[]> {
+export interface VitrinePaginadaParams {
+  cursor?: string | null;
+  limit?: number;
+  cidade?: string | null;
+  nicho?: string | null;
+  q?: string | null;
+}
+
+export interface VitrinePaginadaResult {
+  items: VitrineLojaCard[];
+  nextCursor: string | null;
+  hasMore: boolean;
+}
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function encodeVitrineCursor(createdAt: string, id: string): string {
+  return Buffer.from(`${createdAt}|${id}`, "utf8").toString("base64url");
+}
+
+export function decodeVitrineCursor(cursor: string): { createdAt: string; id: string } | null {
+  try {
+    const raw = Buffer.from(cursor, "base64url").toString("utf8");
+    const sep = raw.lastIndexOf("|");
+    if (sep <= 0) return null;
+    const createdAt = raw.slice(0, sep);
+    const id = raw.slice(sep + 1);
+    if (!UUID_REGEX.test(id)) return null;
+    const parsedTime = Date.parse(createdAt);
+    if (Number.isNaN(parsedTime)) return null;
+    return { createdAt: new Date(parsedTime).toISOString(), id };
+  } catch {
+    return null;
+  }
+}
+
+export async function getVitrinePaginada(
+  params: VitrinePaginadaParams = {}
+): Promise<VitrinePaginadaResult> {
+  const safeLimit = Math.min(Math.max(Number(params.limit) || 24, 1), 60);
   const supabase = createPublicClient();
-  const { data: lojas } = await supabase
+
+  let query = supabase
     .from("lojas")
     .select(
-      "id, slug, nome, nicho, cidade, bairro, tema, cor_primaria, raio_borda_px, logo_url, capa_url, sinal_centavos, servicos(preco_centavos, ativo)"
+      "id, slug, nome, nicho, cidade, bairro, tema, cor_primaria, raio_borda_px, logo_url, capa_url, sinal_centavos, created_at, servicos(preco_centavos, ativo)"
     )
     .eq("pausada", false)
     .order("created_at", { ascending: false })
-    .limit(60);
+    .order("id", { ascending: false })
+    .limit(safeLimit + 1);
 
-  if (!lojas) return [];
+  if (params.cidade && params.cidade.trim() && params.cidade !== "todas") {
+    query = query.eq("cidade", params.cidade.trim());
+  }
 
-  return lojas.map((row) => {
+  if (params.nicho && params.nicho.trim() && params.nicho !== "todos") {
+    query = query.eq("nicho", params.nicho.trim());
+  }
+
+  if (params.q && params.q.trim()) {
+    const cleanQ = params.q.trim().replace(/[%_,()]/g, " ");
+    if (cleanQ) {
+      query = query.or(`nome.ilike.%${cleanQ}%,bairro.ilike.%${cleanQ}%,cidade.ilike.%${cleanQ}%`);
+    }
+  }
+
+  if (params.cursor) {
+    const decoded = decodeVitrineCursor(params.cursor);
+    if (decoded) {
+      query = query.or(
+        `created_at.lt.${decoded.createdAt},and(created_at.eq.${decoded.createdAt},id.lt.${decoded.id})`
+      );
+    }
+  }
+
+  const { data: lojas } = await query;
+  if (!lojas || lojas.length === 0) {
+    return { items: [], nextCursor: null, hasMore: false };
+  }
+
+  const hasMore = lojas.length > safeLimit;
+  const pageRows = hasMore ? lojas.slice(0, safeLimit) : lojas;
+  const lastRow = pageRows[pageRows.length - 1];
+  const nextCursor =
+    hasMore && lastRow?.created_at && lastRow?.id
+      ? encodeVitrineCursor(String(lastRow.created_at), String(lastRow.id))
+      : null;
+
+  const items: VitrineLojaCard[] = pageRows.map((row) => {
     const servicosAtivos = (
       (row.servicos as { preco_centavos: number; ativo: boolean }[] | null) ?? []
     ).filter((s) => s.ativo);
@@ -168,4 +244,11 @@ export async function getVitrineLojas(): Promise<VitrineLojaCard[]> {
       total_servicos: servicosAtivos.length,
     };
   });
+
+  return { items, nextCursor, hasMore };
+}
+
+export async function getVitrineLojas(): Promise<VitrineLojaCard[]> {
+  const { items } = await getVitrinePaginada({ limit: 24 });
+  return items;
 }
