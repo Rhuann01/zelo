@@ -9,3 +9,5 @@ supabase/.branches/
 supabase/.temp/
 .DS_Store
 *.log
+test-results/
+playwright-report/

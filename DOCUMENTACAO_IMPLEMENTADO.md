@@ -90,19 +90,22 @@
 - **Anti-Overbooking:** Constraint `EXCLUDE USING gist` impede dois agendamentos simultâneos para o mesmo profissional (erro `23P01` testado sob concorrência).
 - **Exclusão Segura de Loja:** Exige criação prévia de Senha de Segurança (`scryptSync` + salt 16 bytes + `timingSafeEqual`), confirmação exata do `slug` da loja e validação de `owner_id` dentro da RPC `excluir_loja_segura`.
 - **Rate Limiting & Hardening:** Implementado em `src/lib/security/rate-limit.ts` nas rotas `/api/vitrine`, `/api/midia/buscar`, `/api/webhooks/asaas` (com trava de 64 KB), `/api/dev-login` (restrito a `localhost` + `development`), `/super-admin/export` e nas Server Actions críticas de convite, PIN e exclusão.
+- **Anti-Bot (Cloudflare Turnstile):** `src/lib/security/turnstile.ts` e `src/components/ui/turnstile-widget.tsx` integrados ao agendamento público (`criarAgendamentoAction` + `ReservaDrawer`).
+- **Instalação PWA Inteligente:** `src/components/pwa-install-banner.tsx` com popup nativo (`beforeinstallprompt`) no Android e guia visual passo a passo no iPhone (`public/ios-install-1.png` e `public/ios-install-2.png`).
 
 ---
 
 ## 6. Testes Automatizados (`tests/`)
 
-Para rodar a suíte completa contra o Supabase local:
+Para rodar as suítes locais:
 
 ```bash
 npx tsc --noEmit
-npm test
+npm test          # 8 arquivos Vitest (32 testes)
+npm run test:e2e  # Playwright E2E (10 testes: 360px mobile e 1440px desktop)
 ```
 
-Arquivos de teste existentes (8 arquivos, 32 testes no total):
+Arquivos de teste existentes:
 - `tests/etapa1-rls.test.ts` — Isolamento RLS entre lojas e perfis
 - `tests/etapa2-painel.test.ts` — Permissões do painel, serviços e equipe
 - `tests/etapa3-4-booking.test.ts` — RPCs de reserva, disponibilidade e concorrência GiST (`23P01`)
@@ -111,4 +114,5 @@ Arquivos de teste existentes (8 arquivos, 32 testes no total):
 - `tests/convites-equipe-seguranca.test.ts` — Convites por link único, saída voluntária e blindagem
 - `tests/seguranca-exclusao-paginacao.test.ts` — Hash `scrypt`, rate limit, cursor da vitrine e RPC `excluir_loja_segura`
 - `tests/security-attacks.test.ts` — Testes defensivos contra acesso anônimo, webhook sem token e Open Redirect
-- `tests/k6-carga.js` — Script de teste de carga local com Grafana k6
+- `tests/e2e/zelo-fluxos.spec.ts` — Playwright E2E (`360px` e `1440px`: Landing, `/explorar`, `/[slug]`, rotas legais e bloqueio de `/painel` e `/super-admin`) — **10/10 aprovados**
+- `tests/k6-carga.js` — Teste de carga Grafana k6 até 1.000 VUs (**37.682 reqs**, `0.00%` falhas, `p(95) = 430.93ms`)

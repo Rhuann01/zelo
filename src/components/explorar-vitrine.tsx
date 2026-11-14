@@ -244,8 +244,8 @@ export function ExplorarVitrine({
       </header>
 
       {/* Main Content Viewport */}
-      <main className="flex-1 flex flex-col w-full pt-14 pb-24">
-        <div className="mx-auto flex w-full max-w-[480px] flex-col gap-4 px-4 pt-2.5">
+      <main className="flex-1 flex flex-col w-full overflow-x-hidden pt-14 pb-24">
+        <div className="mx-auto flex w-full max-w-[480px] min-w-0 flex-col gap-4 px-4 pt-2.5">
           {tab === "horarios" ? (
             <ExplorarMeusHorarios
               viewer={viewer}
