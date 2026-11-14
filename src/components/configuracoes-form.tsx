@@ -8,6 +8,7 @@ import {
   ArrowLeftRight,
   BellRing,
   ChevronRight,
+  CreditCard,
   Download,
   Info,
   Loader2,
@@ -17,6 +18,7 @@ import {
   Moon,
   Pencil,
   Phone,
+  Plus,
   ShieldCheck,
   Store,
   Umbrella,
@@ -352,6 +354,44 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
                 </span>
               </div>
             )}
+
+            <div className="border-t border-[var(--zelo-soft)] pt-2 space-y-1">
+              <Link
+                href="/painel/assinatura"
+                className="flex min-h-[48px] items-center justify-between rounded-lg px-2.5 transition-colors hover:bg-[var(--zelo-soft)]"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <CreditCard className="h-5 w-5 shrink-0 text-[var(--zelo-muted)]" />
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-medium text-[var(--zelo-ink)]">
+                      Assinatura & Indicação
+                    </span>
+                    <span className="text-xs text-[var(--zelo-muted)] truncate">
+                      Plano Asaas e código de 1 mês grátis
+                    </span>
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--zelo-muted)]" />
+              </Link>
+
+              <Link
+                href="/onboarding"
+                className="flex min-h-[48px] items-center justify-between rounded-lg px-2.5 transition-colors hover:bg-[var(--zelo-soft)]"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Plus className="h-5 w-5 shrink-0 text-[var(--zelo-muted)]" />
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-medium text-[var(--zelo-ink)]">
+                      Criar nova unidade / loja
+                    </span>
+                    <span className="text-xs text-[var(--zelo-muted)] truncate">
+                      Gerencie múltiplas unidades no mesmo login
+                    </span>
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--zelo-muted)]" />
+              </Link>
+            </div>
           </div>
         </section>
       )}
