@@ -387,11 +387,21 @@ export function ExplorarVitrine({ lojas }: { lojas: VitrineLojaCard[] }) {
                         />
                       ) : (
                         <div
-                          className="h-full w-full opacity-90"
+                          className="relative h-full w-full overflow-hidden"
                           style={{
-                            background: `radial-gradient(circle at 80% 20%, ${heroLoja.cor_primaria}55, #111111 72%)`,
+                            background: `radial-gradient(circle at 80% 20%, ${heroLoja.cor_primaria}66, #111111 72%)`,
                           }}
-                        />
+                        >
+                          {heroLoja.logo_url && (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img
+                              src={heroLoja.logo_url}
+                              alt=""
+                              aria-hidden="true"
+                              className="h-full w-full scale-125 object-cover opacity-45 blur-xl"
+                            />
+                          )}
+                        </div>
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-black/20" />
 
@@ -484,13 +494,14 @@ export function ExplorarVitrine({ lojas }: { lojas: VitrineLojaCard[] }) {
               {/* Pro Partner Conversion Banner */}
               <Link
                 href={viewer ? "/onboarding" : "/entrar?next=/onboarding"}
-                className="mt-1 flex items-center justify-between gap-4 rounded-3xl bg-[#1A1C1A] p-5 text-white shadow-md transition-transform active:scale-[0.99] dark:bg-[var(--zelo-card)]"
+                style={{ backgroundColor: "#1A1C1A", color: "#FFFFFF" }}
+                className="mt-1 flex items-center justify-between gap-4 rounded-3xl p-5 shadow-md transition-transform active:scale-[0.99]"
               >
                 <div className="flex flex-col gap-1 min-w-0">
                   <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#FFB95F]">
                     Para Donos & Profissionais
                   </span>
-                  <h3 className="text-[17px] font-extrabold leading-snug">
+                  <h3 className="text-[17px] font-extrabold leading-snug text-white">
                     Tenha sua página no Zelo
                   </h3>
                   <p className="max-w-[240px] text-xs text-white/75">
@@ -613,26 +624,21 @@ function PremiumLojaCard({
             />
           ) : (
             <div
-              className="flex h-full w-full items-center justify-center"
+              className="relative h-full w-full overflow-hidden"
               style={{
-                background: `linear-gradient(135deg, ${loja.cor_primaria}26, ${loja.cor_primaria}08)`,
+                background: `radial-gradient(circle at 80% 25%, ${loja.cor_primaria}55, #141514 76%)`,
               }}
             >
-              {loja.logo_url ? (
+              {loja.logo_url && (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
                   src={loja.logo_url}
-                  alt={loja.nome}
-                  className="h-16 w-16 rounded-2xl object-cover shadow-md"
+                  alt=""
+                  aria-hidden="true"
+                  className="h-full w-full scale-125 object-cover opacity-55 blur-xl"
                 />
-              ) : (
-                <span
-                  className="flex h-16 w-16 items-center justify-center rounded-2xl text-lg font-extrabold text-white shadow-md"
-                  style={{ backgroundColor: loja.cor_primaria }}
-                >
-                  {getInitials(loja.nome)}
-                </span>
               )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/15 to-transparent" />
             </div>
           )}
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
@@ -669,17 +675,34 @@ function PremiumLojaCard({
 
       {/* Card Body */}
       <div className="flex flex-col gap-2.5 p-3.5">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <Link href={`/${loja.slug}`} className="hover:underline">
-              <h3 className="truncate text-[17px] font-extrabold leading-tight tracking-tight">
-                {loja.nome}
-              </h3>
-            </Link>
-            <p className="mt-0.5 truncate text-xs font-medium text-[var(--zelo-muted)]">
-              {[loja.bairro, loja.cidade].filter(Boolean).join(", ")} •{" "}
-              {NICHO_LABEL[loja.nicho] ?? "Espaço"}
-            </p>
+        <div className="flex items-start justify-between gap-2.5">
+          <div className="flex min-w-0 items-center gap-2.5">
+            {loja.logo_url ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={loja.logo_url}
+                alt={loja.nome}
+                className="h-10 w-10 shrink-0 rounded-xl object-cover shadow-xs"
+              />
+            ) : (
+              <span
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-extrabold text-white shadow-xs"
+                style={{ backgroundColor: loja.cor_primaria }}
+              >
+                {getInitials(loja.nome)}
+              </span>
+            )}
+            <div className="min-w-0">
+              <Link href={`/${loja.slug}`} className="hover:underline">
+                <h3 className="truncate text-[17px] font-extrabold leading-tight tracking-tight">
+                  {loja.nome}
+                </h3>
+              </Link>
+              <p className="mt-0.5 truncate text-xs font-medium text-[var(--zelo-muted)]">
+                {[loja.bairro, loja.cidade].filter(Boolean).join(", ")} •{" "}
+                {NICHO_LABEL[loja.nicho] ?? "Espaço"}
+              </p>
+            </div>
           </div>
           {loja.preco_inicial_centavos != null && (
             <div className="shrink-0 text-right">

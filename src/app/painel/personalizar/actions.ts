@@ -52,3 +52,27 @@ export async function saveCustomizacaoAction(raw: unknown) {
   revalidatePath("/explorar");
   return { ok: true, message: "Tema e PIX salvos com sucesso." };
 }
+
+export async function revalidateLojaMediaAction(lojaId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+
+  const { data } = await supabase
+    .from("lojas")
+    .select("slug")
+    .eq("id", lojaId)
+    .eq("dono_id", user.id)
+    .maybeSingle();
+
+  if (!data?.slug) return { ok: false };
+
+  revalidateTag(`loja-${data.slug}`);
+  revalidateTag("vitrine-explorar");
+  revalidatePath("/painel/personalizar");
+  revalidatePath(`/${data.slug}`);
+  revalidatePath("/explorar");
+  return { ok: true };
+}

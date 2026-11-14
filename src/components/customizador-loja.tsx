@@ -16,7 +16,10 @@ import {
   Trash2,
   Wallet,
 } from "lucide-react";
-import { saveCustomizacaoAction } from "@/app/painel/personalizar/actions";
+import {
+  revalidateLojaMediaAction,
+  saveCustomizacaoAction,
+} from "@/app/painel/personalizar/actions";
 import { createClient } from "@/lib/supabase/client";
 import { compressImageToWebP, STORE_MEDIA_COMPRESS_CONFIG } from "@/lib/image/compress-webp";
 import { showToast } from "@/components/zelo-toast";
@@ -109,8 +112,10 @@ export function CustomizadorLoja({
     initialLocalizacao?.longitude ?? null
   );
   const [logoUrl, setLogoUrl] = useState(loja.logo_url);
+  const [capaUrl, setCapaUrl] = useState(loja.capa_url);
   const [refreshing, setRefreshing] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingCapa, setUploadingCapa] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const accentInk =
@@ -143,6 +148,7 @@ export function CustomizadorLoja({
       if (dbErr) throw dbErr;
 
       setLogoUrl(url);
+      await revalidateLojaMediaAction(loja.id);
       showToast("Logo atualizada com sucesso.", "success");
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Erro ao enviar logo.", "error");
@@ -163,11 +169,67 @@ export function CustomizadorLoja({
       if (dbErr) throw dbErr;
 
       setLogoUrl(null);
+      await revalidateLojaMediaAction(loja.id);
       showToast("Logo da loja removida.", "success");
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Erro ao remover logo.", "error");
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function handleCapaUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !isOwner) return;
+    setUploadingCapa(true);
+    try {
+      const blob = await compressImageToWebP(file, STORE_MEDIA_COMPRESS_CONFIG);
+      const supabase = createClient();
+      const path = `${loja.id}/capa.webp`;
+      const { error: upErr } = await supabase.storage.from("lojas-media").upload(path, blob, {
+        contentType: "image/webp",
+        upsert: true,
+        cacheControl: "31536000",
+      });
+      if (upErr) throw upErr;
+
+      const { data: pub } = supabase.storage.from("lojas-media").getPublicUrl(path);
+      const url = `${pub.publicUrl}?v=${Date.now()}`;
+
+      const { error: dbErr } = await supabase
+        .from("lojas")
+        .update({ capa_url: url })
+        .eq("id", loja.id);
+      if (dbErr) throw dbErr;
+
+      setCapaUrl(url);
+      await revalidateLojaMediaAction(loja.id);
+      showToast("Banner da vitrine atualizado com sucesso.", "success");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Erro ao enviar banner.", "error");
+    } finally {
+      setUploadingCapa(false);
+    }
+  }
+
+  async function handleRemoveCapa() {
+    setUploadingCapa(true);
+    try {
+      const supabase = createClient();
+      await supabase.storage.from("lojas-media").remove([`${loja.id}/capa.webp`]).catch(() => null);
+      const { error: dbErr } = await supabase
+        .from("lojas")
+        .update({ capa_url: null })
+        .eq("id", loja.id);
+      if (dbErr) throw dbErr;
+
+      setCapaUrl(null);
+      await revalidateLojaMediaAction(loja.id);
+      showToast("Banner removido.", "success");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Erro ao remover banner.", "error");
+    } finally {
+      setUploadingCapa(false);
     }
   }
 
@@ -490,6 +552,62 @@ export function CustomizadorLoja({
                 <span>Remover</span>
               </button>
             )}
+          </div>
+        )}
+
+        {isOwner && (
+          <div className="space-y-2.5 border-t border-[var(--zelo-border)]/50 pt-3">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <p className="text-xs font-semibold text-[var(--zelo-ink)]">
+                  Banner / Capa da Vitrine
+                </p>
+                <p className="text-[11px] text-[var(--zelo-muted)]">
+                  Foto horizontal exibida no card do Explorar e no topo da loja (WebP até 100 KB).
+                </p>
+              </div>
+            </div>
+
+            {capaUrl && (
+              <div className="relative h-28 w-full overflow-hidden rounded-xl bg-[var(--zelo-soft)]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={capaUrl}
+                  alt={`Banner ${loja.nome}`}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            )}
+
+            <div className="flex items-center gap-2">
+              <label className="flex h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[var(--zelo-soft)] text-xs font-semibold text-[var(--zelo-ink)] transition-colors hover:bg-[var(--zelo-border)]">
+                {uploadingCapa ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ImagePlus className="h-4 w-4 text-[#10B981]" />
+                )}
+                <span>
+                  {uploadingCapa
+                    ? "Processando banner..."
+                    : capaUrl
+                      ? "Alterar Banner"
+                      : "Enviar Banner / Capa"}
+                </span>
+                <input type="file" accept="image/*" onChange={handleCapaUpload} className="hidden" />
+              </label>
+              {capaUrl && (
+                <button
+                  type="button"
+                  disabled={uploadingCapa}
+                  onClick={handleRemoveCapa}
+                  aria-label="Remover banner da loja"
+                  className="inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-red-500/10 px-3.5 text-xs font-semibold text-red-500 transition-colors hover:bg-red-500/15 disabled:opacity-60"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span>Remover</span>
+                </button>
+              )}
+            </div>
           </div>
         )}
       </section>
