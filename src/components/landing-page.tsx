@@ -690,10 +690,11 @@ export function LandingPage() {
       {/* HERO CENTRALIZADO */}
       <section
         id="topo"
-        className="relative overflow-hidden mx-auto max-w-4xl px-4 sm:px-5 pt-16 pb-14 sm:pt-16 sm:pb-12 text-center md:pt-20 md:pb-14"
+        className="relative isolate overflow-hidden mx-auto max-w-4xl px-4 sm:px-5 pt-16 pb-14 sm:pt-16 sm:pb-12 text-center md:pt-20 md:pb-14"
       >
-        <div className="hero-grid-bg pointer-events-none absolute inset-0 -z-10 opacity-70" />
+        <div className="hero-grid-bg pointer-events-none absolute inset-0 z-0 opacity-85" />
 
+        <div className="relative z-10">
         <div className="mb-6 inline-flex max-w-full items-center gap-2 rounded-full bg-[var(--zelo-card)] p-1 pr-3 text-xs font-medium text-[var(--zelo-muted)] shadow-sm">
           <span className="rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-semibold text-amber-600 shrink-0">
             NOVO
@@ -726,9 +727,9 @@ export function LandingPage() {
             cara
           </span>{" "}
           do{" "}
-          <span className="relative inline-block whitespace-nowrap">
-            seu negócio.
-            <span className="absolute left-0 right-0 bottom-0.5 sm:bottom-1 h-2 sm:h-2.5 rounded-full bg-amber-500/25 -z-10" />
+          <span className="relative isolate inline-block whitespace-nowrap">
+            <span className="relative z-10">seu negócio.</span>
+            <span className="absolute left-0 right-0 bottom-0.5 sm:bottom-1 z-0 h-2 sm:h-2.5 rounded-full bg-amber-500/30" />
           </span>
         </h1>
 
@@ -758,6 +759,7 @@ export function LandingPage() {
 
         <div className="mt-3 text-xs text-[var(--zelo-subtle)]">
           14 dias grátis • Sem cartão de crédito • Link próprio sem concorrência
+        </div>
         </div>
       </section>
 
@@ -1712,8 +1714,8 @@ export function LandingPage() {
 
       {/* CTA FINAL */}
       <section className="relative overflow-hidden mx-auto max-w-6xl px-4 sm:px-5 py-12 sm:py-16 border-t border-[var(--zelo-border)]">
-        <div className="relative overflow-hidden rounded-3xl bg-[var(--zelo-soft)] p-7 text-center sm:p-10 md:p-14">
-          <div className="hero-grid-bg pointer-events-none absolute inset-0 opacity-60" />
+        <div className="relative isolate overflow-hidden rounded-3xl bg-[var(--zelo-soft)] p-7 text-center sm:p-10 md:p-14">
+          <div className="hero-grid-bg pointer-events-none absolute inset-0 z-0 opacity-80" />
           <div className="relative z-10">
             <h2 className="text-2xl font-bold tight-heading sm:text-4xl">
               Coloque o seu link na bio hoje mesmo.
