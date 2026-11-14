@@ -24,6 +24,7 @@ import { createClient } from "@/lib/supabase/client";
 import { compressImageToWebP, STORE_MEDIA_COMPRESS_CONFIG } from "@/lib/image/compress-webp";
 import { showToast } from "@/components/zelo-toast";
 import { StoreLocationFields } from "@/components/ui/store-location-fields";
+import { UnsavedChangesGuard } from "@/components/ui/unsaved-changes-guard";
 import type { LojaResumo } from "@/lib/painel/get-painel-context";
 
 const TEMAS = [
@@ -119,6 +120,33 @@ export function CustomizadorLoja({
   const [uploading, setUploading] = useState(false);
   const [uploadingCapa, setUploadingCapa] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [savedSnapshot, setSavedSnapshot] = useState({
+    tema: loja.tema,
+    cor: loja.cor_primaria,
+    raio: loja.raio_borda_px,
+    chavePix: loja.chave_pix ?? "",
+    sinalReais: (loja.sinal_centavos / 100).toFixed(2).replace(".", ","),
+    cep: initialLocalizacao?.cep ?? "",
+    cidade: loja.cidade,
+    bairro: loja.bairro,
+    enderecoTexto: initialLocalizacao?.endereco_texto ?? "",
+    latitude: initialLocalizacao?.latitude ?? null,
+    longitude: initialLocalizacao?.longitude ?? null,
+  });
+
+  const isDirty =
+    isOwner &&
+    (tema !== savedSnapshot.tema ||
+      cor !== savedSnapshot.cor ||
+      raio !== savedSnapshot.raio ||
+      chavePix !== savedSnapshot.chavePix ||
+      sinalReais !== savedSnapshot.sinalReais ||
+      cep !== savedSnapshot.cep ||
+      cidade !== savedSnapshot.cidade ||
+      bairro !== savedSnapshot.bairro ||
+      enderecoTexto !== savedSnapshot.enderecoTexto ||
+      latitude !== savedSnapshot.latitude ||
+      longitude !== savedSnapshot.longitude);
 
   const accentInk =
     cor.toUpperCase() === "#F59E0B" || cor.toUpperCase() === "#A3E635" ? "#111111" : "#FFFFFF";
@@ -241,34 +269,59 @@ export function CustomizadorLoja({
     setRaio(preset.defaultRaio);
   }
 
-  function handleSave() {
+  async function handleSave(): Promise<boolean> {
     const sinalCentavos = Math.max(
       0,
       Math.round(Number(sinalReais.replace(/[^\d,.-]/g, "").replace(",", ".")) * 100) || 0
     );
 
-    startTransition(async () => {
-      const res = await saveCustomizacaoAction({
-        loja_id: loja.id,
-        tema,
-        cor_primaria: cor,
-        raio_borda_px: raio,
-        chave_pix: chavePix.trim() || null,
-        sinal_centavos: sinalCentavos,
-        cidade: cidade.trim(),
-        bairro: bairro.trim(),
-        endereco_texto: enderecoTexto.trim(),
-        cep: cep.trim(),
-        latitude,
-        longitude,
+    return new Promise((resolve) => {
+      startTransition(async () => {
+        const res = await saveCustomizacaoAction({
+          loja_id: loja.id,
+          tema,
+          cor_primaria: cor,
+          raio_borda_px: raio,
+          chave_pix: chavePix.trim() || null,
+          sinal_centavos: sinalCentavos,
+          cidade: cidade.trim(),
+          bairro: bairro.trim(),
+          endereco_texto: enderecoTexto.trim(),
+          cep: cep.trim(),
+          latitude,
+          longitude,
+        });
+        if (res.error) {
+          showToast(res.error, "error");
+          resolve(false);
+        } else {
+          setSavedSnapshot({
+            tema,
+            cor,
+            raio,
+            chavePix,
+            sinalReais,
+            cep,
+            cidade,
+            bairro,
+            enderecoTexto,
+            latitude,
+            longitude,
+          });
+          if (res.message) showToast(res.message, "success");
+          resolve(true);
+        }
       });
-      if (res.error) showToast(res.error, "error");
-      else if (res.message) showToast(res.message, "success");
     });
   }
 
   return (
     <div className="flex flex-col gap-5 pb-6">
+      <UnsavedChangesGuard
+        isDirty={isDirty}
+        isSaving={isPending}
+        onSave={handleSave}
+      />
       {/* Interactive Storefront Mini Preview */}
       <section>
         <div className="mb-2 flex items-center justify-between">

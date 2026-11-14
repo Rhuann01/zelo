@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { AvatarUploader } from "@/components/avatar-uploader";
 import { showToast } from "@/components/zelo-toast";
+import { UnsavedChangesGuard } from "@/components/ui/unsaved-changes-guard";
 import {
   saveConfiguracoesAction,
   signOutConfigAction,
@@ -40,13 +41,20 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
   const [pausada, setPausada] = useState(ctx.lojaAtual.pausada);
   const [dark, setDark] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [savedSnapshot, setSavedSnapshot] = useState({
+    nome: ctx.perfil.nome,
+    whatsapp: ctx.perfil.whatsapp ?? "",
+    pushAtivo: ctx.perfil.notificacoes_push,
+    emailAtivo: ctx.perfil.notificacoes_email,
+    pausada: ctx.lojaAtual.pausada,
+  });
 
   const hasChanges =
-    nome !== ctx.perfil.nome ||
-    whatsapp !== (ctx.perfil.whatsapp ?? "") ||
-    pushAtivo !== ctx.perfil.notificacoes_push ||
-    emailAtivo !== ctx.perfil.notificacoes_email ||
-    (ctx.isOwner && pausada !== ctx.lojaAtual.pausada);
+    nome !== savedSnapshot.nome ||
+    whatsapp !== savedSnapshot.whatsapp ||
+    pushAtivo !== savedSnapshot.pushAtivo ||
+    emailAtivo !== savedSnapshot.emailAtivo ||
+    (ctx.isOwner && pausada !== savedSnapshot.pausada);
 
   useEffect(() => {
     setDark(document.documentElement.classList.contains("dark"));
@@ -78,25 +86,42 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
     URL.revokeObjectURL(url);
   }
 
-  function handleSave() {
-    startTransition(async () => {
-      const res = await saveConfiguracoesAction({
-        nome,
-        whatsapp,
-        notificacoes_push: pushAtivo,
-        notificacoes_email: emailAtivo,
-        ...(ctx.isOwner ? { loja_id: ctx.lojaAtual.id, pausada } : {}),
+  async function handleSave(): Promise<boolean> {
+    return new Promise((resolve) => {
+      startTransition(async () => {
+        const res = await saveConfiguracoesAction({
+          nome,
+          whatsapp,
+          notificacoes_push: pushAtivo,
+          notificacoes_email: emailAtivo,
+          ...(ctx.isOwner ? { loja_id: ctx.lojaAtual.id, pausada } : {}),
+        });
+        if (res.error) {
+          showToast(res.error, "error");
+          resolve(false);
+        } else {
+          setSavedSnapshot({
+            nome,
+            whatsapp,
+            pushAtivo,
+            emailAtivo,
+            pausada,
+          });
+          router.refresh();
+          if (res.message) showToast(res.message, "success");
+          resolve(true);
+        }
       });
-      if (res.error) showToast(res.error, "error");
-      else {
-        router.refresh();
-        if (res.message) showToast(res.message, "success");
-      }
     });
   }
 
   return (
     <div className="flex flex-col gap-5 pb-4">
+      <UnsavedChangesGuard
+        isDirty={hasChanges}
+        isSaving={isPending}
+        onSave={handleSave}
+      />
       {/* Top Subheader */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
