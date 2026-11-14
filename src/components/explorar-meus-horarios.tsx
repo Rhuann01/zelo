@@ -832,20 +832,20 @@ function RemarcarDrawer({
 
         <div className="flex-1 space-y-4 overflow-y-auto px-5 pb-5">
           {/* Modo Remarcação Banner (Stitch) */}
-          <div className="flex items-start gap-3 rounded-2xl bg-[#FEF7EE] p-3.5 text-[#92400E] dark:bg-[#F59E0B]/15 dark:text-[#FCD34D]">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FFDDB8]/70 text-[#9A3412] dark:bg-[#F59E0B]/20 dark:text-[#FBBF24]">
+          <div className="flex items-start gap-3 rounded-2xl bg-[#FEF7EE] p-3.5 text-[#92400E]">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FFDDB8]/80 text-[#9A3412]">
               <Clock className="h-5 w-5" />
             </span>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-xs font-extrabold uppercase tracking-wider">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-[#78350F]">
                   Modo Remarcação
                 </span>
-                <span className="rounded bg-[#FFEDD5] px-1.5 py-0.5 text-[10px] font-bold text-[#9A3412] dark:bg-[#F59E0B]/20 dark:text-[#FBBF24]">
+                <span className="rounded bg-[#FFEDD5] px-1.5 py-0.5 text-[10px] font-bold text-[#9A3412]">
                   Sem Taxa
                 </span>
               </div>
-              <p className="mt-1 text-xs leading-snug opacity-90">
+              <p className="mt-1 text-xs leading-snug text-[#92400E]">
                 Você pode escolher um novo horário sem custos adicionais. Sua vaga atual só será liberada após confirmar.
               </p>
             </div>
