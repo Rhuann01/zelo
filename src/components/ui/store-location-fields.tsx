@@ -3,28 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2, MapPin, Search, X } from "lucide-react";
 import { StoreMapPicker } from "@/components/ui/store-map";
-
-interface NominatimItem {
-  place_id: number;
-  display_name: string;
-  lat: string;
-  lon: string;
-  address?: {
-    road?: string;
-    pedestrian?: string;
-    house_number?: string;
-    suburb?: string;
-    neighbourhood?: string;
-    quarter?: string;
-    city_district?: string;
-    city?: string;
-    town?: string;
-    municipality?: string;
-    village?: string;
-    state?: string;
-    postcode?: string;
-  };
-}
+import {
+  geocodeBrazilCascade,
+  round6,
+  searchBrazilAddress,
+  type GeoSuggestion,
+} from "@/lib/geo/geocode-br";
 
 interface StoreLocationFieldsProps {
   cidade: string;
@@ -47,10 +31,6 @@ function formatCep(raw: string): string {
   return `${digits.slice(0, 5)}-${digits.slice(5)}`;
 }
 
-function round6(n: number): number {
-  return Math.round(n * 1_000_000) / 1_000_000;
-}
-
 export function StoreLocationFields({
   cidade,
   bairro,
@@ -71,7 +51,7 @@ export function StoreLocationFields({
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
-  const [suggestions, setSuggestions] = useState<NominatimItem[]>([]);
+  const [suggestions, setSuggestions] = useState<GeoSuggestion[]>([]);
   const [searchError, setSearchError] = useState<string | null>(null);
   const searchAbortRef = useRef<AbortController | null>(null);
 
@@ -80,7 +60,7 @@ export function StoreLocationFields({
       ? "bg-[var(--zelo-card)] shadow-xs"
       : "bg-[var(--zelo-soft)]";
 
-  // Busca automática ao completar 8 dígitos do CEP (ViaCEP + posiciona pino no mapa)
+  // Busca automática ao completar 8 dígitos do CEP (ViaCEP + BrasilAPI v2 + cascata no mapa)
   useEffect(() => {
     const digits = cep.replace(/\D/g, "");
     if (digits.length !== 8) {
@@ -96,61 +76,88 @@ export function StoreLocationFields({
 
     (async () => {
       try {
-        const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`, {
-          signal: controller.signal,
-        });
-        if (!res.ok) throw new Error("Falha ao consultar CEP");
-        const data = (await res.json()) as {
-          erro?: boolean;
-          localidade?: string;
-          uf?: string;
-          bairro?: string;
-          logradouro?: string;
-          complemento?: string;
-        };
+        const [viaRes, brRes] = await Promise.allSettled([
+          fetch(`https://viacep.com.br/ws/${digits}/json/`, { signal: controller.signal }),
+          fetch(`https://brasilapi.com.br/api/cep/v2/${digits}`, { signal: controller.signal }),
+        ]);
 
-        if (data.erro) {
+        let nextCidade = "";
+        let nextUf = "";
+        let nextBairro = "";
+        let nextLogradouro = "";
+        let brCoords: { lat: number; lng: number } | null = null;
+
+        if (viaRes.status === "fulfilled" && viaRes.value.ok) {
+          const viaData = (await viaRes.value.json()) as {
+            erro?: boolean;
+            localidade?: string;
+            uf?: string;
+            bairro?: string;
+            logradouro?: string;
+          };
+          if (!viaData.erro) {
+            nextCidade = viaData.localidade?.trim() ?? "";
+            nextUf = viaData.uf?.trim() ?? "";
+            nextBairro = viaData.bairro?.trim() ?? "";
+            nextLogradouro = viaData.logradouro?.trim() ?? "";
+          }
+        }
+
+        if (brRes.status === "fulfilled" && brRes.value.ok) {
+          const brData = (await brRes.value.json()) as {
+            city?: string;
+            state?: string;
+            neighborhood?: string;
+            street?: string;
+            location?: {
+              coordinates?: {
+                latitude?: string | number;
+                longitude?: string | number;
+              };
+            };
+          };
+          if (!nextCidade) nextCidade = brData.city?.trim() ?? "";
+          if (!nextUf) nextUf = brData.state?.trim() ?? "";
+          if (!nextBairro) nextBairro = brData.neighborhood?.trim() ?? "";
+          if (!nextLogradouro) nextLogradouro = brData.street?.trim() ?? "";
+
+          const rawLat = Number(brData.location?.coordinates?.latitude);
+          const rawLng = Number(brData.location?.coordinates?.longitude);
+          if (Number.isFinite(rawLat) && Number.isFinite(rawLng) && rawLat !== 0 && rawLng !== 0) {
+            brCoords = { lat: round6(rawLat), lng: round6(rawLng) };
+          }
+        }
+
+        if (!nextCidade && !nextLogradouro) {
           setCepStatus("CEP não encontrado. Confira os números ou busque pelo nome.");
           setCepLoading(false);
           return;
         }
 
-        const nextCidade = data.localidade?.trim() ?? "";
-        const nextBairro = data.bairro?.trim() ?? "";
-        const nextLogradouro = data.logradouro?.trim() ?? "";
-
         if (nextCidade) onChangeCidade(nextCidade);
         if (nextBairro) onChangeBairro(nextBairro);
         if (nextLogradouro) onChangeEndereco(nextLogradouro);
 
-        setCepStatus(
-          nextCidade
-            ? `CEP encontrado: ${[nextLogradouro, nextBairro, nextCidade].filter(Boolean).join(", ")}`
-            : "CEP localizado."
-        );
+        // Posiciona o pino no mapa: primeiro Photon/cascata (rua -> bairro -> cidade), ou BrasilAPI
+        const geoHit = await geocodeBrazilCascade({
+          endereco: nextLogradouro,
+          bairro: nextBairro,
+          cidade: nextCidade,
+          uf: nextUf,
+          signal: controller.signal,
+        });
 
-        // Posiciona automaticamente o pino no mapa com base no endereço do CEP
-        const geoQuery = [nextLogradouro, nextBairro, nextCidade, data.uf, "Brasil"]
-          .filter(Boolean)
-          .join(", ");
-        if (geoQuery.length >= 4) {
-          try {
-            const geoRes = await fetch(
-              `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(
-                geoQuery
-              )}`,
-              { signal: controller.signal }
-            );
-            if (geoRes.ok) {
-              const geoData = (await geoRes.json()) as Array<{ lat: string; lon: string }>;
-              if (geoData[0]) {
-                onChangeCoords(round6(Number(geoData[0].lat)), round6(Number(geoData[0].lon)));
-              }
-            }
-          } catch {
-            // Se falhar geocoding automático, usuário ainda pode ajustar no mapa
-          }
+        if (geoHit && geoHit.precision === "street") {
+          onChangeCoords(geoHit.lat, geoHit.lng);
+        } else if (brCoords) {
+          onChangeCoords(brCoords.lat, brCoords.lng);
+        } else if (geoHit) {
+          onChangeCoords(geoHit.lat, geoHit.lng);
         }
+
+        setCepStatus(
+          `CEP encontrado: ${[nextLogradouro, nextBairro, nextCidade].filter(Boolean).join(", ")}`
+        );
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
           setCepStatus("Não foi possível consultar o CEP agora.");
@@ -163,7 +170,7 @@ export function StoreLocationFields({
     return () => controller.abort();
   }, [cep, onChangeBairro, onChangeCidade, onChangeCoords, onChangeEndereco]);
 
-  // Pesquisa com sugestões por nome/rua/referência (Nominatim)
+  // Pesquisa fuzzy por nome/rua/referência (Photon + fallback Nominatim)
   useEffect(() => {
     const q = searchQuery.trim();
     if (q.length < 3) {
@@ -180,17 +187,22 @@ export function StoreLocationFields({
       setSearchError(null);
 
       try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&countrycodes=br&limit=5&q=${encodeURIComponent(
-            q
-          )}`,
-          { signal: controller.signal }
-        );
-        if (!res.ok) throw new Error("Erro na busca");
-        const data = (await res.json()) as NominatimItem[];
-        setSuggestions(data);
-        if (data.length === 0) {
-          setSearchError("Nenhum local encontrado. Tente incluir a cidade junto (ex: Rua X, Belo Horizonte).");
+        // Primeiro tenta com cidadeHint se cidade estiver preenchida; se vier vazio, tenta busca ampla
+        let results = await searchBrazilAddress(q, {
+          limit: 5,
+          signal: controller.signal,
+          cidadeHint: cidade,
+        });
+        if (results.length === 0 && cidade.trim().length >= 2) {
+          results = await searchBrazilAddress(q, {
+            limit: 5,
+            signal: controller.signal,
+          });
+        }
+
+        setSuggestions(results);
+        if (results.length === 0) {
+          setSearchError("Nenhum local encontrado. Tente incluir a cidade (ex: Rua X, Caxias).");
         }
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
@@ -199,39 +211,22 @@ export function StoreLocationFields({
       } finally {
         setSearchLoading(false);
       }
-    }, 450);
+    }, 380);
 
     return () => {
       window.clearTimeout(timer);
     };
-  }, [searchQuery]);
+  }, [searchQuery, cidade]);
 
-  function handleSelectSuggestion(item: NominatimItem) {
-    const addr = item.address ?? {};
-    const nextCidade =
-      addr.city ?? addr.town ?? addr.municipality ?? addr.village ?? "";
-    const nextBairro =
-      addr.suburb ?? addr.neighbourhood ?? addr.quarter ?? addr.city_district ?? "";
-    const road = addr.road ?? addr.pedestrian ?? "";
-    const nextEnd = [road, addr.house_number].filter(Boolean).join(", ");
+  function handleSelectSuggestion(item: GeoSuggestion) {
+    if (item.cidade) onChangeCidade(item.cidade);
+    if (item.bairro) onChangeBairro(item.bairro);
+    if (item.endereco) onChangeEndereco(item.endereco);
+    onChangeCoords(item.lat, item.lng);
 
-    if (nextCidade) onChangeCidade(nextCidade);
-    if (nextBairro) onChangeBairro(nextBairro);
-    if (nextEnd) {
-      onChangeEndereco(nextEnd);
-    } else if (!endereco.trim()) {
-      onChangeEndereco(item.display_name.split(",")[0]?.trim() ?? "");
-    }
-
-    const lat = round6(Number(item.lat));
-    const lng = round6(Number(item.lon));
-    if (Number.isFinite(lat) && Number.isFinite(lng)) {
-      onChangeCoords(lat, lng);
-    }
-
-    if (addr.postcode) {
-      lastFetchedCepRef.current = addr.postcode.replace(/\D/g, "");
-      setCep(formatCep(addr.postcode));
+    if (item.cep) {
+      lastFetchedCepRef.current = item.cep.replace(/\D/g, "");
+      setCep(formatCep(item.cep));
     }
 
     setSuggestions([]);
@@ -273,7 +268,7 @@ export function StoreLocationFields({
               disabled={disabled}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Ex: Av. Paulista, Savassi, Centro..."
+              placeholder="Ex: Travessa Aniceto Cruz, Av. Paulista..."
               className="w-full bg-transparent text-sm outline-none"
             />
             {searchLoading && <Loader2 className="h-4 w-4 animate-spin text-[var(--zelo-muted)] shrink-0" />}
@@ -297,13 +292,13 @@ export function StoreLocationFields({
             <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-30 rounded-xl bg-[var(--zelo-card)] p-1.5 shadow-lg ring-1 ring-[var(--zelo-border)] max-h-60 overflow-y-auto space-y-1">
               {suggestions.map((item) => (
                 <button
-                  key={item.place_id}
+                  key={item.id}
                   type="button"
                   onClick={() => handleSelectSuggestion(item)}
                   className="w-full rounded-lg px-3 py-2 text-left text-xs hover:bg-[var(--zelo-soft)] transition flex items-start gap-2"
                 >
                   <MapPin className="h-3.5 w-3.5 mt-0.5 text-emerald-500 shrink-0" />
-                  <span className="line-clamp-2 text-[var(--zelo-ink)]">{item.display_name}</span>
+                  <span className="line-clamp-2 text-[var(--zelo-ink)]">{item.label}</span>
                 </button>
               ))}
             </div>
@@ -331,7 +326,7 @@ export function StoreLocationFields({
               disabled={disabled}
               value={cidade}
               onChange={(e) => onChangeCidade(e.target.value)}
-              placeholder="Ex: Belo Horizonte"
+              placeholder="Ex: Caxias"
               className="w-full bg-transparent text-sm outline-none"
             />
           </div>
@@ -346,7 +341,7 @@ export function StoreLocationFields({
             disabled={disabled}
             value={bairro}
             onChange={(e) => onChangeBairro(e.target.value)}
-            placeholder="Ex: Savassi"
+            placeholder="Ex: Ponte"
             className={`h-11 w-full rounded-xl px-3.5 text-sm outline-none ${inputSurfaceClass}`}
           />
         </div>
@@ -362,7 +357,7 @@ export function StoreLocationFields({
           disabled={disabled}
           value={endereco}
           onChange={(e) => onChangeEndereco(e.target.value)}
-          placeholder="Ex: Rua Pernambuco, 420 - Sala 2"
+          placeholder="Ex: Travessa Aniceto Cruz, 120"
           className={`h-11 w-full rounded-xl px-3.5 text-sm outline-none ${inputSurfaceClass}`}
         />
       </div>

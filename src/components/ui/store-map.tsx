@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Crosshair, ExternalLink, Link2, Loader2, MapPin, Search } from "lucide-react";
+import { geocodeBrazilCascade } from "@/lib/geo/geocode-br";
 
 /**
  * Extrai latitude e longitude de URLs do Google Maps ou texto "lat, lng".
@@ -469,15 +470,20 @@ export function StoreMapPicker({
     setLoadingGeo(true);
     setFeedback(null);
     try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(
-          `${q}, Brasil`
-        )}`
-      );
-      const data = (await res.json()) as Array<{ lat: string; lon: string }>;
-      if (data[0]) {
-        onChangeCoords(round6(Number(data[0].lat)), round6(Number(data[0].lon)));
-        setFeedback("Endereço aproximado encontrado. Arraste o pino se quiser ajustar.");
+      const hit = await geocodeBrazilCascade({
+        endereco: enderecoTexto,
+        bairro,
+        cidade,
+      });
+      if (hit) {
+        onChangeCoords(hit.lat, hit.lng);
+        setFeedback(
+          hit.precision === "street"
+            ? "Endereço localizado no mapa! Arraste o pino se quiser ajustar."
+            : hit.precision === "neighborhood"
+              ? "Rua exata não listada — centralizamos no seu bairro. Toque no mapa ou arraste o pino até sua porta."
+              : "Centralizamos na sua cidade. Toque no mapa ou arraste o pino até sua porta."
+        );
       } else {
         setFeedback("Endereço não localizado. Toque no mapa ou cole o link do Google Maps.");
       }
