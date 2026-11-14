@@ -167,7 +167,7 @@ export function SuperAdminDashboard({
                 key={item.id}
                 type="button"
                 onClick={() => setTab(item.id)}
-                className={`inline-flex min-h-[38px] items-center gap-1.5 rounded-xl px-3 text-xs font-semibold whitespace-nowrap transition-colors ${
+                className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-xl px-3 text-xs font-semibold whitespace-nowrap transition-colors ${
                   active
                     ? "bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)]"
                     : "bg-[var(--zelo-soft)] text-[var(--zelo-muted)] hover:text-[var(--zelo-ink)]"
@@ -337,7 +337,7 @@ export function SuperAdminDashboard({
                     key={f}
                     type="button"
                     onClick={() => setFiltroSemaforo(f)}
-                    className={`min-h-[40px] rounded-xl px-3 text-xs font-semibold capitalize ${
+                    className={`min-h-[44px] rounded-xl px-3 text-xs font-semibold capitalize ${
                       filtroSemaforo === f
                         ? "bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)]"
                         : "bg-[var(--zelo-card)] text-[var(--zelo-muted)]"
@@ -403,7 +403,7 @@ export function SuperAdminDashboard({
                           type="button"
                           disabled={isPending}
                           onClick={() => handleExtendTrial(loja.id, 7)}
-                          className="inline-flex min-h-[38px] items-center gap-1.5 rounded-xl bg-[var(--zelo-soft)] px-3 text-xs font-semibold hover:opacity-80 disabled:opacity-50"
+                          className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-[var(--zelo-soft)] px-3 text-xs font-semibold hover:opacity-80 disabled:opacity-50"
                         >
                           <Clock className="h-3.5 w-3.5" />
                           <span>+7d Trial</span>
@@ -412,7 +412,7 @@ export function SuperAdminDashboard({
                           type="button"
                           disabled={isPending}
                           onClick={() => handleTogglePausa(loja.id, !loja.pausada)}
-                          className={`inline-flex min-h-[38px] items-center gap-1.5 rounded-xl px-3 text-xs font-semibold disabled:opacity-50 ${
+                          className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-xl px-3 text-xs font-semibold disabled:opacity-50 ${
                             loja.pausada
                               ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
                               : "bg-rose-500/12 text-rose-600 dark:text-rose-400"

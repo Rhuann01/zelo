@@ -219,7 +219,7 @@ export function AssinaturaPanel({
                   key={m.id}
                   type="button"
                   onClick={() => setBillingType(m.id)}
-                  className={`min-h-[40px] rounded-xl text-xs font-semibold ${
+                  className={`min-h-[44px] rounded-xl text-xs font-semibold ${
                     billingType === m.id
                       ? "bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)]"
                       : "bg-[var(--zelo-soft)] text-[var(--zelo-muted)]"
@@ -270,7 +270,7 @@ export function AssinaturaPanel({
           <button
             type="button"
             onClick={handleCopy}
-            className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg bg-[var(--zelo-card)] px-3 text-xs font-semibold"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg bg-[var(--zelo-card)] px-3 text-xs font-semibold"
           >
             {copied ? (
               <>
@@ -293,7 +293,7 @@ export function AssinaturaPanel({
               value={codigoInput}
               onChange={(e) => setCodigoInput(e.target.value)}
               placeholder="Recebeu um código de indicação?"
-              className="h-11 flex-1 rounded-xl bg-[var(--zelo-soft)] px-3 text-xs font-mono-num outline-none"
+              className="h-11 min-w-0 flex-1 rounded-xl bg-[var(--zelo-soft)] px-3 text-xs font-mono-num outline-none"
             />
             <button
               type="submit"
