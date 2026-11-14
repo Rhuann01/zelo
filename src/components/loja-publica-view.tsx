@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   ArrowRight,
   ChevronLeft,
-  Clock,
   ExternalLink,
   MapPin,
   MessageCircle,
@@ -17,6 +16,7 @@ import {
   Zap,
 } from "lucide-react";
 import { ReservaDrawer } from "@/components/reserva-drawer";
+import { EquipeHorariosTab } from "@/components/storefront/equipe-horarios-tab";
 import { ServiceCard } from "@/components/storefront/service-card";
 import { StoreNavBar } from "@/components/storefront/store-nav-bar";
 import { StoreMapEmbed, buildExternalMapUrl } from "@/components/ui";
@@ -27,16 +27,6 @@ import {
   type ProfissionalPublico,
   type ServicoPublico,
 } from "@/lib/public/get-loja-publica";
-
-const DIAS_ORDEM = [
-  { key: "seg", label: "Segunda-feira" },
-  { key: "ter", label: "Terça-feira" },
-  { key: "qua", label: "Quarta-feira" },
-  { key: "qui", label: "Quinta-feira" },
-  { key: "sex", label: "Sexta-feira" },
-  { key: "sab", label: "Sábado" },
-  { key: "dom", label: "Domingo" },
-] as const;
 
 function formatPrice(centavos: number) {
   return `R$ ${(centavos / 100).toFixed(2).replace(".", ",")}`;
@@ -69,6 +59,7 @@ export function LojaPublicaView({
   const [tab, setTab] = useState<"servicos" | "equipe" | "detalhes">("servicos");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedProfId, setSelectedProfId] = useState<string>(profissionais[0]?.id ?? "");
+  const [profPreSelecionado, setProfPreSelecionado] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
   const [buscaServico, setBuscaServico] = useState("");
@@ -133,6 +124,21 @@ export function LojaPublicaView({
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
+  }
+
+  function handleAgendarComProfissional(profId: string) {
+    setSelectedProfId(profId);
+    if (selectedIds.length > 0) {
+      setDrawerOpen(true);
+      return;
+    }
+    if (servicos.length === 1) {
+      setSelectedIds([servicos[0].id]);
+      setDrawerOpen(true);
+      return;
+    }
+    setProfPreSelecionado(true);
+    setTab("servicos");
   }
 
   async function handleShare() {
@@ -476,6 +482,31 @@ export function LojaPublicaView({
                 </button>
               </div>
 
+              {profPreSelecionado && selectedProfId && (
+                <div
+                  className="flex items-center justify-between gap-2 rounded-2xl px-3 py-2 text-xs"
+                  style={{
+                    backgroundColor: "color-mix(in srgb, var(--t-accent) 12%, transparent)",
+                  }}
+                >
+                  <span className="truncate font-medium">
+                    Profissional selecionado:{" "}
+                    <strong>
+                      {profissionais.find((p) => p.id === selectedProfId)?.nome}
+                    </strong>{" "}
+                    — escolha um serviço abaixo
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setProfPreSelecionado(false)}
+                    className="shrink-0 rounded-full p-1 transition-opacity hover:opacity-75"
+                    aria-label="Fechar aviso de profissional"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
+
               {servicosFiltrados.length === 0 ? (
                 <div className="p-6 text-center space-y-1.5" style={cardSurfaceStyle}>
                   <Scissors className="mx-auto h-6 w-6" style={{ color: "var(--t-muted)" }} />
@@ -511,82 +542,14 @@ export function LojaPublicaView({
 
           {/* TAB 2: EQUIPE & HORÁRIOS */}
           {tab === "equipe" && (
-            <div className="space-y-4">
-              <section className="space-y-2.5">
-                <h2 className="px-0.5 text-sm font-bold">Profissionais</h2>
-                {profissionais.length === 0 ? (
-                  <div
-                    className="p-4 text-xs"
-                    style={{ ...cardSurfaceStyle, color: "var(--t-muted)" }}
-                  >
-                    Nenhum profissional disponível para exibição pública no momento.
-                  </div>
-                ) : (
-                  profissionais.map((p) => {
-                    const pInicial = (p.nome.trim()[0] || "P").toUpperCase();
-                    return (
-                      <div
-                        key={p.id}
-                        className="flex items-center gap-3 p-3.5"
-                        style={cardSurfaceStyle}
-                      >
-                        {p.avatar_url ? (
-                          /* eslint-disable-next-line @next/next/no-img-element */
-                          <img
-                            src={p.avatar_url}
-                            alt={p.nome}
-                            className="h-11 w-11 shrink-0 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div
-                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold"
-                            style={{ backgroundColor: "var(--t-inner)", color: "var(--t-ink)" }}
-                          >
-                            {pInicial}
-                          </div>
-                        )}
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-bold">{p.nome}</p>
-                          <p className="truncate text-xs" style={{ color: "var(--t-muted)" }}>
-                            {p.cargo}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </section>
-
-              <section className="p-4 space-y-2.5" style={cardSurfaceStyle}>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" style={{ color: "var(--t-accent)" }} />
-                  <h2 className="text-sm font-bold">Horário de Funcionamento</h2>
-                </div>
-                <div className="space-y-1.5">
-                  {DIAS_ORDEM.map(({ key, label }) => {
-                    const cfg = loja.horarios_loja?.[key] as
-                      | { ativo?: boolean; abre?: string; fecha?: string }
-                      | undefined;
-                    const ativo = cfg?.ativo ?? key !== "dom";
-                    const abre = cfg?.abre ?? "09:00";
-                    const fecha = cfg?.fecha ?? "20:00";
-                    return (
-                      <div key={key} className="flex items-center justify-between py-1 text-xs">
-                        <span style={{ color: ativo ? "var(--t-ink)" : "var(--t-muted)" }}>
-                          {label}
-                        </span>
-                        <span
-                          className="font-mono-num font-medium"
-                          style={{ color: ativo ? "var(--t-ink)" : "var(--t-muted)" }}
-                        >
-                          {ativo ? `${abre} – ${fecha}` : "Fechado"}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-            </div>
+            <EquipeHorariosTab
+              loja={loja}
+              profissionais={profissionais}
+              selectedProfId={selectedProfId}
+              isBrutal={isBrutal}
+              cardSurfaceStyle={cardSurfaceStyle}
+              onAgendarComProfissional={handleAgendarComProfissional}
+            />
           )}
 
           {/* TAB 3: DETALHES & MAPA */}
