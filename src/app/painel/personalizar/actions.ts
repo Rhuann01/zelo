@@ -89,6 +89,8 @@ export async function savePresetBannerAction(
   const isValidBannerUrl =
     capaUrl === null ||
     capaUrl.startsWith("/banners/") ||
+    capaUrl.startsWith("https://images.unsplash.com/") ||
+    capaUrl.startsWith("https://pixabay.com/") ||
     capaUrl.startsWith("https://images.pexels.com/");
   if (!isValidBannerUrl) {
     return { ok: false, error: "Banner inválido." };

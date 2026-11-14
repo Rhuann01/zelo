@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Check, Loader2, Search } from "lucide-react";
 
 interface StockPhotoItem {
-  id: number;
+  id: string;
   alt: string;
   photographer: string;
   thumbUrl: string;
@@ -169,7 +169,7 @@ export function StockPhotoSearch({
       )}
 
       <p className="text-[10px] text-[var(--zelo-muted)]">
-        Fotos gratuitas fornecidas via Pexels API.
+        Fotos gratuitas via Unsplash / Pixabay API.
       </p>
     </div>
   );

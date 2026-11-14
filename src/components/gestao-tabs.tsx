@@ -1008,7 +1008,7 @@ export function GestaoTabs({
                   Buscar Foto Grátis para Serviço
                 </h3>
                 <p className="text-[11px] text-[var(--zelo-muted)]">
-                  Escolha uma foto pronta da Pexels API para usar na vitrine.
+                  Escolha uma foto gratuita pronta para usar na sua vitrine.
                 </p>
               </div>
               <button
