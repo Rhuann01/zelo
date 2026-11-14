@@ -31,9 +31,21 @@ export function parseSuperAdminAllowlist(raw = process.env.SUPER_ADMIN_UIDS): Se
   );
 }
 
+export function parseSuperAdminEmailAllowlist(
+  raw = process.env.SUPER_ADMIN_EMAILS
+): Set<string> {
+  if (!raw) return new Set();
+  return new Set(
+    raw
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean)
+  );
+}
+
 /**
  * Blindagem de 4 camadas do /super-admin:
- * 1. Usuário autenticado + Allowlist estrita (`SUPER_ADMIN_UIDS`)
+ * 1. Usuário autenticado + Allowlist estrita (`SUPER_ADMIN_UIDS` ou `SUPER_ADMIN_EMAILS`)
  * 2. MFA AAL2 obrigatório (em produção)
  * 3. `import "server-only"` + `createAdminClient` exclusivo
  * 4. Cloudflare Access header quando `CF_ACCESS_REQUIRED === "true"`
@@ -57,9 +69,17 @@ export async function verifySuperAdminAccess(): Promise<SuperAdminGuardResult> {
     return { ok: false, status: 401, reason: "unauthenticated" };
   }
 
-  // Camada 1: Allowlist explícita de UIDs
-  const allowlist = parseSuperAdminAllowlist();
-  if (!allowlist.has(user.id)) {
+  // Camada 1: Allowlist explícita de UIDs ou E-mails verificados
+  const uidAllowlist = parseSuperAdminAllowlist();
+  const emailAllowlist = parseSuperAdminEmailAllowlist();
+  const userEmail = user.email?.trim().toLowerCase() ?? "";
+  const isAllowedByUid = uidAllowlist.has(user.id);
+  const isAllowedByEmail =
+    Boolean(userEmail) &&
+    Boolean(user.email_confirmed_at) &&
+    emailAllowlist.has(userEmail);
+
+  if (!isAllowedByUid && !isAllowedByEmail) {
     return { ok: false, status: 403, reason: "not_allowlisted" };
   }
 

@@ -12,20 +12,18 @@ interface NotifyParams {
 }
 
 /**
- * Prioriza Web Push (custo zero) antes de usar a cota diária do Resend (100/dia).
+ * Envia notificações exclusivamente via Web Push PWA (custo zero, sem Resend).
  */
 export async function notifyUserPrioritizingPush({
   userId,
   title,
   body,
   url = "/painel",
-  emailSubject,
-  emailHtml,
-}: NotifyParams): Promise<{ channel: "push" | "email" | "none" }> {
+}: NotifyParams): Promise<{ channel: "push" | "none" }> {
   const admin = createAdminClient();
   const { data: perfil } = await admin
     .from("perfis")
-    .select("email, notificacoes_push, notificacoes_email")
+    .select("notificacoes_push")
     .eq("id", userId)
     .maybeSingle();
 
@@ -65,27 +63,6 @@ export async function notifyUserPrioritizingPush({
       if (delivered > 0) {
         return { channel: "push" };
       }
-    }
-  }
-
-  const resendKey = process.env.RESEND_API_KEY;
-  if (perfil.notificacoes_email && perfil.email && resendKey && emailHtml) {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${resendKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: process.env.RESEND_FROM_EMAIL || "Zelo <agenda@zelo.app>",
-        to: [perfil.email],
-        subject: emailSubject || title,
-        html: emailHtml,
-      }),
-    }).catch(() => null);
-
-    if (res?.ok) {
-      return { channel: "email" };
     }
   }
 
