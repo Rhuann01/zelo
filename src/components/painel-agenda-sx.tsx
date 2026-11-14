@@ -287,7 +287,7 @@ export function PainelAgendaSX({
 
       {/* Modal de Ações do Agendamento */}
       {selectedEvent && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-xs sm:items-center sm:p-4">
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50 backdrop-blur-xs sm:items-center sm:p-4">
           <div className="w-full max-w-[440px] space-y-4 rounded-t-2xl bg-[var(--zelo-card)] p-5 shadow-xl sm:rounded-2xl">
             <div className="flex items-start justify-between gap-2">
               <div>
@@ -359,10 +359,10 @@ export function PainelAgendaSX({
 
       {/* Modal de Encaixe Manual (Balcão) */}
       {encaixeOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-xs sm:items-center sm:p-4">
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50 backdrop-blur-xs sm:items-center sm:p-4">
           <form
             onSubmit={handleCriarEncaixe}
-            className="w-full max-w-[440px] space-y-3 rounded-t-2xl bg-[var(--zelo-card)] p-5 shadow-xl sm:rounded-2xl"
+            className="max-h-[90vh] w-full max-w-[440px] space-y-3 overflow-y-auto rounded-t-2xl bg-[var(--zelo-card)] p-5 shadow-xl sm:rounded-2xl"
           >
             <div className="flex items-center justify-between">
               <h3 className="text-base font-bold">Encaixe Rápido (Balcão)</h3>
