@@ -18,12 +18,11 @@ export default async function FinanceiroPage() {
       .from("profissionais")
       .select("id, nome, comissao_percentual, meta_semanal_centavos, eh_dono, user_id")
       .eq("loja_id", ctx.lojaAtual.id)
-      .eq("ativo", true)
       .order("eh_dono", { ascending: false }),
     supabase
       .from("agendamentos")
       .select(
-        "id, inicio, status, total_centavos, sinal_centavos, profissional_id, cliente_nome_avulso, cliente:perfis(nome), agendamento_servicos(servico:servicos(nome))"
+        "id, inicio, status, total_centavos, sinal_centavos, profissional_id, cliente_nome, beneficiario_nome, cliente:perfis(nome), agendamento_servicos(nome_snapshot, servico:servicos(nome))"
       )
       .eq("loja_id", ctx.lojaAtual.id)
       .gte("inicio", sinceIso)
@@ -51,7 +50,8 @@ export default async function FinanceiroPage() {
     const servicosNomes = servsRaw
       .map((item) => {
         const s = Array.isArray(item.servico) ? item.servico[0] : item.servico;
-        return s?.nome ? String(s.nome) : null;
+        const nome = item.nome_snapshot || s?.nome;
+        return nome ? String(nome) : null;
       })
       .filter(Boolean) as string[];
 
@@ -66,7 +66,8 @@ export default async function FinanceiroPage() {
       profissional_comissao_pct: prof?.comissao_pct ?? 100,
       profissional_user_id: prof?.user_id ?? null,
       cliente_nome:
-        (row.cliente_nome_avulso as string | null) ||
+        (row.beneficiario_nome as string | null) ||
+        (row.cliente_nome as string | null) ||
         (clienteRaw?.nome ? String(clienteRaw.nome) : "Cliente"),
       servicos_label:
         servicosNomes.length > 0 ? servicosNomes.join(" + ") : "Atendimento",

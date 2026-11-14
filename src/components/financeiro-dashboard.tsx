@@ -380,7 +380,7 @@ export function FinanceiroDashboard({
               </div>
               <span className="inline-flex items-center gap-1 rounded-full bg-neutral-800 px-2.5 py-0.5 font-mono-num text-[11px] font-semibold text-amber-400">
                 <TrendingUp className="h-3.5 w-3.5" />
-                <span>{myProf ? `${myProf.comissao_pct}%` : "100%"}</span>
+                <span>Repasse {myProf ? `${myProf.comissao_pct}%` : "100%"}</span>
               </span>
             </div>
 

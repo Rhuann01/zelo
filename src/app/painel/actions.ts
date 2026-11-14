@@ -123,6 +123,7 @@ export async function atualizarStatusAgendamentoAction(raw: unknown) {
   }
 
   revalidatePath("/painel");
+  revalidatePath("/painel/financeiro");
   revalidatePath("/explorar");
   return { ok: true };
 }
