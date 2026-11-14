@@ -32,7 +32,6 @@ interface ClienteAgendamento {
   status: "pendente" | "confirmado" | "concluido" | "cancelado" | "no_show";
   total_centavos: number;
   sinal_centavos: number;
-  sinal_pago: boolean;
   loja: {
     id: string;
     nome: string;
@@ -195,9 +194,6 @@ export function ExplorarMeusHorarios({
     if (entry) {
       setItems(entry.items);
       setLoading(false);
-      if (Date.now() - entry.fetchedAt < AGENDAMENTOS_TTL_MS) {
-        return;
-      }
     } else {
       setLoading(true);
     }
@@ -207,7 +203,7 @@ export function ExplorarMeusHorarios({
     supabase
       .from("agendamentos")
       .select(
-        "id, inicio, fim, status, total_centavos, sinal_centavos, sinal_pago, loja:lojas(id, nome, slug, bairro, cidade, logo_url, cor_primaria, antecedencia_cancel_min, latitude, longitude, maps_url, endereco_texto), profissional:profissionais(id, nome, cargo, avatar_url), agendamento_servicos(servico:servicos(nome, duracao_min))"
+        "id, inicio, fim, status, total_centavos, sinal_centavos, loja:lojas(id, nome, slug, bairro, cidade, logo_url, cor_primaria, antecedencia_cancel_min, latitude, longitude, maps_url, endereco_texto), profissional:profissionais(id, nome, cargo, avatar_url), agendamento_servicos(servico:servicos(nome, duracao_min))"
       )
       .eq("cliente_id", viewer.id)
       .order("inicio", { ascending: false })
@@ -240,7 +236,6 @@ export function ExplorarMeusHorarios({
             status: row.status as ClienteAgendamento["status"],
             total_centavos: Number(row.total_centavos ?? 0),
             sinal_centavos: Number(row.sinal_centavos ?? 0),
-            sinal_pago: Boolean(row.sinal_pago),
             loja: lojaRaw
               ? {
                   id: String(lojaRaw.id),
@@ -495,7 +490,7 @@ export function ExplorarMeusHorarios({
               : null;
             const restanteCentavos = Math.max(
               0,
-              ag.total_centavos - (ag.sinal_pago ? ag.sinal_centavos : 0)
+              ag.total_centavos - ag.sinal_centavos
             );
             const servicoLabel =
               ag.servicos.length > 0
@@ -614,12 +609,11 @@ export function ExplorarMeusHorarios({
                         <div className="flex items-center gap-1.5">
                           <span>Sinal via PIX</span>
                           <span className="rounded bg-[#10B981]/15 px-1.5 py-0.5 text-[10px] font-bold text-[#047857] dark:text-[#34D399]">
-                            {ag.sinal_pago ? "Pago" : "Previsto"}
+                            Previsto
                           </span>
                         </div>
                         <span className="font-mono-num font-semibold text-[#047857] dark:text-[#34D399]">
-                          {ag.sinal_pago ? "- " : ""}
-                          {formatBRL(ag.sinal_centavos)}
+                          - {formatBRL(ag.sinal_centavos)}
                         </span>
                       </div>
                     )}
