@@ -75,6 +75,11 @@ export function ExplorarVitrine({ lojas }: { lojas: VitrineLojaCard[] }) {
 
   useEffect(() => {
     try {
+      const params = new URLSearchParams(window.location.search);
+      const t = params.get("tab");
+      if (t === "horarios" || t === "favoritos" || t === "perfil" || t === "explorar") {
+        setTab(t);
+      }
       const raw = localStorage.getItem("zelo_favoritos");
       if (raw) {
         const parsed = JSON.parse(raw);
