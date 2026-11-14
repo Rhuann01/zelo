@@ -66,7 +66,8 @@ export function StoreBannerMedia({
         <div
           className="pointer-events-none absolute inset-0"
           style={{
-            background: "linear-gradient(to bottom, transparent 25%, var(--t-bg, #0F0F12) 100%)",
+            background:
+              "linear-gradient(to bottom, rgba(0,0,0,0.12) 0%, color-mix(in srgb, var(--t-bg, #0F0F12) 60%, transparent) 48%, var(--t-bg, #0F0F12) 88%)",
           }}
         />
       )}

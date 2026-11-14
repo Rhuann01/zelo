@@ -241,21 +241,21 @@ export function LojaPublicaView({
               )}
 
               <div className="flex min-w-0 flex-1 flex-col justify-center pb-0.5">
-                <div className="flex items-center gap-1.5">
+                <div
+                  className={`inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold backdrop-blur-md ${
+                    loja.pausada
+                      ? "bg-black/75 text-[#FBBF24]"
+                      : "bg-black/75 text-[#34D399]"
+                  }`}
+                >
                   <span
-                    className={`h-2 w-2 rounded-full ${
-                      loja.pausada ? "bg-[#F59E0B]" : "animate-pulse bg-[#10B981]"
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      loja.pausada ? "bg-[#FBBF24]" : "animate-pulse bg-[#34D399]"
                     }`}
                   />
-                  <span
-                    className={`text-xs font-medium ${
-                      loja.pausada ? "text-[#D97706]" : "text-[#10B981]"
-                    }`}
-                  >
-                    {loja.pausada ? "Loja pausada" : "Atendimento hoje"}
-                  </span>
+                  <span>{loja.pausada ? "Loja pausada" : "Atendimento hoje"}</span>
                 </div>
-                <h1 className="mt-0.5 truncate text-2xl font-bold tracking-tight">{loja.nome}</h1>
+                <h1 className="mt-1 truncate text-2xl font-bold tracking-tight">{loja.nome}</h1>
                 {(loja.bairro || loja.cidade) && (
                   <p className="mt-0.5 truncate text-xs" style={{ color: "var(--t-muted)" }}>
                     {[loja.bairro, loja.cidade].filter(Boolean).join(", ")}
