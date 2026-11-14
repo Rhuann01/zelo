@@ -107,9 +107,8 @@ const TEMA_META: Record<
   liquid_glass: {
     label: "Liquid Glass",
     desc: "Apple iOS 26 translúcido",
-    bg: "#090C16",
-    accent: "#38BDF8",
-    darkCard: true,
+    bg: "#F2F2F7",
+    accent: "#007AFF",
   },
   material_you: {
     label: "Material You",

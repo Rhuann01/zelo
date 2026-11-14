@@ -20,6 +20,7 @@ import { ReservaDrawer } from "@/components/reserva-drawer";
 import { ServiceCard } from "@/components/storefront/service-card";
 import { StoreNavBar } from "@/components/storefront/store-nav-bar";
 import { StoreMapEmbed, buildExternalMapUrl } from "@/components/ui";
+import { LiquidGlassSvgDefs, LiquidGlassSurface } from "@/components/ui/liquid-glass-surface";
 import {
   getAccentInk,
   type LojaPublica,
@@ -168,6 +169,7 @@ export function LojaPublicaView({
       }
     >
       <main className="mx-auto flex w-full max-w-[480px] flex-1 flex-col pb-32">
+        {isLiquidGlass && <LiquidGlassSvgDefs />}
         {/* Top App Profile Header (estilo aplicativo próprio) */}
         <header className="px-4 pt-4 pb-3">
           <div className="flex items-center justify-between gap-2.5">
@@ -614,58 +616,97 @@ export function LojaPublicaView({
         />
       )}
 
-      {/* Sticky Bottom Drawer Bar (Stitch) */}
+      {/* Floating Concentric Booking Capsule (Apple HIG / Stitch) */}
       {selecionados.length > 0 && !loja.pausada && (
-        <div
-          className={`zelo-sheet-up fixed right-0 bottom-0 left-0 z-40 px-4 py-3 backdrop-blur-md ${
-            isLiquidGlass ? "store-glass-surface" : ""
-          }`}
-          style={{
-            backgroundColor: "color-mix(in srgb, var(--t-surface) 95%, transparent)",
-            borderTop: "1px solid var(--t-border)",
-            boxShadow: "0 -4px 24px rgba(0,0,0,0.18)",
-          }}
-        >
-          <div className="mx-auto flex max-w-[480px] items-center justify-between gap-2.5">
-            <button
-              type="button"
-              onClick={() => setSelectedIds([])}
-              aria-label="Limpar serviços selecionados"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors active:scale-95"
+        <div className="pointer-events-none fixed inset-x-0 bottom-[max(14px,env(safe-area-inset-bottom))] z-40 flex justify-center px-3.5">
+          {isLiquidGlass ? (
+            <LiquidGlassSurface
+              tone="light"
+              className="zelo-sheet-up pointer-events-auto w-full max-w-[448px] rounded-[28px] p-2.5"
+            >
+              <div className="flex items-center justify-between gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setSelectedIds([])}
+                  aria-label="Limpar serviços selecionados"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-black/5 text-[#3A3A3C] transition-colors active:scale-95"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <span className="truncate text-[11px] font-medium text-[#6E6E73]">
+                    {selecionados.length === 1
+                      ? `1 serviço • ${totalDuracao} min`
+                      : `${selecionados.length} serviços • ${totalDuracao} min`}
+                  </span>
+                  <span className="font-mono-num text-lg font-bold leading-tight text-[#1C1C1E]">
+                    {formatPrice(totalCentavos)}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setDrawerOpen(true)}
+                  className="flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-[20px] px-4 text-xs font-semibold shadow-md transition-transform active:scale-95"
+                  style={{
+                    backgroundColor: "var(--t-accent)",
+                    color: "var(--t-accent-ink)",
+                  }}
+                >
+                  <span>Escolher horário</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </LiquidGlassSurface>
+          ) : (
+            <div
+              className="zelo-sheet-up pointer-events-auto flex w-full max-w-[448px] items-center justify-between gap-2.5 rounded-[28px] p-2.5 backdrop-blur-xl"
               style={{
-                backgroundColor: "var(--t-inner)",
-                color: "var(--t-muted)",
+                backgroundColor: "color-mix(in srgb, var(--t-surface) 94%, transparent)",
+                border: isBrutal ? "2px solid #000000" : "1px solid var(--t-border)",
+                boxShadow: isBrutal ? "3px 3px 0px #000000" : "0 14px 36px rgba(0, 0, 0, 0.22)",
               }}
             >
-              <X className="h-4 w-4" />
-            </button>
+              <button
+                type="button"
+                onClick={() => setSelectedIds([])}
+                aria-label="Limpar serviços selecionados"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors active:scale-95"
+                style={{
+                  backgroundColor: "var(--t-inner)",
+                  color: "var(--t-muted)",
+                }}
+              >
+                <X className="h-4 w-4" />
+              </button>
 
-            <div className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate text-xs" style={{ color: "var(--t-muted)" }}>
-                {selecionados.length === 1
-                  ? `1 serviço • ${totalDuracao} min`
-                  : `${selecionados.length} serviços • ${totalDuracao} min`}
-              </span>
-              <span className="font-mono-num text-xl font-bold leading-tight">
-                {formatPrice(totalCentavos)}
-              </span>
+              <div className="flex min-w-0 flex-1 flex-col">
+                <span className="truncate text-[11px]" style={{ color: "var(--t-muted)" }}>
+                  {selecionados.length === 1
+                    ? `1 serviço • ${totalDuracao} min`
+                    : `${selecionados.length} serviços • ${totalDuracao} min`}
+                </span>
+                <span className="font-mono-num text-lg font-bold leading-tight">
+                  {formatPrice(totalCentavos)}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setDrawerOpen(true)}
+                className="flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-[20px] px-4 text-xs font-semibold shadow-md transition-transform active:scale-95"
+                style={{
+                  backgroundColor: "var(--t-accent)",
+                  color: "var(--t-accent-ink)",
+                  ...(isBrutal ? { border: "2px solid #000000" } : {}),
+                }}
+              >
+                <span>Escolher horário</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
             </div>
-
-            <button
-              type="button"
-              onClick={() => setDrawerOpen(true)}
-              className="flex h-12 shrink-0 items-center justify-center gap-2 px-5 text-sm font-semibold shadow-lg transition-transform active:scale-95"
-              style={{
-                borderRadius: "calc(var(--t-radius) * 0.78)",
-                backgroundColor: "var(--t-accent)",
-                color: "var(--t-accent-ink)",
-                ...(isBrutal ? { border: "2px solid #000000", boxShadow: "3px 3px 0px #000000" } : {}),
-              }}
-            >
-              <span>Escolher horário</span>
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </div>
+          )}
         </div>
       )}
 

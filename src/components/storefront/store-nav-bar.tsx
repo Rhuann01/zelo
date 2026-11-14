@@ -1,6 +1,7 @@
 "use client";
 
 import { List, MapPin, Users } from "lucide-react";
+import { LiquidGlassSurface } from "@/components/ui/liquid-glass-surface";
 
 export type StoreTabKey = "servicos" | "equipe" | "detalhes";
 
@@ -30,69 +31,106 @@ export function StoreNavBar({
   if (estiloBarra === "dock_flutuante") {
     if (hidden) return null;
 
-    return (
-      <div className="pointer-events-none fixed inset-x-0 bottom-[max(14px,env(safe-area-inset-bottom))] z-40 flex justify-center px-4">
-        <nav
-          aria-label="Navegação da loja"
-          className={`zelo-sheet-up pointer-events-auto flex items-center gap-1.5 rounded-full p-1.5 backdrop-blur-xl ${
-            isLiquidGlass ? "store-glass-surface" : ""
-          }`}
-          style={{
-            backgroundColor: isLiquidGlass
-              ? "rgba(15, 18, 28, 0.72)"
-              : "#111216",
-            boxShadow: isBrutal
-              ? "3px 3px 0px #000000"
-              : "0 14px 36px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.14)",
-            border: isBrutal
-              ? "2px solid #000000"
-              : "1px solid rgba(255, 255, 255, 0.12)",
-          }}
-        >
-          {NAV_ITEMS.map(({ key, shortLabel, icon: Icon }) => {
-            const active = tab === key;
+    const dockContent = (
+      <div className="flex items-center gap-1">
+        {NAV_ITEMS.map(({ key, shortLabel, icon: Icon }) => {
+          const active = tab === key;
+          if (isLiquidGlass) {
             return (
               <button
                 key={key}
                 type="button"
                 onClick={() => onChangeTab(key)}
                 aria-label={shortLabel}
-                className={`flex min-h-[44px] items-center justify-center gap-2 rounded-full text-xs font-semibold transition-all duration-200 active:scale-95 ${
-                  active ? "px-4" : "w-11 px-0"
+                className={`flex min-h-[44px] items-center justify-center gap-1.5 rounded-[26px] text-xs font-semibold transition-all duration-200 active:scale-95 ${
+                  active ? "px-4" : "w-12 px-0"
                 }`}
                 style={
                   active
                     ? {
-                        backgroundColor: "#FFFFFF",
-                        color: "#111216",
-                        ...(isBrutal ? { border: "1.5px solid #000000" } : {}),
+                        backgroundColor: "rgba(255, 255, 255, 0.92)",
+                        color: "var(--t-accent)",
+                        boxShadow:
+                          "0 4px 14px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 1)",
                       }
                     : {
-                        backgroundColor: "rgba(255, 255, 255, 0.08)",
-                        color: "rgba(255, 255, 255, 0.72)",
+                        color: "#3A3A3C",
                       }
                 }
               >
-                <span
-                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
-                    active ? "" : ""
-                  }`}
-                  style={
-                    active
-                      ? {
-                          backgroundColor: "var(--t-accent)",
-                          color: "var(--t-accent-ink)",
-                        }
-                      : undefined
-                  }
-                >
-                  <Icon className="h-4 w-4 shrink-0" />
-                </span>
+                <Icon className="h-[18px] w-[18px] shrink-0" />
                 {active && <span>{shortLabel}</span>}
               </button>
             );
-          })}
-        </nav>
+          }
+
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => onChangeTab(key)}
+              aria-label={shortLabel}
+              className={`flex min-h-[44px] items-center justify-center gap-2 rounded-full text-xs font-semibold transition-all duration-200 active:scale-95 ${
+                active ? "px-4" : "w-11 px-0"
+              }`}
+              style={
+                active
+                  ? {
+                      backgroundColor: "#FFFFFF",
+                      color: "#111216",
+                      ...(isBrutal ? { border: "1.5px solid #000000" } : {}),
+                    }
+                  : {
+                      backgroundColor: "rgba(255, 255, 255, 0.08)",
+                      color: "rgba(255, 255, 255, 0.72)",
+                    }
+              }
+            >
+              <span
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+                style={
+                  active
+                    ? {
+                        backgroundColor: "var(--t-accent)",
+                        color: "var(--t-accent-ink)",
+                      }
+                    : undefined
+                }
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+              </span>
+              {active && <span>{shortLabel}</span>}
+            </button>
+          );
+        })}
+      </div>
+    );
+
+    return (
+      <div className="pointer-events-none fixed inset-x-0 bottom-[max(14px,env(safe-area-inset-bottom))] z-40 flex justify-center px-4">
+        {isLiquidGlass ? (
+          <nav aria-label="Navegação da loja" className="zelo-sheet-up pointer-events-auto">
+            <LiquidGlassSurface tone="light" className="rounded-[32px] p-1.5">
+              {dockContent}
+            </LiquidGlassSurface>
+          </nav>
+        ) : (
+          <nav
+            aria-label="Navegação da loja"
+            className="zelo-sheet-up pointer-events-auto flex items-center rounded-full p-1.5 backdrop-blur-xl"
+            style={{
+              backgroundColor: "#111216",
+              boxShadow: isBrutal
+                ? "3px 3px 0px #000000"
+                : "0 14px 36px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.14)",
+              border: isBrutal
+                ? "2px solid #000000"
+                : "1px solid rgba(255, 255, 255, 0.12)",
+            }}
+          >
+            {dockContent}
+          </nav>
+        )}
       </div>
     );
   }
@@ -100,7 +138,7 @@ export function StoreNavBar({
   return (
     <nav
       aria-label="Seções da loja"
-      className={`no-scrollbar w-full overflow-x-auto ${isLiquidGlass ? "store-glass-surface" : ""}`}
+      className="no-scrollbar w-full overflow-x-auto"
       style={{
         backgroundColor: "var(--t-surface)",
         borderTop: "1px solid var(--t-border)",

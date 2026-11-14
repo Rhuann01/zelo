@@ -13,7 +13,7 @@ const COR_PADRAO_POR_TEMA: Record<CreateLojaInput["tema"], string> = {
   glam: "#BE185D",
   brutal: "#A3E635",
   slate: "#2563EB",
-  liquid_glass: "#38BDF8",
+  liquid_glass: "#007AFF",
   material_you: "#6750A4",
 };
 

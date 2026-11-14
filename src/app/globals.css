@@ -115,25 +115,20 @@ body {
   --t-border-w: 1px;
 }
 
-/* Apple Liquid Glass (iOS 26 / Specular + Blur + Saturate) */
+/* Apple Liquid Glass (iOS 26 HIG: Content Layer limpo + Controles Flutuantes Vítreos) */
 .theme-liquid_glass {
-  --t-bg: #070910;
-  --t-surface: rgba(255, 255, 255, 0.11);
-  --t-inner: rgba(255, 255, 255, 0.16);
-  --t-border: rgba(255, 255, 255, 0.28);
-  --t-ink: #F8FAFC;
-  --t-muted: rgba(241, 245, 249, 0.74);
-  --t-shadow: 0 12px 32px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.38);
+  --t-bg: #F2F2F7;
+  --t-surface: #FFFFFF;
+  --t-inner: #E9E9EF;
+  --t-border: rgba(60, 60, 67, 0.12);
+  --t-ink: #1C1C1E;
+  --t-muted: #6E6E73;
+  --t-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   --t-border-w: 1px;
   background-image:
-    radial-gradient(circle at 15% 18%, color-mix(in srgb, var(--t-accent) 28%, transparent), transparent 52%),
-    radial-gradient(circle at 88% 78%, rgba(56, 189, 248, 0.16), transparent 48%),
-    linear-gradient(180deg, #090C16 0%, #070910 100%);
-}
-
-.theme-liquid_glass .store-glass-surface {
-  backdrop-filter: blur(18px) saturate(180%);
-  -webkit-backdrop-filter: blur(18px) saturate(180%);
+    radial-gradient(circle at 18% 6%, color-mix(in srgb, var(--t-accent) 16%, transparent), transparent 46%),
+    radial-gradient(circle at 86% 14%, color-mix(in srgb, var(--t-accent) 10%, transparent), transparent 42%),
+    linear-gradient(180deg, #F5F5FA 0%, #F2F2F7 100%);
 }
 
 /* Google Material Design 3 / Material You (Dynamic Tonal Surfaces) */
