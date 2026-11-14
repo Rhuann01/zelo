@@ -67,6 +67,7 @@ export const conviteProfissionalSchema = z
 export const customizacaoLojaSchema = z
   .object({
     loja_id: z.string().uuid(),
+    nome: z.string().trim().min(2, "Informe o nome da loja").max(80).optional(),
     tema: z.enum(TEMA_OPTIONS),
     cor_primaria: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Cor hexadecimal inválida"),
     raio_borda_px: z.number().int().min(2).max(24),
@@ -91,6 +92,7 @@ export const perfilConfigSchema = z
     notificacoes_push: z.boolean(),
     notificacoes_email: z.boolean(),
     loja_id: z.string().uuid().optional(),
+    nome_loja: z.string().trim().min(2, "Informe o nome da loja").max(80).optional(),
     pausada: z.boolean().optional(),
   })
   .strict();

@@ -125,6 +125,7 @@ export function CustomizadorLoja({
     longitude: number | null;
   };
 }) {
+  const [nomeLoja, setNomeLoja] = useState(loja.nome);
   const [tema, setTema] = useState<LojaResumo["tema"]>(loja.tema);
   const [cor, setCor] = useState(loja.cor_primaria);
   const [raio, setRaio] = useState(loja.raio_borda_px);
@@ -161,6 +162,7 @@ export function CustomizadorLoja({
   const [savingPresetBanner, setSavingPresetBanner] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [savedSnapshot, setSavedSnapshot] = useState({
+    nomeLoja: loja.nome,
     tema: loja.tema,
     cor: loja.cor_primaria,
     raio: loja.raio_borda_px,
@@ -182,7 +184,8 @@ export function CustomizadorLoja({
 
   const isDirty =
     isOwner &&
-    (tema !== savedSnapshot.tema ||
+    (nomeLoja !== savedSnapshot.nomeLoja ||
+      tema !== savedSnapshot.tema ||
       cor !== savedSnapshot.cor ||
       raio !== savedSnapshot.raio ||
       estiloCard !== savedSnapshot.estiloCard ||
@@ -350,6 +353,7 @@ export function CustomizadorLoja({
       startTransition(async () => {
         const res = await saveCustomizacaoAction({
           loja_id: loja.id,
+          nome: nomeLoja.trim(),
           tema,
           cor_primaria: cor,
           raio_borda_px: raio,
@@ -370,6 +374,7 @@ export function CustomizadorLoja({
           resolve(false);
         } else {
           setSavedSnapshot({
+            nomeLoja: nomeLoja.trim(),
             tema,
             cor,
             raio,
@@ -458,7 +463,7 @@ export function CustomizadorLoja({
                       className="truncate text-[13px] font-semibold leading-tight"
                       style={{ color: "var(--t-ink)" }}
                     >
-                      {loja.nome}
+                      {nomeLoja || loja.nome}
                     </h4>
                     <BadgeCheck className="h-3.5 w-3.5 shrink-0" style={{ color: cor }} />
                   </div>
@@ -487,7 +492,9 @@ export function CustomizadorLoja({
                   <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/45 to-transparent" />
                   <div className="relative z-10 flex h-full items-center justify-between px-3">
                     <div className="min-w-0">
-                      <p className="truncate text-[11px] font-bold text-white">{loja.nome}</p>
+                      <p className="truncate text-[11px] font-bold text-white">
+                        {nomeLoja || loja.nome}
+                      </p>
                       <p className="text-[9px] text-white/80">Agende em segundos</p>
                     </div>
                     <span
@@ -668,6 +675,22 @@ export function CustomizadorLoja({
           </div>
         </div>
       </section>
+
+      {isOwner && (
+        <section className="rounded-xl bg-[var(--zelo-card)] p-4 shadow-sm">
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-semibold text-[var(--zelo-ink)]">Nome da Loja</span>
+            <input
+              type="text"
+              value={nomeLoja}
+              onChange={(e) => setNomeLoja(e.target.value)}
+              placeholder="Ex: Barbearia Central"
+              maxLength={80}
+              className="h-11 rounded-xl bg-[var(--zelo-soft)] px-3.5 text-sm font-medium text-[var(--zelo-ink)] outline-none focus:ring-2 focus:ring-[var(--zelo-border-strong)]"
+            />
+          </label>
+        </section>
+      )}
 
       {!isOwner && (
         <div className="rounded-xl bg-[#F59E0B]/15 px-3.5 py-2.5 text-xs font-medium text-[#D97706]">

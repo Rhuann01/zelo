@@ -39,6 +39,7 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
   const [pushAtivo, setPushAtivo] = useState(ctx.perfil.notificacoes_push);
   const [emailAtivo, setEmailAtivo] = useState(ctx.perfil.notificacoes_email);
   const [pausada, setPausada] = useState(ctx.lojaAtual.pausada);
+  const [nomeLoja, setNomeLoja] = useState(ctx.lojaAtual.nome);
   const [dark, setDark] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [savedSnapshot, setSavedSnapshot] = useState({
@@ -47,6 +48,7 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
     pushAtivo: ctx.perfil.notificacoes_push,
     emailAtivo: ctx.perfil.notificacoes_email,
     pausada: ctx.lojaAtual.pausada,
+    nomeLoja: ctx.lojaAtual.nome,
   });
 
   const hasChanges =
@@ -54,7 +56,8 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
     whatsapp !== savedSnapshot.whatsapp ||
     pushAtivo !== savedSnapshot.pushAtivo ||
     emailAtivo !== savedSnapshot.emailAtivo ||
-    (ctx.isOwner && pausada !== savedSnapshot.pausada);
+    (ctx.isOwner &&
+      (pausada !== savedSnapshot.pausada || nomeLoja !== savedSnapshot.nomeLoja));
 
   useEffect(() => {
     setDark(document.documentElement.classList.contains("dark"));
@@ -94,7 +97,7 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
           whatsapp,
           notificacoes_push: pushAtivo,
           notificacoes_email: emailAtivo,
-          ...(ctx.isOwner ? { loja_id: ctx.lojaAtual.id, pausada } : {}),
+          ...(ctx.isOwner ? { loja_id: ctx.lojaAtual.id, pausada, nome_loja: nomeLoja } : {}),
         });
         if (res.error) {
           showToast(res.error, "error");
@@ -106,6 +109,7 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
             pushAtivo,
             emailAtivo,
             pausada,
+            nomeLoja,
           });
           router.refresh();
           if (res.message) showToast(res.message, "success");
@@ -338,7 +342,18 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
             Controles da Unidade
           </span>
           <div className="flex flex-col gap-3 rounded-xl bg-[var(--zelo-card)] p-4 shadow-sm">
-            <div className="flex items-start justify-between gap-2.5">
+            <label className="flex flex-col gap-1.5 pb-1">
+              <span className="text-xs font-medium text-[var(--zelo-muted)]">Nome da Loja</span>
+              <input
+                type="text"
+                value={nomeLoja}
+                onChange={(e) => setNomeLoja(e.target.value)}
+                placeholder="Ex: Barbearia Central"
+                maxLength={80}
+                className="h-11 rounded-lg bg-[var(--zelo-soft)] px-3 text-sm font-medium text-[var(--zelo-ink)] outline-none focus:ring-2 focus:ring-[var(--zelo-border-strong)]"
+              />
+            </label>
+            <div className="flex items-start justify-between gap-2.5 border-t border-[var(--zelo-border)]/50 pt-3">
               <div className="flex items-start gap-2.5">
                 <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F59E0B]/15 text-[#F59E0B]">
                   <Umbrella className="h-[18px] w-[18px]" />

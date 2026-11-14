@@ -32,6 +32,7 @@ export async function saveCustomizacaoAction(raw: unknown) {
     updated_at: new Date().toISOString(),
   };
 
+  if (input.nome !== undefined) updatePayload.nome = input.nome;
   if (input.cidade !== undefined) updatePayload.cidade = input.cidade;
   if (input.bairro !== undefined) updatePayload.bairro = input.bairro;
   if (input.endereco_texto !== undefined) updatePayload.endereco_texto = input.endereco_texto;

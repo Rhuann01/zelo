@@ -34,17 +34,26 @@ export async function saveConfiguracoesAction(raw: unknown) {
     return { error: "Não foi possível salvar seu perfil." };
   }
 
-  if (input.loja_id !== undefined && input.pausada !== undefined) {
+  if (
+    input.loja_id !== undefined &&
+    (input.pausada !== undefined || input.nome_loja !== undefined)
+  ) {
+    const lojaUpdate: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
+    };
+    if (input.pausada !== undefined) lojaUpdate.pausada = input.pausada;
+    if (input.nome_loja !== undefined) lojaUpdate.nome = input.nome_loja;
+
     const { data: lojaAtualizada, error: lojaErr } = await supabase
       .from("lojas")
-      .update({ pausada: input.pausada, updated_at: new Date().toISOString() })
+      .update(lojaUpdate)
       .eq("id", input.loja_id)
       .eq("owner_id", user.id)
       .select("id, slug")
       .maybeSingle();
 
     if (lojaErr || !lojaAtualizada) {
-      return { error: "Apenas o proprietário pode pausar ou reativar a loja." };
+      return { error: "Apenas o proprietário pode editar as configurações da loja." };
     }
 
     revalidateTag(`loja-${lojaAtualizada.slug}`);
