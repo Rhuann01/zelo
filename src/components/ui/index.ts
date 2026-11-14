@@ -8,4 +8,5 @@ export {
   StoreMapPicker,
   buildEmbedMapUrl,
   buildExternalMapUrl,
+  parseGoogleMapsCoords,
 } from "./store-map";

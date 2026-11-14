@@ -1,7 +1,52 @@
 "use client";
 
-import { useState } from "react";
-import { Crosshair, ExternalLink, Loader2, MapPin, Search } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Crosshair, ExternalLink, Link2, Loader2, MapPin, Search } from "lucide-react";
+
+/**
+ * Extrai latitude e longitude de URLs do Google Maps ou texto "lat, lng".
+ */
+export function parseGoogleMapsCoords(
+  input: string
+): { lat: number; lng: number } | null {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  // 1. Padrão !3dLAT!4dLNG (links de place do Google Maps)
+  const bangMatch = trimmed.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+  if (bangMatch) {
+    const lat = Number(bangMatch[1]);
+    const lng = Number(bangMatch[2]);
+    if (isValidLatLng(lat, lng)) return { lat: round6(lat), lng: round6(lng) };
+  }
+
+  // 2. Padrão @LAT,LNG ou q=LAT,LNG ou ll=LAT,LNG ou raw "LAT, LNG"
+  const coordMatch = trimmed.match(
+    /(?:@|[?&](?:q|ll)=|^)\s*(-?\d{1,2}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/
+  );
+  if (coordMatch) {
+    const lat = Number(coordMatch[1]);
+    const lng = Number(coordMatch[2]);
+    if (isValidLatLng(lat, lng)) return { lat: round6(lat), lng: round6(lng) };
+  }
+
+  return null;
+}
+
+function isValidLatLng(lat: number, lng: number) {
+  return (
+    Number.isFinite(lat) &&
+    Number.isFinite(lng) &&
+    lat >= -90 &&
+    lat <= 90 &&
+    lng >= -180 &&
+    lng <= 180
+  );
+}
+
+function round6(n: number) {
+  return Number(n.toFixed(6));
+}
 
 export function buildExternalMapUrl(params: {
   latitude?: number | null;
@@ -28,8 +73,8 @@ export function buildEmbedMapUrl(params: {
 }): string | null {
   const { latitude, longitude, addressQuery } = params;
   if (latitude != null && longitude != null) {
-    const dLon = 0.0055;
-    const dLat = 0.004;
+    const dLon = 0.0045;
+    const dLat = 0.0035;
     const bbox = [
       (longitude - dLon).toFixed(6),
       (latitude - dLat).toFixed(6),
@@ -55,7 +100,7 @@ interface StoreMapEmbedProps {
 }
 
 /**
- * Mapa real embutido (OpenStreetMap/Google) com ação direta para abrir na localização exata.
+ * Mapa real embutido leve para a página pública `/[slug]` (zero JS de mapa pesado).
  */
 export function StoreMapEmbed({
   latitude,
@@ -99,6 +144,133 @@ export function StoreMapEmbed({
   );
 }
 
+/**
+ * Mapa interativo Leaflet carregado sob demanda apenas no painel do lojista.
+ * Permite clicar em qualquer ponto ou arrastar o pino para ajustar a posição exata.
+ */
+function InteractiveLeafletPicker({
+  latitude,
+  longitude,
+  onChangeCoords,
+}: {
+  latitude: number | null;
+  longitude: number | null;
+  onChangeCoords: (lat: number, lng: number) => void;
+}) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<import("leaflet").Map | null>(null);
+  const markerRef = useRef<import("leaflet").Marker | null>(null);
+  const onChangeRef = useRef(onChangeCoords);
+  onChangeRef.current = onChangeCoords;
+
+  useEffect(() => {
+    let active = true;
+    const defaultLat = latitude ?? -19.9191;
+    const defaultLng = longitude ?? -43.9386;
+
+    (async () => {
+      const L = (await import("leaflet")).default;
+      // @ts-expect-error Leaflet CSS loaded dynamically only inside picker
+      await import("leaflet/dist/leaflet.css");
+      if (!active || !containerRef.current || mapRef.current) return;
+
+      const map = L.map(containerRef.current, {
+        center: [defaultLat, defaultLng],
+        zoom: latitude != null && longitude != null ? 17 : 13,
+        zoomControl: true,
+      });
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "&copy; OpenStreetMap",
+        maxZoom: 19,
+      }).addTo(map);
+
+      const pinIcon = L.divIcon({
+        className: "",
+        html: `<div style="width:28px;height:28px;border-radius:9999px;background:#111111;border:3px solid #FFFFFF;box-shadow:0 4px 12px rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;"><div style="width:8px;height:8px;border-radius:9999px;background:#F59E0B;"></div></div>`,
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
+      });
+
+      const placeMarker = (lat: number, lng: number) => {
+        if (!markerRef.current) {
+          const m = L.marker([lat, lng], { draggable: true, icon: pinIcon }).addTo(map);
+          m.on("dragend", () => {
+            const pos = m.getLatLng();
+            onChangeRef.current(round6(pos.lat), round6(pos.lng));
+          });
+          markerRef.current = m;
+        } else {
+          markerRef.current.setLatLng([lat, lng]);
+        }
+      };
+
+      if (latitude != null && longitude != null) {
+        placeMarker(latitude, longitude);
+      }
+
+      map.on("click", (e: import("leaflet").LeafletMouseEvent) => {
+        const lat = round6(e.latlng.lat);
+        const lng = round6(e.latlng.lng);
+        placeMarker(lat, lng);
+        onChangeRef.current(lat, lng);
+      });
+
+      mapRef.current = map;
+    })();
+
+    return () => {
+      active = false;
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+        markerRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || latitude == null || longitude == null) return;
+
+    (async () => {
+      const L = (await import("leaflet")).default;
+      if (!markerRef.current) {
+        const pinIcon = L.divIcon({
+          className: "",
+          html: `<div style="width:28px;height:28px;border-radius:9999px;background:#111111;border:3px solid #FFFFFF;box-shadow:0 4px 12px rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;"><div style="width:8px;height:8px;border-radius:9999px;background:#F59E0B;"></div></div>`,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14],
+        });
+        const m = L.marker([latitude, longitude], {
+          draggable: true,
+          icon: pinIcon,
+        }).addTo(map);
+        m.on("dragend", () => {
+          const pos = m.getLatLng();
+          onChangeRef.current(round6(pos.lat), round6(pos.lng));
+        });
+        markerRef.current = m;
+      } else {
+        markerRef.current.setLatLng([latitude, longitude]);
+      }
+      map.setView([latitude, longitude], Math.max(map.getZoom(), 16), {
+        animate: true,
+      });
+    })();
+  }, [latitude, longitude]);
+
+  return (
+    <div className="relative overflow-hidden rounded-xl bg-[var(--zelo-soft)]">
+      <div ref={containerRef} className="h-56 w-full z-0" />
+      <span className="pointer-events-none absolute top-2 left-2 z-[400] rounded-lg bg-black/75 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-xs">
+        Toque no mapa ou arraste o pino para ajustar
+      </span>
+    </div>
+  );
+}
+
 interface StoreMapPickerProps {
   enderecoTexto: string;
   bairro: string;
@@ -109,7 +281,7 @@ interface StoreMapPickerProps {
 }
 
 /**
- * Seletor de localização real via GPS do navegador ou busca de endereço (Nominatim OSM, R$ 0).
+ * Seletor de localização exata: GPS, busca por endereço, link do Google Maps e pino arrastável no mapa.
  */
 export function StoreMapPicker({
   enderecoTexto,
@@ -121,11 +293,8 @@ export function StoreMapPicker({
 }: StoreMapPickerProps) {
   const [loadingGps, setLoadingGps] = useState(false);
   const [loadingGeo, setLoadingGeo] = useState(false);
+  const [mapsLinkInput, setMapsLinkInput] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
-
-  const addressQuery = [enderecoTexto, bairro, cidade, "Brasil"]
-    .filter(Boolean)
-    .join(", ");
 
   const handleUseGps = () => {
     if (!navigator.geolocation) {
@@ -136,16 +305,13 @@ export function StoreMapPicker({
     setFeedback(null);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        onChangeCoords(
-          Number(pos.coords.latitude.toFixed(6)),
-          Number(pos.coords.longitude.toFixed(6))
-        );
+        onChangeCoords(round6(pos.coords.latitude), round6(pos.coords.longitude));
         setLoadingGps(false);
-        setFeedback("Localização atual marcada no mapa.");
+        setFeedback("Localização atual marcada! Se precisar, arraste o pino.");
       },
       () => {
         setLoadingGps(false);
-        setFeedback("Permita o acesso à localização ou busque pelo endereço.");
+        setFeedback("Permita o acesso ao GPS ou marque direto no mapa.");
       },
       { enableHighAccuracy: true, timeout: 10_000 }
     );
@@ -167,19 +333,27 @@ export function StoreMapPicker({
       );
       const data = (await res.json()) as Array<{ lat: string; lon: string }>;
       if (data[0]) {
-        onChangeCoords(
-          Number(Number(data[0].lat).toFixed(6)),
-          Number(Number(data[0].lon).toFixed(6))
-        );
-        setFeedback("Endereço encontrado e marcado no mapa.");
+        onChangeCoords(round6(Number(data[0].lat)), round6(Number(data[0].lon)));
+        setFeedback("Endereço aproximado encontrado. Arraste o pino se quiser ajustar.");
       } else {
-        setFeedback("Endereço não localizado. Tente usar o botão de GPS.");
+        setFeedback("Endereço não localizado. Toque no mapa ou cole o link do Google Maps.");
       }
     } catch {
       setFeedback("Não foi possível consultar o mapa agora.");
     } finally {
       setLoadingGeo(false);
     }
+  };
+
+  const handleApplyMapsLink = () => {
+    const coords = parseGoogleMapsCoords(mapsLinkInput);
+    if (!coords) {
+      setFeedback("Não encontrei coordenadas nesse link. Cole a URL completa do Google Maps.");
+      return;
+    }
+    onChangeCoords(coords.lat, coords.lng);
+    setMapsLinkInput("");
+    setFeedback("Coordenadas extraídas do Google Maps!");
   };
 
   return (
@@ -213,21 +387,42 @@ export function StoreMapPicker({
         </button>
       </div>
 
+      {/* Colar link do Google Maps */}
+      <div className="flex gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg bg-[var(--zelo-soft)] px-3 h-11">
+          <Link2 className="h-4 w-4 shrink-0 text-[var(--zelo-subtle)]" />
+          <input
+            type="text"
+            value={mapsLinkInput}
+            onChange={(e) => setMapsLinkInput(e.target.value)}
+            placeholder="Ou cole o link do Google Maps..."
+            className="min-w-0 w-full bg-transparent text-xs outline-none"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={handleApplyMapsLink}
+          disabled={!mapsLinkInput.trim()}
+          className="min-h-[44px] rounded-lg bg-[var(--zelo-soft)] px-3 text-xs font-semibold text-[var(--zelo-ink)] disabled:opacity-50"
+        >
+          Aplicar
+        </button>
+      </div>
+
       {feedback && (
         <p className="text-[11px] text-[var(--zelo-muted)]">{feedback}</p>
       )}
 
-      <StoreMapEmbed
+      <InteractiveLeafletPicker
         latitude={latitude}
         longitude={longitude}
-        addressQuery={addressQuery}
-        title="Prévia da localização da loja"
+        onChangeCoords={(lat, lng) => onChangeCoords(lat, lng)}
       />
 
       {latitude != null && longitude != null && (
         <div className="flex items-center justify-between text-[11px] font-mono-num text-[var(--zelo-muted)]">
           <span>
-            Pin: {latitude}, {longitude}
+            Pin exato: {latitude}, {longitude}
           </span>
           <button
             type="button"
