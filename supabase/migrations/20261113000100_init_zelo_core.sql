@@ -60,7 +60,7 @@ CREATE TABLE public.lojas (
   plano TEXT NOT NULL DEFAULT 'trial' CHECK (plano IN ('trial', 'solo', 'estudio')),
   trial_ate TIMESTAMPTZ NOT NULL DEFAULT (now() + interval '14 days'),
   assinatura_status TEXT NOT NULL DEFAULT 'trial' CHECK (assinatura_status IN ('trial', 'ativa', 'atrasada', 'cancelada')),
-  codigo_indicacao TEXT UNIQUE DEFAULT encode(gen_random_bytes(5), 'hex'),
+  codigo_indicacao TEXT UNIQUE DEFAULT encode(extensions.gen_random_bytes(5), 'hex'),
   indicado_por_loja_id UUID REFERENCES public.lojas(id) ON DELETE SET NULL,
   bonus_indicacao_pago BOOLEAN NOT NULL DEFAULT false,
   ultimo_acesso_painel_em TIMESTAMPTZ,
