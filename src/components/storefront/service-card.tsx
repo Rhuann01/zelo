@@ -44,9 +44,7 @@ export function ServiceCard({
         disabled={disabled}
         onClick={() => onToggle(servico.id)}
         aria-pressed={selected}
-        className={`group relative flex min-h-[218px] w-full flex-col justify-end overflow-hidden text-left transition-transform duration-200 active:scale-[0.98] disabled:opacity-60 ${
-          isLiquidGlass ? "store-glass-surface" : ""
-        }`}
+        className="group relative flex min-h-[218px] w-full flex-col justify-end overflow-hidden text-left transition-transform duration-200 active:scale-[0.98] disabled:opacity-60"
         style={{
           borderRadius: "calc(var(--t-radius) * 1.15)",
           backgroundColor: "var(--t-surface)",
@@ -130,9 +128,7 @@ export function ServiceCard({
       disabled={disabled}
       onClick={() => onToggle(servico.id)}
       aria-pressed={selected}
-      className={`group relative flex w-full flex-col overflow-hidden p-2 text-left transition-transform duration-200 active:scale-[0.98] disabled:opacity-60 ${
-        isLiquidGlass ? "store-glass-surface" : ""
-      }`}
+      className="group relative flex w-full flex-col overflow-hidden p-2 text-left transition-transform duration-200 active:scale-[0.98] disabled:opacity-60"
       style={{
         borderRadius: "calc(var(--t-radius) * 1.25)",
         backgroundColor: "var(--t-surface)",
