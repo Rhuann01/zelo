@@ -24,6 +24,10 @@ import {
   criarAgendamentoAction,
   getSlotsDisponiveisAction,
 } from "@/app/[slug]/actions";
+import {
+  formatBrazilPhone,
+  isValidBrazilPhone,
+} from "@/lib/schemas/agendamento";
 import type { SlotDisponivel } from "@/lib/booking/disponibilidade";
 import type {
   LojaPublica,
@@ -215,16 +219,29 @@ export function ReservaDrawer({
     if (!selectedSlot || !selectedProfId) return;
     setSubmitError(null);
 
+    const telefoneFinal = paraOutro
+      ? beneficiarioWhatsapp.trim()
+      : whatsappCliente.trim();
+
+    if (paraOutro && beneficiarioNome.trim().length < 2) {
+      setSubmitError("Informe o nome de quem vai ser atendido.");
+      return;
+    }
+
+    if (!isValidBrazilPhone(telefoneFinal)) {
+      setSubmitError(
+        "Informe um WhatsApp válido com DDD (ex: (11) 99999-9999) para o barbeiro conseguir falar com você."
+      );
+      return;
+    }
+
     startTransition(async () => {
       const res = await criarAgendamentoAction({
         loja_id: loja.id,
         profissional_id: selectedProfId,
         servicos_ids: selecionados.map((s) => s.id),
         inicio_iso: selectedSlot.inicioIso,
-        whatsapp_cliente:
-          (paraOutro ? beneficiarioWhatsapp.trim() : "") ||
-          whatsappCliente.trim() ||
-          undefined,
+        whatsapp_cliente: telefoneFinal,
         beneficiario_nome: paraOutro ? beneficiarioNome.trim() || undefined : undefined,
       });
 
@@ -811,10 +828,10 @@ export function ReservaDrawer({
                         Sem senhas ou cadastros longos
                       </p>
                     </div>
-                    {whatsappCliente.trim().length >= 8 && (
+                    {isValidBrazilPhone(whatsappCliente) && (
                       <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-500">
                         <Check className="h-3 w-3 shrink-0" />
-                        <span>WhatsApp Ativo</span>
+                        <span>WhatsApp Válido</span>
                       </span>
                     )}
                   </div>
@@ -829,15 +846,21 @@ export function ReservaDrawer({
                     />
                     <input
                       type="tel"
+                      required
                       value={whatsappCliente}
-                      onChange={(e) => setWhatsappCliente(e.target.value)}
-                      placeholder="(00) 00000-0000"
+                      onChange={(e) => setWhatsappCliente(formatBrazilPhone(e.target.value))}
+                      placeholder="(11) 99999-9999"
                       className="w-full bg-transparent font-mono-num text-sm font-semibold outline-none"
                     />
-                    {whatsappCliente.trim().length >= 8 && (
+                    {isValidBrazilPhone(whatsappCliente) && (
                       <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
                     )}
                   </div>
+                  {whatsappCliente.trim().length > 0 && !isValidBrazilPhone(whatsappCliente) && (
+                    <p className="text-[11px] font-medium text-amber-500">
+                      Digite DDD + 9 dígitos (ex: (11) 99999-9999). Números repetidos são bloqueados.
+                    </p>
+                  )}
 
                   {/* Toggle: Book for someone else */}
                   <div className="pt-2">
@@ -905,8 +928,10 @@ export function ReservaDrawer({
                           <input
                             type="tel"
                             value={beneficiarioWhatsapp}
-                            onChange={(e) => setBeneficiarioWhatsapp(e.target.value)}
-                            placeholder="(00) 00000-0000"
+                            onChange={(e) =>
+                              setBeneficiarioWhatsapp(formatBrazilPhone(e.target.value))
+                            }
+                            placeholder="(11) 99999-9999"
                             className="h-10 w-full rounded-xl px-3 font-mono-num text-xs outline-none"
                             style={{ backgroundColor: "var(--t-card)" }}
                           />
