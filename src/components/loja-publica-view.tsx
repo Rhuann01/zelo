@@ -225,12 +225,18 @@ export function LojaPublicaView({
               <Link
                 href="/explorar"
                 aria-label="Voltar para explorar"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-transform active:scale-95"
-                style={{
-                  backgroundColor: "var(--t-surface)",
-                  color: "var(--t-ink)",
-                  border: isBrutal ? "2px solid #000000" : "1px solid var(--t-border)",
-                }}
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-transform active:scale-95 ${
+                  isLiquidGlass ? "store-glass-surface" : ""
+                }`}
+                style={
+                  isLiquidGlass
+                    ? { color: "var(--t-ink)" }
+                    : {
+                        backgroundColor: "var(--t-surface)",
+                        color: "var(--t-ink)",
+                        border: isBrutal ? "2px solid #000000" : "1px solid var(--t-border)",
+                      }
+                }
               >
                 <ChevronLeft className="h-5 w-5" />
               </Link>
@@ -239,12 +245,18 @@ export function LojaPublicaView({
                 type="button"
                 onClick={handleShare}
                 aria-label="Compartilhar página"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-transform active:scale-95"
-                style={{
-                  backgroundColor: "var(--t-surface)",
-                  color: copiedShare ? "var(--t-accent)" : "var(--t-ink)",
-                  border: isBrutal ? "2px solid #000000" : "1px solid var(--t-border)",
-                }}
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-transform active:scale-95 ${
+                  isLiquidGlass ? "store-glass-surface" : ""
+                }`}
+                style={
+                  isLiquidGlass
+                    ? { color: copiedShare ? "var(--t-accent)" : "var(--t-ink)" }
+                    : {
+                        backgroundColor: "var(--t-surface)",
+                        color: copiedShare ? "var(--t-accent)" : "var(--t-ink)",
+                        border: isBrutal ? "2px solid #000000" : "1px solid var(--t-border)",
+                      }
+                }
               >
                 <Share2 className="h-4 w-4" />
               </button>
@@ -297,11 +309,15 @@ export function LojaPublicaView({
                 className={`flex h-11 items-center gap-2.5 rounded-full px-4 ${
                   isLiquidGlass ? "store-glass-surface" : ""
                 }`}
-                style={{
-                  backgroundColor: "var(--t-surface)",
-                  border: isBrutal ? "2px solid #000000" : "1px solid var(--t-border)",
-                  boxShadow: "var(--t-shadow)",
-                }}
+                style={
+                  isLiquidGlass
+                    ? undefined
+                    : {
+                        backgroundColor: "var(--t-surface)",
+                        border: isBrutal ? "2px solid #000000" : "1px solid var(--t-border)",
+                        boxShadow: "var(--t-shadow)",
+                      }
+                }
               >
                 <Search className="h-4 w-4 shrink-0" style={{ color: "var(--t-muted)" }} />
                 <input
@@ -388,21 +404,31 @@ export function LojaPublicaView({
                         key={f.key}
                         type="button"
                         onClick={() => setFiltroDuracao(f.key)}
-                        className="min-h-[36px] shrink-0 rounded-full px-4 text-xs font-semibold transition-all active:scale-95"
+                        className={`min-h-[36px] shrink-0 rounded-full px-4 text-xs font-semibold transition-all active:scale-95 ${
+                          !active && isLiquidGlass ? "store-glass-surface" : ""
+                        }`}
                         style={
                           active
                             ? {
                                 backgroundColor: "var(--t-accent)",
                                 color: "var(--t-accent-ink)",
+                                ...(isLiquidGlass
+                                  ? {
+                                      boxShadow:
+                                        "0 6px 18px color-mix(in srgb, var(--t-accent) 30%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.45)",
+                                    }
+                                  : {}),
                                 ...(isBrutal ? { border: "1.5px solid #000000" } : {}),
                               }
-                            : {
-                                backgroundColor: "var(--t-surface)",
-                                color: "var(--t-muted)",
-                                border: isBrutal
-                                  ? "1.5px solid #000000"
-                                  : "1px solid var(--t-border)",
-                              }
+                            : isLiquidGlass
+                              ? { color: "var(--t-ink)" }
+                              : {
+                                  backgroundColor: "var(--t-surface)",
+                                  color: "var(--t-muted)",
+                                  border: isBrutal
+                                    ? "1.5px solid #000000"
+                                    : "1px solid var(--t-border)",
+                                }
                         }
                       >
                         {f.label}

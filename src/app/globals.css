@@ -131,6 +131,19 @@ body {
     linear-gradient(180deg, #F5F5FA 0%, #F2F2F7 100%);
 }
 
+/* Superfície Apple HIG Liquid Glass para controles e navegação (botões, busca, pílulas) */
+.store-glass-surface {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.56) 100%);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-bottom-color: rgba(15, 23, 42, 0.08);
+  box-shadow:
+    0 8px 24px rgba(15, 23, 42, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.03);
+}
+
 /* Google Material Design 3 / Material You (Dynamic Tonal Surfaces) */
 .theme-material_you {
   --t-bg: color-mix(in srgb, var(--t-accent) 4%, #FAF9FD);
