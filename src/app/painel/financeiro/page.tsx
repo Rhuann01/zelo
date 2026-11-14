@@ -16,7 +16,7 @@ export default async function FinanceiroPage() {
   const [{ data: profsData }, { data: agsData }] = await Promise.all([
     supabase
       .from("profissionais")
-      .select("id, nome, comissao_pct, eh_dono, user_id")
+      .select("id, nome, comissao_percentual, meta_semanal_centavos, eh_dono, user_id")
       .eq("loja_id", ctx.lojaAtual.id)
       .eq("ativo", true)
       .order("eh_dono", { ascending: false }),
@@ -34,7 +34,8 @@ export default async function FinanceiroPage() {
   const profissionais: FinanceiroProfissionalItem[] = (profsData ?? []).map((p) => ({
     id: String(p.id),
     nome: String(p.nome),
-    comissao_pct: Number(p.comissao_pct ?? 100),
+    comissao_pct: Number(p.comissao_percentual ?? 100),
+    meta_semanal_centavos: Number(p.meta_semanal_centavos ?? 150_000),
     eh_dono: Boolean(p.eh_dono),
     user_id: (p.user_id as string | null) ?? null,
   }));
@@ -81,7 +82,9 @@ export default async function FinanceiroPage() {
       perfilNome={ctx.perfil.nome}
     >
       <FinanceiroDashboard
+        lojaId={ctx.lojaAtual.id}
         lojaNome={ctx.lojaAtual.nome}
+        chavePixLoja={ctx.lojaAtual.chave_pix}
         isOwner={ctx.isOwner}
         currentUserId={ctx.userId}
         profissionais={profissionais}

@@ -1,14 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
+  Check,
   Download,
   Flag,
+  Pencil,
+  QrCode,
   Scissors,
   Store,
   TrendingUp,
   Wallet,
+  X,
 } from "lucide-react";
+import { atualizarMetaSemanalAction } from "@/app/painel/financeiro/actions";
 
 export interface FinanceiroAgendamentoItem {
   id: string;
@@ -28,6 +34,7 @@ export interface FinanceiroProfissionalItem {
   id: string;
   nome: string;
   comissao_pct: number;
+  meta_semanal_centavos: number;
   eh_dono: boolean;
   user_id: string | null;
 }
@@ -54,13 +61,17 @@ function getSaoPauloYmd(date: Date) {
 }
 
 export function FinanceiroDashboard({
+  lojaId,
   lojaNome,
+  chavePixLoja,
   isOwner,
   currentUserId,
   profissionais,
   agendamentos,
 }: {
+  lojaId: string;
   lojaNome: string;
+  chavePixLoja: string | null;
   isOwner: boolean;
   currentUserId: string;
   profissionais: FinanceiroProfissionalItem[];
@@ -141,7 +152,42 @@ export function FinanceiroDashboard({
       : 0;
 
   // Meta Semanal (últimos 7 dias concluídos)
-  const metaSemanalCentavos = 150_000; // R$ 1.500,00 base
+  const [metaSemanalCentavos, setMetaSemanalCentavos] = useState(
+    myProf?.meta_semanal_centavos ?? 150_000
+  );
+  const [editingMeta, setEditingMeta] = useState(false);
+  const [metaInput, setMetaInput] = useState(
+    String(((myProf?.meta_semanal_centavos ?? 150_000) / 100).toFixed(2)).replace(".", ",")
+  );
+  const [savingMeta, setSavingMeta] = useState(false);
+  const [metaError, setMetaError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const val = myProf?.meta_semanal_centavos ?? 150_000;
+    setMetaSemanalCentavos(val);
+    setMetaInput((val / 100).toFixed(2).replace(".", ","));
+  }, [myProf?.meta_semanal_centavos]);
+
+  async function handleSaveMeta() {
+    setMetaError(null);
+    const normalized = metaInput.replace(/\./g, "").replace(",", ".").trim();
+    const reais = Number(normalized);
+    if (!Number.isFinite(reais) || reais < 0 || reais > 1_000_000) {
+      setMetaError("Informe um valor válido em reais.");
+      return;
+    }
+    const metaCentavos = Math.round(reais * 100);
+    setSavingMeta(true);
+    const res = await atualizarMetaSemanalAction({ lojaId, metaCentavos });
+    setSavingMeta(false);
+    if (!res.ok) {
+      setMetaError(res.error ?? "Erro ao salvar meta.");
+      return;
+    }
+    setMetaSemanalCentavos(metaCentavos);
+    setEditingMeta(false);
+  }
+
   const semanaLiquidoCentavos = useMemo(() => {
     const weekAgoMs = Date.now() - 7 * 86_400_000;
     return agendamentos
@@ -158,10 +204,10 @@ export function FinanceiroDashboard({
       );
   }, [agendamentos, myProf]);
 
-  const metaPct = Math.min(
-    100,
-    Math.round((semanaLiquidoCentavos / metaSemanalCentavos) * 100)
-  );
+  const metaPct =
+    metaSemanalCentavos > 0
+      ? Math.min(100, Math.round((semanaLiquidoCentavos / metaSemanalCentavos) * 100))
+      : 100;
   const metaFaltaCentavos = Math.max(0, metaSemanalCentavos - semanaLiquidoCentavos);
 
   // Caixa da Casa (Dono)
@@ -435,43 +481,106 @@ export function FinanceiroDashboard({
           </section>
 
           {/* Card Meta Pessoal Semanal */}
-          <section className="flex flex-col gap-2.5 rounded-2xl bg-[var(--zelo-card)] p-4 shadow-sm">
+          <section className="flex flex-col gap-3 rounded-2xl bg-[var(--zelo-card)] p-4 shadow-sm">
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <Flag className="h-4 w-4 text-[var(--zelo-muted)]" />
-                <span className="text-sm font-bold text-[var(--zelo-ink)]">
+              <div className="flex items-center gap-2 min-w-0">
+                <Flag className="h-4 w-4 shrink-0 text-[var(--zelo-muted)]" />
+                <span className="text-sm font-bold text-[var(--zelo-ink)] truncate">
                   Meta Pessoal Semanal
                 </span>
               </div>
-              <span className="font-mono-num text-xs font-semibold text-[var(--zelo-muted)]">
-                {formatBRL(semanaLiquidoCentavos)} / {formatBRL(metaSemanalCentavos)}
-              </span>
+              {!editingMeta && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMetaError(null);
+                    setEditingMeta(true);
+                  }}
+                  className="inline-flex min-h-[36px] shrink-0 items-center gap-1.5 rounded-xl bg-[var(--zelo-soft)] px-2.5 py-1 text-xs font-semibold text-[var(--zelo-ink)] transition hover:opacity-80"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  <span>Editar</span>
+                </button>
+              )}
             </div>
 
-            <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--zelo-soft)]">
-              <div
-                className="h-full rounded-full bg-[var(--zelo-btn-bg)] transition-all duration-500"
-                style={{ width: `${metaPct}%` }}
-              />
-            </div>
-
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-medium text-[var(--zelo-muted)]">
-                {metaPct}% atingido
-              </span>
-              <span className="font-semibold text-[var(--zelo-ink)]">
-                {metaFaltaCentavos === 0 ? (
-                  "Meta batida!"
-                ) : (
-                  <>
-                    Faltam{" "}
-                    <strong className="font-mono-num">
-                      {formatBRL(metaFaltaCentavos)}
-                    </strong>
-                  </>
+            {editingMeta ? (
+              <div className="flex flex-col gap-2 rounded-xl bg-[var(--zelo-soft)] p-3">
+                <label className="text-xs font-semibold text-[var(--zelo-muted)]">
+                  Definir meta semanal (R$)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={metaInput}
+                    onChange={(e) => setMetaInput(e.target.value)}
+                    placeholder="1500,00"
+                    className="min-h-[44px] flex-1 rounded-xl border border-[var(--zelo-border-strong)] bg-[var(--zelo-card)] px-3 text-sm font-mono-num font-semibold text-[var(--zelo-ink)] outline-none focus:border-[var(--zelo-ink)]"
+                  />
+                  <button
+                    type="button"
+                    disabled={savingMeta}
+                    onClick={handleSaveMeta}
+                    aria-label="Salvar meta"
+                    className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl bg-[var(--zelo-btn-bg)] px-3 text-xs font-semibold text-[var(--zelo-btn-ink)] disabled:opacity-50"
+                  >
+                    <Check className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={savingMeta}
+                    onClick={() => {
+                      setEditingMeta(false);
+                      setMetaError(null);
+                    }}
+                    aria-label="Cancelar"
+                    className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl bg-[var(--zelo-card)] px-3 text-xs font-semibold text-[var(--zelo-muted)]"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                {metaError && (
+                  <p className="text-xs font-medium text-rose-500">{metaError}</p>
                 )}
-              </span>
-            </div>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-baseline justify-between gap-2 text-xs">
+                  <span className="font-mono-num font-bold text-[var(--zelo-ink)] whitespace-nowrap">
+                    {formatBRL(semanaLiquidoCentavos)}
+                  </span>
+                  <span className="font-mono-num text-[var(--zelo-muted)] whitespace-nowrap">
+                    Meta: {formatBRL(metaSemanalCentavos)}
+                  </span>
+                </div>
+
+                <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--zelo-soft)]">
+                  <div
+                    className="h-full rounded-full bg-[var(--zelo-btn-bg)] transition-all duration-500"
+                    style={{ width: `${metaPct}%` }}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between gap-2 text-xs">
+                  <span className="font-medium text-[var(--zelo-muted)] whitespace-nowrap">
+                    {metaPct}% atingido
+                  </span>
+                  <span className="font-semibold text-[var(--zelo-ink)] whitespace-nowrap">
+                    {metaFaltaCentavos === 0 ? (
+                      "Meta batida!"
+                    ) : (
+                      <>
+                        Faltam{" "}
+                        <strong className="font-mono-num">
+                          {formatBRL(metaFaltaCentavos)}
+                        </strong>
+                      </>
+                    )}
+                  </span>
+                </div>
+              </>
+            )}
           </section>
         </>
       ) : (
@@ -550,6 +659,51 @@ export function FinanceiroDashboard({
                 {formatBRL(retencaoCasaCentavos)}
               </span>
             </div>
+
+            <div className="flex items-center justify-between gap-2 pt-1 text-[11px] text-[var(--zelo-muted)]">
+              <span>Quer ajustar a % de comissão de cada profissional?</span>
+              <Link
+                href="/painel/gestao"
+                className="shrink-0 font-semibold text-[var(--zelo-ink)] underline"
+              >
+                Ir para Gestão
+              </Link>
+            </div>
+          </section>
+
+          {/* Card PIX Geral da Loja */}
+          <section className="flex flex-col gap-2 rounded-2xl bg-[var(--zelo-card)] p-4 shadow-sm">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <QrCode className="h-4 w-4 shrink-0 text-[#10B981]" />
+                <span className="text-sm font-bold text-[var(--zelo-ink)] truncate">
+                  PIX Geral da Loja (Patrão)
+                </span>
+              </div>
+              <Link
+                href="/painel/personalizar"
+                className="shrink-0 text-xs font-semibold text-[var(--zelo-ink)] underline"
+              >
+                {chavePixLoja ? "Alterar" : "Configurar"}
+              </Link>
+            </div>
+            {chavePixLoja ? (
+              <p className="text-xs leading-relaxed text-[var(--zelo-muted)]">
+                Chave salva:{" "}
+                <strong className="font-mono-num text-[var(--zelo-ink)] break-all">
+                  {chavePixLoja}
+                </strong>
+                . Os sinais caem direto nesta conta e o{" "}
+                <strong>Fechamento Equipe</strong> acima mostra exatamente quanto
+                repassar a cada profissional.
+              </p>
+            ) : (
+              <p className="text-xs leading-relaxed text-[var(--zelo-muted)]">
+                Nenhuma chave PIX configurada ainda. Cadastre em{" "}
+                <strong>Personalizar</strong> para receber sinais direto na sua
+                conta.
+              </p>
+            )}
           </section>
         </>
       )}
