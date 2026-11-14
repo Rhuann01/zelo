@@ -74,6 +74,7 @@ export const customizacaoLojaSchema = z
     estilo_card: z.enum(ESTILO_CARD_OPTIONS).default("preenchido"),
     estilo_barra: z.enum(ESTILO_BARRA_OPTIONS).default("abas"),
     modo_escuro: z.boolean().default(false),
+    pix_modo: z.enum(["loja", "profissional"]).default("loja"),
     chave_pix: z.string().trim().max(120).nullable().default(null),
     sinal_centavos: z.number().int().min(0).max(5_000_000).default(0),
     cidade: z.string().trim().min(2).max(80).optional(),
@@ -94,5 +95,6 @@ export const perfilConfigSchema = z
     loja_id: z.string().uuid().optional(),
     nome_loja: z.string().trim().min(2, "Informe o nome da loja").max(80).optional(),
     pausada: z.boolean().optional(),
+    minha_chave_pix: z.string().trim().max(120).nullable().optional(),
   })
   .strict();

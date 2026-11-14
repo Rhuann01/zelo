@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   Store,
   Umbrella,
+  Wallet,
 } from "lucide-react";
 import { AvatarUploader } from "@/components/avatar-uploader";
 import { showToast } from "@/components/zelo-toast";
@@ -32,7 +33,15 @@ import {
 } from "@/app/painel/configuracoes/actions";
 import type { PainelContext } from "@/lib/painel/get-painel-context";
 
-export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
+export function ConfiguracoesForm({
+  ctx,
+  initialMinhaChavePix = "",
+  canEditProfPix = false,
+}: {
+  ctx: PainelContext;
+  initialMinhaChavePix?: string;
+  canEditProfPix?: boolean;
+}) {
   const router = useRouter();
   const [nome, setNome] = useState(ctx.perfil.nome);
   const [whatsapp, setWhatsapp] = useState(ctx.perfil.whatsapp ?? "");
@@ -40,6 +49,9 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
   const [emailAtivo, setEmailAtivo] = useState(ctx.perfil.notificacoes_email);
   const [pausada, setPausada] = useState(ctx.lojaAtual.pausada);
   const [nomeLoja, setNomeLoja] = useState(ctx.lojaAtual.nome);
+  const [minhaChavePix, setMinhaChavePix] = useState(initialMinhaChavePix);
+  const showProfPixField =
+    ctx.lojaAtual.pix_modo === "profissional" && canEditProfPix;
   const [dark, setDark] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [savedSnapshot, setSavedSnapshot] = useState({
@@ -49,6 +61,7 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
     emailAtivo: ctx.perfil.notificacoes_email,
     pausada: ctx.lojaAtual.pausada,
     nomeLoja: ctx.lojaAtual.nome,
+    minhaChavePix: initialMinhaChavePix,
   });
 
   const hasChanges =
@@ -56,6 +69,7 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
     whatsapp !== savedSnapshot.whatsapp ||
     pushAtivo !== savedSnapshot.pushAtivo ||
     emailAtivo !== savedSnapshot.emailAtivo ||
+    (showProfPixField && minhaChavePix !== savedSnapshot.minhaChavePix) ||
     (ctx.isOwner &&
       (pausada !== savedSnapshot.pausada || nomeLoja !== savedSnapshot.nomeLoja));
 
@@ -97,6 +111,9 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
           whatsapp,
           notificacoes_push: pushAtivo,
           notificacoes_email: emailAtivo,
+          ...(showProfPixField
+            ? { loja_id: ctx.lojaAtual.id, minha_chave_pix: minhaChavePix.trim() || null }
+            : {}),
           ...(ctx.isOwner ? { loja_id: ctx.lojaAtual.id, pausada, nome_loja: nomeLoja } : {}),
         });
         if (res.error) {
@@ -110,6 +127,7 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
             emailAtivo,
             pausada,
             nomeLoja,
+            minhaChavePix,
           });
           router.refresh();
           if (res.message) showToast(res.message, "success");
@@ -206,6 +224,28 @@ export function ConfiguracoesForm({ ctx }: { ctx: PainelContext }) {
               )}
             </div>
           </label>
+
+          {showProfPixField && (
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-[var(--zelo-muted)]">
+                Minha Chave PIX (pagamento direto na loja)
+              </span>
+              <div className="flex h-12 items-center gap-2 rounded-lg bg-[var(--zelo-soft)] px-3.5">
+                <Wallet className="h-4 w-4 shrink-0 text-[var(--zelo-muted)]" />
+                <input
+                  type="text"
+                  value={minhaChavePix}
+                  onChange={(e) => setMinhaChavePix(e.target.value)}
+                  placeholder="CPF, e-mail, celular ou chave aleatória"
+                  maxLength={120}
+                  className="w-full bg-transparent font-mono-num text-sm text-[var(--zelo-ink)] outline-none"
+                />
+              </div>
+              <span className="text-[11px] text-[var(--zelo-muted)]">
+                Liberado pelo proprietário apenas para facilitar copiar e colar seu PIX na hora do atendimento.
+              </span>
+            </label>
+          )}
         </div>
       </section>
 

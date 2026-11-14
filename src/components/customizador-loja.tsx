@@ -136,6 +136,9 @@ export function CustomizadorLoja({
     loja.estilo_barra ?? "abas"
   );
   const [modoEscuro, setModoEscuro] = useState(Boolean(loja.modo_escuro));
+  const [pixModo, setPixModo] = useState<"loja" | "profissional">(
+    loja.pix_modo ?? "loja"
+  );
   const [chavePix, setChavePix] = useState(loja.chave_pix ?? "");
   const [sinalReais, setSinalReais] = useState(
     (loja.sinal_centavos / 100).toFixed(2).replace(".", ",")
@@ -169,6 +172,7 @@ export function CustomizadorLoja({
     estiloCard: loja.estilo_card ?? "preenchido",
     estiloBarra: loja.estilo_barra ?? "abas",
     modoEscuro: Boolean(loja.modo_escuro),
+    pixModo: loja.pix_modo ?? "loja",
     chavePix: loja.chave_pix ?? "",
     sinalReais: (loja.sinal_centavos / 100).toFixed(2).replace(".", ","),
     cep: initialLocalizacao?.cep ?? "",
@@ -191,6 +195,7 @@ export function CustomizadorLoja({
       estiloCard !== savedSnapshot.estiloCard ||
       estiloBarra !== savedSnapshot.estiloBarra ||
       modoEscuro !== savedSnapshot.modoEscuro ||
+      pixModo !== savedSnapshot.pixModo ||
       chavePix !== savedSnapshot.chavePix ||
       sinalReais !== savedSnapshot.sinalReais ||
       cep !== savedSnapshot.cep ||
@@ -360,6 +365,7 @@ export function CustomizadorLoja({
           estilo_card: estiloCard,
           estilo_barra: estiloBarra,
           modo_escuro: modoEscuroLocked ? false : modoEscuro,
+          pix_modo: pixModo,
           chave_pix: chavePix.trim() || null,
           sinal_centavos: sinalCentavos,
           cidade: cidade.trim(),
@@ -381,6 +387,7 @@ export function CustomizadorLoja({
             estiloCard,
             estiloBarra,
             modoEscuro,
+            pixModo,
             chavePix,
             sinalReais,
             cep,
@@ -1052,18 +1059,59 @@ export function CustomizadorLoja({
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5">
             <Wallet className="h-[18px] w-[18px] text-[var(--zelo-ink)]" />
-            <h3 className="text-sm font-semibold text-[var(--zelo-ink)]">Chave PIX da Loja</h3>
+            <h3 className="text-sm font-semibold text-[var(--zelo-ink)]">
+              Chave PIX (Pagamento na Loja)
+            </h3>
           </div>
           {chavePix.trim().length > 3 && (
             <span className="inline-flex items-center gap-1 rounded-full bg-[#10B981]/15 px-2 py-0.5 font-mono-num text-[11px] font-medium text-[#10B981]">
               <CheckCircle2 className="h-3 w-3" />
-              Chave Validada
+              Chave Salva
             </span>
           )}
         </div>
-        <p className="text-xs text-[var(--zelo-muted)]">
-          Recebimento do sinal (depósito caução) cai diretamente na conta da loja, sem taxa de intermediação.
+        <p className="text-xs leading-relaxed text-[var(--zelo-muted)]">
+          O Zelo não intermedia pagamentos — o cliente paga diretamente no estabelecimento. Essa chave serve apenas para facilitar na hora de copiar e colar o PIX.
         </p>
+
+        {isOwner && (
+          <div className="space-y-1.5">
+            <span className="text-[11px] font-semibold text-[var(--zelo-muted)]">
+              Quem pode cadastrar chave PIX?
+            </span>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setPixModo("loja")}
+                className={`flex min-h-[54px] flex-col justify-between rounded-xl p-2.5 text-left transition-all ${
+                  pixModo === "loja"
+                    ? "bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)] shadow-sm"
+                    : "bg-[var(--zelo-soft)] text-[var(--zelo-ink)] hover:bg-[var(--zelo-border)]"
+                }`}
+              >
+                <span className="text-xs font-bold">Só da loja</span>
+                <span className="text-[10px] opacity-80">PIX único do dono</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPixModo("profissional")}
+                className={`flex min-h-[54px] flex-col justify-between rounded-xl p-2.5 text-left transition-all ${
+                  pixModo === "profissional"
+                    ? "bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)] shadow-sm"
+                    : "bg-[var(--zelo-soft)] text-[var(--zelo-ink)] hover:bg-[var(--zelo-border)]"
+                }`}
+              >
+                <span className="text-xs font-bold">Por barbeiro</span>
+                <span className="text-[10px] opacity-80">Equipe cadastra o seu</span>
+              </button>
+            </div>
+            {pixModo === "profissional" && (
+              <p className="text-[11px] text-[var(--zelo-muted)]">
+                Cada profissional pode informar a própria chave PIX na aba <strong>Config</strong> (se não preencher, vale a chave da loja abaixo).
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="flex min-h-[48px] items-center justify-between gap-2 rounded-lg bg-[var(--zelo-soft)] px-3.5">
           <input

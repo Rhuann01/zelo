@@ -62,6 +62,22 @@ export async function saveConfiguracoesAction(raw: unknown) {
     revalidatePath("/explorar");
   }
 
+  if (input.minha_chave_pix !== undefined && input.loja_id) {
+    const { data: lojaCfg } = await supabase
+      .from("lojas")
+      .select("pix_modo")
+      .eq("id", input.loja_id)
+      .maybeSingle();
+
+    if (lojaCfg?.pix_modo === "profissional") {
+      await supabase
+        .from("profissionais")
+        .update({ chave_pix: input.minha_chave_pix || null })
+        .eq("loja_id", input.loja_id)
+        .eq("user_id", user.id);
+    }
+  }
+
   revalidatePath("/painel/configuracoes");
   revalidatePath("/painel");
   return { ok: true, message: "Configurações salvas." };
