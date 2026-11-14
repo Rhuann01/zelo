@@ -408,195 +408,231 @@ export function CustomizadorLoja({
               refreshing ? "opacity-50" : "opacity-100"
             }`}
             style={{
-              backgroundColor: "var(--t-surface)",
+              backgroundColor: "var(--t-bg)",
               borderRadius: `${raio}px`,
               border: isBrutal ? "2px solid #000000" : undefined,
               boxShadow: isBrutal ? "3px 3px 0px #000000" : "var(--t-shadow)",
             }}
           >
-            {/* Banner de fundo atrás do cabeçalho do preview */}
-            <div
-              className="pointer-events-none absolute inset-x-0 top-0 z-0 h-28 overflow-hidden"
-              style={{ "--t-bg": "var(--t-surface)" } as React.CSSProperties}
-            >
-              <StoreBannerMedia
-                capaUrl={capaUrl}
-                logoUrl={logoUrl}
-                corPrimaria={cor}
-                alt={`Banner ${loja.nome}`}
-                overlayMode="store"
-              />
-            </div>
-
-            <div className="relative z-10 flex flex-col gap-2.5 px-3 pt-12 pb-3">
-              {/* Brand Header inside Preview */}
+            <div className="relative z-10 flex flex-col gap-2.5 p-3">
+              {/* App-Style Top Header */}
               <div className="flex items-center gap-2.5">
-              {logoUrl ? (
-                <img
-                  src={logoUrl}
-                  alt={loja.nome}
-                  className="h-10 w-10 shrink-0 object-cover shadow-md ring-2 ring-[var(--t-surface)]"
-                  style={{ borderRadius: `${Math.max(4, raio - 2)}px` }}
-                />
-              ) : (
-                <div
-                  className="flex h-10 w-10 shrink-0 items-center justify-center text-xs font-bold"
-                  style={{
-                    backgroundColor: cor,
-                    color: accentInk,
-                    borderRadius: `${Math.max(4, raio - 2)}px`,
-                    border: isBrutal ? "2px solid #000000" : undefined,
-                  }}
-                >
-                  {loja.nome.slice(0, 2).toUpperCase()}
-                </div>
-              )}
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1">
-                  <h4
-                    className="truncate text-[13px] font-semibold leading-tight"
-                    style={{ color: "var(--t-ink)" }}
-                  >
-                    {loja.nome}
-                  </h4>
-                  <BadgeCheck className="h-3.5 w-3.5 shrink-0" style={{ color: cor }} />
-                </div>
-                <p className="truncate text-[11px]" style={{ color: "var(--t-muted)" }}>
-                  {loja.bairro || "Centro"} • {loja.cidade || "Cidade"}
-                </p>
-              </div>
-              <span
-                className="shrink-0 rounded px-2 py-1 font-mono-num text-[10px] font-medium"
-                style={{ backgroundColor: "var(--t-inner)", color: "var(--t-ink)" }}
-              >
-                5.0
-              </span>
-            </div>
-
-            {estiloBarra === "abas" && (
-              <div
-                className="flex items-center gap-3 border-b pb-1.5 text-[10px] font-semibold"
-                style={{ borderColor: "var(--t-border)", color: "var(--t-muted)" }}
-              >
-                <span style={{ color: cor }}>Serviços</span>
-                <span>Equipe</span>
-                <span>Mapa</span>
-              </div>
-            )}
-
-            {/* Dynamic Mock Service Grid (Preenchido vs Vidro Borrado) */}
-            <div className="grid grid-cols-2 gap-2">
-              {estiloCard === "vidro_borrado" ? (
-                <div
-                  className="relative flex h-24 flex-col justify-end overflow-hidden p-2"
-                  style={{
-                    borderRadius: `${Math.max(6, raio)}px`,
-                    background: `linear-gradient(135deg, ${cor}55 0%, #11131A 100%)`,
-                    border: isBrutal ? "1.5px solid #000000" : "1px solid var(--t-border)",
-                  }}
-                >
-                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/85 to-transparent backdrop-blur-sm" />
-                  <div className="relative z-10 flex items-end justify-between gap-1 text-white">
-                    <div className="min-w-0">
-                      <p className="truncate text-[10px] font-semibold">Corte Clássico</p>
-                      <p className="font-mono-num text-[10px] font-bold">R$ 45,00</p>
-                    </div>
-                    <span
-                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
-                      style={{ backgroundColor: cor, color: accentInk }}
-                    >
-                      +
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div
-                  className="overflow-hidden"
-                  style={{
-                    backgroundColor: "var(--t-inner)",
-                    borderRadius: `${Math.max(6, raio)}px`,
-                    border: isBrutal ? "1.5px solid #000000" : "1px solid var(--t-border)",
-                  }}
-                >
-                  <div
-                    className="h-10 w-full"
-                    style={{ background: `linear-gradient(135deg, ${cor}44 0%, var(--t-surface) 100%)` }}
+                {logoUrl ? (
+                  <img
+                    src={logoUrl}
+                    alt={loja.nome}
+                    className="h-9 w-9 shrink-0 rounded-full object-cover shadow-sm ring-1 ring-black/10"
                   />
-                  <div className="flex items-center justify-between gap-1 p-2">
+                ) : (
+                  <div
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                    style={{
+                      backgroundColor: cor,
+                      color: accentInk,
+                      border: isBrutal ? "2px solid #000000" : undefined,
+                    }}
+                  >
+                    {loja.nome.slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[9px]" style={{ color: "var(--t-muted)" }}>
+                    {loja.bairro || "Centro"} • {loja.cidade || "Cidade"}
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <h4
+                      className="truncate text-[13px] font-semibold leading-tight"
+                      style={{ color: "var(--t-ink)" }}
+                    >
+                      {loja.nome}
+                    </h4>
+                    <BadgeCheck className="h-3.5 w-3.5 shrink-0" style={{ color: cor }} />
+                  </div>
+                </div>
+                <span
+                  className="shrink-0 rounded-full px-2 py-0.5 font-mono-num text-[10px] font-semibold"
+                  style={{ backgroundColor: "var(--t-surface)", color: "var(--t-ink)" }}
+                >
+                  5.0
+                </span>
+              </div>
+
+              {/* Banner Promocional Condicional (só aparece se houver banner) */}
+              {capaUrl && (
+                <div
+                  className="relative h-16 w-full overflow-hidden rounded-xl"
+                  style={{
+                    border: isBrutal ? "1.5px solid #000000" : undefined,
+                  }}
+                >
+                  <img
+                    src={capaUrl}
+                    alt={`Banner ${loja.nome}`}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/45 to-transparent" />
+                  <div className="relative z-10 flex h-full items-center justify-between px-3">
                     <div className="min-w-0">
-                      <p className="truncate text-[10px] font-semibold" style={{ color: "var(--t-ink)" }}>
-                        Corte Clássico
-                      </p>
-                      <p className="font-mono-num text-[10px] font-bold" style={{ color: cor }}>
-                        R$ 45,00
-                      </p>
+                      <p className="truncate text-[11px] font-bold text-white">{loja.nome}</p>
+                      <p className="text-[9px] text-white/80">Agende em segundos</p>
                     </div>
                     <span
-                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
+                      className="shrink-0 rounded-full px-2.5 py-1 text-[9px] font-semibold"
                       style={{ backgroundColor: cor, color: accentInk }}
                     >
-                      +
+                      Agendar
                     </span>
                   </div>
                 </div>
               )}
 
+              {estiloBarra === "abas" && (
+                <div
+                  className="flex items-center gap-3 border-b pb-1.5 text-[10px] font-semibold"
+                  style={{ borderColor: "var(--t-border)", color: "var(--t-muted)" }}
+                >
+                  <span style={{ color: cor }}>Serviços</span>
+                  <span>Equipe</span>
+                  <span>Mapa</span>
+                </div>
+              )}
+
+              {/* Dynamic Mock Service Grid (ambos os cards respeitam estiloCard) */}
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  {
+                    nome: "Corte Clássico",
+                    preco: "R$ 45,00",
+                    duracao: "35 min",
+                    bg: `linear-gradient(140deg, ${cor}cc 0%, #1c1f26 100%)`,
+                  },
+                  {
+                    nome: "Barba Completa",
+                    preco: "R$ 35,00",
+                    duracao: "30 min",
+                    bg: `linear-gradient(140deg, #272c36 0%, ${cor}99 100%)`,
+                  },
+                ].map((item) =>
+                  estiloCard === "vidro_borrado" ? (
+                    <div
+                      key={item.nome}
+                      className="relative flex h-24 flex-col justify-end overflow-hidden p-2"
+                      style={{
+                        borderRadius: `${Math.max(8, raio)}px`,
+                        background: item.bg,
+                        border: isBrutal ? "1.5px solid #000000" : undefined,
+                      }}
+                    >
+                      <div
+                        className="pointer-events-none absolute inset-0"
+                        style={{
+                          background:
+                            "linear-gradient(180deg, rgba(0,0,0,0) 20%, rgba(0,0,0,0.45) 60%, rgba(0,0,0,0.88) 100%)",
+                        }}
+                      />
+                      <div className="relative z-10 flex items-end justify-between gap-1 text-white">
+                        <div className="min-w-0">
+                          <p className="truncate text-[10px] font-semibold leading-tight">
+                            {item.nome}
+                          </p>
+                          <p className="font-mono-num text-[10px] font-bold">{item.preco}</p>
+                        </div>
+                        <span
+                          className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
+                          style={{ backgroundColor: cor, color: accentInk }}
+                        >
+                          +
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      key={item.nome}
+                      className="overflow-hidden p-1.5"
+                      style={{
+                        backgroundColor: "var(--t-surface)",
+                        borderRadius: `${Math.max(8, raio)}px`,
+                        border: isBrutal ? "1.5px solid #000000" : "1px solid var(--t-border)",
+                      }}
+                    >
+                      <div
+                        className="h-11 w-full rounded-lg"
+                        style={{
+                          background: item.bg,
+                          borderRadius: `${Math.max(6, raio - 4)}px`,
+                        }}
+                      />
+                      <div className="flex items-end justify-between gap-1 px-0.5 pt-1.5">
+                        <div className="min-w-0">
+                          <p
+                            className="truncate text-[10px] font-semibold leading-tight"
+                            style={{ color: "var(--t-ink)" }}
+                          >
+                            {item.nome}
+                          </p>
+                          <p className="font-mono-num text-[10px] font-bold" style={{ color: cor }}>
+                            {item.preco}
+                          </p>
+                        </div>
+                        <span
+                          className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
+                          style={{ backgroundColor: cor, color: accentInk }}
+                        >
+                          +
+                        </span>
+                      </div>
+                    </div>
+                  )
+                )}
+              </div>
+
+              {estiloBarra === "dock_flutuante" && (
+                <div className="flex justify-center pt-0.5">
+                  <div
+                    className={`inline-flex items-center gap-1.5 rounded-full p-1 text-[9px] font-semibold shadow-sm ${
+                      tema === "liquid_glass"
+                        ? "bg-white/75 backdrop-blur-md ring-1 ring-white/80"
+                        : ""
+                    }`}
+                    style={
+                      tema === "liquid_glass"
+                        ? undefined
+                        : {
+                            backgroundColor: "var(--t-surface)",
+                            border: isBrutal ? "1.5px solid #000000" : "1px solid var(--t-border)",
+                          }
+                    }
+                  >
+                    <span
+                      className="rounded-full px-2.5 py-0.5"
+                      style={{ backgroundColor: cor, color: accentInk }}
+                    >
+                      Serviços
+                    </span>
+                    <span className="px-1.5" style={{ color: "var(--t-muted)" }}>
+                      Equipe
+                    </span>
+                    <span className="px-1.5" style={{ color: "var(--t-muted)" }}>
+                      Mapa
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Micro CTA */}
               <div
-                className="flex flex-col justify-between p-2"
+                className="flex w-full items-center justify-center gap-1.5 py-2 text-[12px] font-semibold shadow-sm"
                 style={{
-                  backgroundColor: "var(--t-inner)",
-                  borderRadius: `${Math.max(6, raio)}px`,
-                  border: isBrutal ? "1.5px solid #000000" : "1px solid var(--t-border)",
+                  backgroundColor: cor,
+                  color: accentInk,
+                  borderRadius:
+                    tema === "liquid_glass" ? "9999px" : `${Math.max(4, raio - 2)}px`,
+                  border: isBrutal ? "2px solid #000000" : undefined,
                 }}
               >
-                <span className="text-[10px] font-semibold" style={{ color: "var(--t-ink)" }}>
-                  Barba Completa
-                </span>
-                <div className="flex items-center justify-between">
-                  <span className="font-mono-num text-[10px]" style={{ color: "var(--t-muted)" }}>
-                    30 min
-                  </span>
-                  <span className="font-mono-num text-[10px] font-bold" style={{ color: cor }}>
-                    R$ 35
-                  </span>
-                </div>
+                <span>Agendar Horário</span>
+                <ArrowRight className="h-3.5 w-3.5" />
               </div>
-            </div>
-
-            {estiloBarra === "dock_flutuante" && (
-              <div className="flex justify-center pt-0.5">
-                <div
-                  className="inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-[9px] font-semibold shadow"
-                  style={{
-                    backgroundColor: "var(--t-inner)",
-                    border: "1px solid var(--t-border)",
-                  }}
-                >
-                  <span
-                    className="rounded-full px-2 py-0.5"
-                    style={{ backgroundColor: cor, color: accentInk }}
-                  >
-                    Serviços
-                  </span>
-                  <span style={{ color: "var(--t-muted)" }}>Equipe</span>
-                  <span style={{ color: "var(--t-muted)" }}>Mapa</span>
-                </div>
-              </div>
-            )}
-
-            {/* Micro CTA */}
-            <div
-              className="flex w-full items-center justify-center gap-1.5 py-2 text-[12px] font-semibold shadow-sm"
-              style={{
-                backgroundColor: cor,
-                color: accentInk,
-                borderRadius: `${Math.max(4, raio - 2)}px`,
-                border: isBrutal ? "2px solid #000000" : undefined,
-              }}
-            >
-              <span>Agendar Horário</span>
-              <ArrowRight className="h-3.5 w-3.5" />
-            </div>
             </div>
           </div>
 
