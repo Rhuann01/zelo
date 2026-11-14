@@ -25,8 +25,19 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Zelo — Agenda Online White-Label",
+  title: "Zelo — Sua agenda online com a cara do seu negócio",
   description: "Sua página exclusiva de agendamento, no seu estilo e com sinal via PIX.",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
+  openGraph: {
+    title: "Zelo — Sua agenda online com a cara do seu negócio",
+    description: "Crie a página exclusiva do seu negócio com sua cor, seu formato e sua identidade visual.",
+    type: "website",
+    locale: "pt_BR",
+  },
 };
 
 export const viewport: Viewport = {

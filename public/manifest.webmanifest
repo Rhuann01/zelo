@@ -1,0 +1,20 @@
+{
+  "name": "Zelo — Agenda Online",
+  "short_name": "Zelo",
+  "description": "Sua página exclusiva de agendamento online e vitrine local para barbearias, manicures e estúdios.",
+  "start_url": "/explorar",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FAF9F6",
+  "theme_color": "#FAF9F6",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
