@@ -156,6 +156,62 @@ body {
   --t-border-w: 1px;
 }
 
+/* Modo Escuro opcional por loja (aplicado a todos os estilos exceto Urban Noir e Clean Glam) */
+.store-view-base.theme-dark-override {
+  --t-bg: #0F172A;
+  --t-surface: #1E293B;
+  --t-inner: #334155;
+  --t-border: rgba(148, 163, 184, 0.2);
+  --t-ink: #F8FAFC;
+  --t-muted: #94A3B8;
+  --t-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+}
+
+.theme-brutal.theme-dark-override {
+  --t-bg: #14161D;
+  --t-surface: #1E212B;
+  --t-inner: #272B38;
+  --t-border: #000000;
+  --t-ink: #F4F4F5;
+  --t-muted: #A1A1AA;
+  --t-shadow: 4px 4px 0px #000000;
+  --t-border-w: 2px;
+}
+
+.theme-material_you.theme-dark-override {
+  --t-bg: color-mix(in srgb, var(--t-accent) 7%, #111216);
+  --t-surface: color-mix(in srgb, var(--t-accent) 13%, #1A1B21);
+  --t-inner: color-mix(in srgb, var(--t-accent) 20%, #242630);
+  --t-border: color-mix(in srgb, var(--t-accent) 24%, #343642);
+  --t-ink: #E6E1E5;
+  --t-muted: #CAC4D0;
+  --t-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+}
+
+.theme-liquid_glass.theme-dark-override {
+  --t-bg: #090B10;
+  --t-surface: #151822;
+  --t-inner: #1E2230;
+  --t-border: rgba(255, 255, 255, 0.14);
+  --t-ink: #F5F5F7;
+  --t-muted: #A1A1AA;
+  --t-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+  background-image:
+    radial-gradient(circle at 18% 6%, color-mix(in srgb, var(--t-accent) 22%, transparent), transparent 46%),
+    radial-gradient(circle at 86% 14%, color-mix(in srgb, var(--t-accent) 14%, transparent), transparent 42%),
+    linear-gradient(180deg, #0D1018 0%, #090B10 100%);
+}
+
+.theme-liquid_glass.theme-dark-override .store-glass-surface {
+  background: linear-gradient(180deg, rgba(36, 39, 52, 0.78) 0%, rgba(20, 22, 30, 0.64) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-bottom-color: rgba(0, 0, 0, 0.35);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.2);
+}
+
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }

@@ -72,6 +72,7 @@ export const customizacaoLojaSchema = z
     raio_borda_px: z.number().int().min(2).max(24),
     estilo_card: z.enum(ESTILO_CARD_OPTIONS).default("preenchido"),
     estilo_barra: z.enum(ESTILO_BARRA_OPTIONS).default("abas"),
+    modo_escuro: z.boolean().default(false),
     chave_pix: z.string().trim().max(120).nullable().default(null),
     sinal_centavos: z.number().int().min(0).max(5_000_000).default(0),
     cidade: z.string().trim().min(2).max(80).optional(),

@@ -77,6 +77,8 @@ export function LojaPublicaView({
   const accentInk = getAccentInk(loja.cor_primaria);
   const isBrutal = loja.tema === "brutal";
   const isLiquidGlass = loja.tema === "liquid_glass";
+  const isDarkStore =
+    loja.tema !== "glam" && loja.tema !== "urban" && Boolean(loja.modo_escuro);
   const estiloBarra = loja.estilo_barra ?? "abas";
   const estiloCard = loja.estilo_card ?? "preenchido";
   const initials = getInitials(loja.nome);
@@ -159,7 +161,9 @@ export function LojaPublicaView({
 
   return (
     <div
-      className={`store-view-base theme-${loja.tema} flex min-h-screen flex-col`}
+      className={`store-view-base theme-${loja.tema} ${
+        isDarkStore ? "theme-dark-override" : ""
+      } flex min-h-screen flex-col`}
       style={
         {
           "--t-accent": loja.cor_primaria,
@@ -649,6 +653,7 @@ export function LojaPublicaView({
           hidden={selecionados.length > 0 && !loja.pausada}
           isBrutal={isBrutal}
           isLiquidGlass={isLiquidGlass}
+          isDark={isDarkStore}
         />
       )}
 
@@ -657,7 +662,7 @@ export function LojaPublicaView({
         <div className="pointer-events-none fixed inset-x-0 bottom-[max(14px,env(safe-area-inset-bottom))] z-40 flex justify-center px-3.5">
           {isLiquidGlass ? (
             <LiquidGlassSurface
-              tone="light"
+              tone={isDarkStore ? "dark" : "light"}
               className="zelo-sheet-up pointer-events-auto w-full max-w-[448px] rounded-[28px] p-2.5"
             >
               <div className="flex items-center justify-between gap-2.5">
@@ -665,18 +670,30 @@ export function LojaPublicaView({
                   type="button"
                   onClick={() => setSelectedIds([])}
                   aria-label="Limpar serviços selecionados"
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-black/5 text-[#3A3A3C] transition-colors active:scale-95"
+                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors active:scale-95 ${
+                    isDarkStore
+                      ? "bg-white/10 text-white/80"
+                      : "bg-black/5 text-[#3A3A3C]"
+                  }`}
                 >
                   <X className="h-4 w-4" />
                 </button>
 
                 <div className="flex min-w-0 flex-1 flex-col">
-                  <span className="truncate text-[11px] font-medium text-[#6E6E73]">
+                  <span
+                    className={`truncate text-[11px] font-medium ${
+                      isDarkStore ? "text-[#A1A1AA]" : "text-[#6E6E73]"
+                    }`}
+                  >
                     {selecionados.length === 1
                       ? `1 serviço • ${totalDuracao} min`
                       : `${selecionados.length} serviços • ${totalDuracao} min`}
                   </span>
-                  <span className="font-mono-num text-lg font-bold leading-tight text-[#1C1C1E]">
+                  <span
+                    className={`font-mono-num text-lg font-bold leading-tight ${
+                      isDarkStore ? "text-[#F5F5F7]" : "text-[#1C1C1E]"
+                    }`}
+                  >
                     {formatPrice(totalCentavos)}
                   </span>
                 </div>

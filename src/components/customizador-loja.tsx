@@ -12,6 +12,7 @@ import {
   ImagePlus,
   Loader2,
   MapPin,
+  Moon,
   RefreshCw,
   Sparkles,
   Trash2,
@@ -131,6 +132,7 @@ export function CustomizadorLoja({
   const [estiloBarra, setEstiloBarra] = useState<LojaResumo["estilo_barra"]>(
     loja.estilo_barra ?? "abas"
   );
+  const [modoEscuro, setModoEscuro] = useState(Boolean(loja.modo_escuro));
   const [chavePix, setChavePix] = useState(loja.chave_pix ?? "");
   const [sinalReais, setSinalReais] = useState(
     (loja.sinal_centavos / 100).toFixed(2).replace(".", ",")
@@ -161,6 +163,7 @@ export function CustomizadorLoja({
     raio: loja.raio_borda_px,
     estiloCard: loja.estilo_card ?? "preenchido",
     estiloBarra: loja.estilo_barra ?? "abas",
+    modoEscuro: Boolean(loja.modo_escuro),
     chavePix: loja.chave_pix ?? "",
     sinalReais: (loja.sinal_centavos / 100).toFixed(2).replace(".", ","),
     cep: initialLocalizacao?.cep ?? "",
@@ -171,6 +174,9 @@ export function CustomizadorLoja({
     longitude: initialLocalizacao?.longitude ?? null,
   });
 
+  const modoEscuroLocked = tema === "glam" || tema === "urban";
+  const effectiveDark = !modoEscuroLocked && modoEscuro;
+
   const isDirty =
     isOwner &&
     (tema !== savedSnapshot.tema ||
@@ -178,6 +184,7 @@ export function CustomizadorLoja({
       raio !== savedSnapshot.raio ||
       estiloCard !== savedSnapshot.estiloCard ||
       estiloBarra !== savedSnapshot.estiloBarra ||
+      modoEscuro !== savedSnapshot.modoEscuro ||
       chavePix !== savedSnapshot.chavePix ||
       sinalReais !== savedSnapshot.sinalReais ||
       cep !== savedSnapshot.cep ||
@@ -345,6 +352,7 @@ export function CustomizadorLoja({
           raio_borda_px: raio,
           estilo_card: estiloCard,
           estilo_barra: estiloBarra,
+          modo_escuro: modoEscuroLocked ? false : modoEscuro,
           chave_pix: chavePix.trim() || null,
           sinal_centavos: sinalCentavos,
           cidade: cidade.trim(),
@@ -364,6 +372,7 @@ export function CustomizadorLoja({
             raio,
             estiloCard,
             estiloBarra,
+            modoEscuro,
             chavePix,
             sinalReais,
             cep,
@@ -381,7 +390,7 @@ export function CustomizadorLoja({
   }
 
   return (
-    <div className="flex flex-col gap-5 pb-6">
+    <div className="flex flex-col gap-5 pb-20">
       <UnsavedChangesGuard
         isDirty={isDirty}
         isSaving={isPending}
@@ -404,7 +413,9 @@ export function CustomizadorLoja({
 
         <div className="w-full rounded-xl bg-[var(--zelo-soft)] p-3 shadow-sm">
           <div
-            className={`store-view-base theme-${tema} relative flex w-full flex-col overflow-hidden transition-all duration-200 ${
+            className={`store-view-base theme-${tema} ${
+              effectiveDark ? "theme-dark-override" : ""
+            } relative flex w-full flex-col overflow-hidden transition-all duration-200 ${
               refreshing ? "opacity-50" : "opacity-100"
             }`}
             style={{
@@ -591,7 +602,9 @@ export function CustomizadorLoja({
                   <div
                     className={`inline-flex items-center gap-1.5 rounded-full p-1 text-[9px] font-semibold shadow-sm ${
                       tema === "liquid_glass"
-                        ? "bg-white/75 backdrop-blur-md ring-1 ring-white/80"
+                        ? effectiveDark
+                          ? "bg-[#1C1E28]/80 backdrop-blur-md ring-1 ring-white/20"
+                          : "bg-white/75 backdrop-blur-md ring-1 ring-white/80"
                         : ""
                     }`}
                     style={
@@ -705,6 +718,49 @@ export function CustomizadorLoja({
               </button>
             );
           })}
+        </div>
+
+        {/* Chavinha de Modo Escuro (indisponível para Urban Noir e Clean Glam) */}
+        <div
+          className={`mt-3 flex items-center justify-between gap-3 rounded-xl bg-[var(--zelo-card)] p-3.5 shadow-sm transition-opacity ${
+            modoEscuroLocked ? "opacity-45" : ""
+          }`}
+        >
+          <div className="flex min-w-0 items-center gap-2.5">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--zelo-soft)] text-[var(--zelo-ink)]">
+              <Moon className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-[var(--zelo-ink)]">
+                Modo Escuro (Dark)
+              </p>
+              <p className="text-[11px] text-[var(--zelo-muted)]">
+                {modoEscuroLocked
+                  ? "Indisponível para Urban Noir e Clean Glam"
+                  : "Ativa fundo escuro adaptado ao estilo escolhido"}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            role="switch"
+            aria-checked={effectiveDark}
+            aria-label="Ativar modo escuro na loja"
+            disabled={!isOwner || modoEscuroLocked}
+            onClick={() => setModoEscuro((prev) => !prev)}
+            className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full p-0.5 transition-colors ${
+              modoEscuroLocked ? "cursor-not-allowed" : "cursor-pointer"
+            } ${
+              effectiveDark ? "bg-[var(--zelo-btn-bg)]" : "bg-[var(--zelo-border)]"
+            }`}
+          >
+            <span
+              className={`h-6 w-6 rounded-full bg-white shadow-sm transition-transform ${
+                effectiveDark ? "translate-x-5" : "translate-x-0"
+              }`}
+            />
+          </button>
         </div>
       </section>
 
@@ -1060,10 +1116,15 @@ export function CustomizadorLoja({
           type="button"
           onClick={handleSave}
           disabled={isPending}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--zelo-btn-bg)] text-sm font-semibold text-[var(--zelo-btn-ink)] shadow-sm transition-transform active:scale-[0.99] disabled:opacity-60"
+          aria-label="Salvar Personalização"
+          className="fixed right-4 bottom-20 z-40 flex min-h-[46px] items-center gap-1.5 rounded-full bg-[var(--zelo-btn-bg)] px-5 text-sm font-semibold text-[var(--zelo-btn-ink)] shadow-[0_4px_16px_rgba(0,0,0,0.2)] transition-transform active:scale-95 disabled:opacity-50"
         >
-          {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-          Salvar Personalização e Mapa
+          {isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Check className="h-4 w-4" />
+          )}
+          <span>{isPending ? "Salvando..." : "Salvar"}</span>
         </button>
       )}
 

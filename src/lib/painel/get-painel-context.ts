@@ -15,6 +15,7 @@ export interface LojaResumo {
   raio_borda_px: number;
   estilo_card: "preenchido" | "vidro_borrado";
   estilo_barra: "abas" | "dock_flutuante";
+  modo_escuro: boolean;
   chave_pix: string | null;
   sinal_centavos: number;
   logo_url: string | null;
@@ -61,7 +62,7 @@ export async function getPainelContext(nextPath = "/painel"): Promise<PainelCont
     supabase
       .from("lojas")
       .select(
-        "id, owner_id, slug, nome, nicho, cidade, bairro, tema, cor_primaria, raio_borda_px, estilo_card, estilo_barra, chave_pix, sinal_centavos, logo_url, capa_url, horarios_loja, pausada, plano, assinatura_status"
+        "id, owner_id, slug, nome, nicho, cidade, bairro, tema, cor_primaria, raio_borda_px, estilo_card, estilo_barra, modo_escuro, chave_pix, sinal_centavos, logo_url, capa_url, horarios_loja, pausada, plano, assinatura_status"
       )
       .eq("owner_id", user.id)
       .order("created_at", { ascending: true }),
@@ -82,7 +83,7 @@ export async function getPainelContext(nextPath = "/painel"): Promise<PainelCont
     const { data: memberStores } = await supabase
       .from("lojas")
       .select(
-        "id, owner_id, slug, nome, nicho, cidade, bairro, tema, cor_primaria, raio_borda_px, estilo_card, estilo_barra, chave_pix, sinal_centavos, logo_url, capa_url, horarios_loja, pausada, plano, assinatura_status"
+        "id, owner_id, slug, nome, nicho, cidade, bairro, tema, cor_primaria, raio_borda_px, estilo_card, estilo_barra, modo_escuro, chave_pix, sinal_centavos, logo_url, capa_url, horarios_loja, pausada, plano, assinatura_status"
       )
       .in("id", extraLojaIds)
       .order("created_at", { ascending: true });

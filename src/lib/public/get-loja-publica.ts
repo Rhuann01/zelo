@@ -19,6 +19,7 @@ export interface LojaPublica {
   raio_borda_px: number;
   estilo_card: "preenchido" | "vidro_borrado";
   estilo_barra: "abas" | "dock_flutuante";
+  modo_escuro: boolean;
   logo_url: string | null;
   capa_url: string | null;
   horarios_loja: Record<string, unknown>;
@@ -87,7 +88,7 @@ export async function getLojaPublicaBySlug(slug: string): Promise<LojaPublicaCom
       const { data: loja } = await supabase
         .from("lojas")
         .select(
-          "id, slug, nome, nicho, cidade, bairro, endereco_texto, maps_url, latitude, longitude, whatsapp_loja, sinal_centavos, tema, cor_primaria, raio_borda_px, estilo_card, estilo_barra, logo_url, capa_url, horarios_loja, pausada"
+          "id, slug, nome, nicho, cidade, bairro, endereco_texto, maps_url, latitude, longitude, whatsapp_loja, sinal_centavos, tema, cor_primaria, raio_borda_px, estilo_card, estilo_barra, modo_escuro, logo_url, capa_url, horarios_loja, pausada"
         )
         .eq("slug", cleanSlug)
         .maybeSingle();

@@ -25,6 +25,8 @@ export async function saveCustomizacaoAction(raw: unknown) {
     raio_borda_px: input.raio_borda_px,
     estilo_card: input.estilo_card,
     estilo_barra: input.estilo_barra,
+    modo_escuro:
+      input.tema === "glam" || input.tema === "urban" ? false : input.modo_escuro,
     chave_pix: input.chave_pix,
     sinal_centavos: input.sinal_centavos,
     updated_at: new Date().toISOString(),

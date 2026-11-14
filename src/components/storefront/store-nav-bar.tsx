@@ -12,6 +12,7 @@ interface StoreNavBarProps {
   hidden?: boolean;
   isBrutal?: boolean;
   isLiquidGlass?: boolean;
+  isDark?: boolean;
 }
 
 const NAV_ITEMS: Array<{ key: StoreTabKey; label: string; shortLabel: string; icon: typeof List }> = [
@@ -27,6 +28,7 @@ export function StoreNavBar({
   hidden = false,
   isBrutal = false,
   isLiquidGlass = false,
+  isDark = false,
 }: StoreNavBarProps) {
   if (estiloBarra === "dock_flutuante") {
     if (hidden) return null;
@@ -47,14 +49,21 @@ export function StoreNavBar({
                 }`}
                 style={
                   active
-                    ? {
-                        backgroundColor: "rgba(255, 255, 255, 0.92)",
-                        color: "var(--t-accent)",
-                        boxShadow:
-                          "0 4px 14px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 1)",
-                      }
+                    ? isDark
+                      ? {
+                          backgroundColor: "rgba(255, 255, 255, 0.16)",
+                          color: "#FFFFFF",
+                          boxShadow:
+                            "0 4px 14px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.35)",
+                        }
+                      : {
+                          backgroundColor: "rgba(255, 255, 255, 0.92)",
+                          color: "var(--t-accent)",
+                          boxShadow:
+                            "0 4px 14px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 1)",
+                        }
                     : {
-                        color: "#3A3A3C",
+                        color: isDark ? "#D1D5DB" : "#3A3A3C",
                       }
                 }
               >
@@ -110,7 +119,7 @@ export function StoreNavBar({
       <div className="pointer-events-none fixed inset-x-0 bottom-[max(14px,env(safe-area-inset-bottom))] z-40 flex justify-center px-4">
         {isLiquidGlass ? (
           <nav aria-label="Navegação da loja" className="zelo-sheet-up pointer-events-auto">
-            <LiquidGlassSurface tone="light" className="rounded-[32px] p-1.5">
+            <LiquidGlassSurface tone={isDark ? "dark" : "light"} className="rounded-[32px] p-1.5">
               {dockContent}
             </LiquidGlassSurface>
           </nav>
