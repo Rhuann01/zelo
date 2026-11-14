@@ -14,6 +14,7 @@ import {
   Globe,
   LayoutGrid,
   Lock,
+  Moon,
   PauseCircle,
   PlayCircle,
   Search,
@@ -21,6 +22,7 @@ import {
   ShieldCheck,
   Sparkles,
   Store,
+  Sun,
   Terminal,
   TrendingUp,
 } from "lucide-react";
@@ -42,9 +44,9 @@ const NAV_ITEMS: Array<{
   shortLabel: string;
   icon: typeof LayoutGrid;
 }> = [
-  { id: "visao", label: "Torre de Controle", shortLabel: "Geral", icon: LayoutGrid },
-  { id: "lojas", label: "Lojas & Assinaturas", shortLabel: "Lojas", icon: Store },
-  { id: "crescimento", label: "Crescimento & Radar", shortLabel: "Radar", icon: TrendingUp },
+  { id: "visao", label: "Overview", shortLabel: "Geral", icon: LayoutGrid },
+  { id: "lojas", label: "Lojas", shortLabel: "Lojas", icon: Store },
+  { id: "crescimento", label: "Crescimento", shortLabel: "Radar", icon: TrendingUp },
   { id: "infra", label: "Infra & Logs", shortLabel: "Infra", icon: Terminal },
 ];
 
@@ -63,10 +65,9 @@ function formatDateBr(iso: string) {
   });
 }
 
-function getInitials(email: string | null) {
-  if (!email) return "FA";
-  const local = email.split("@")[0] ?? "FA";
-  return local.slice(0, 2).toUpperCase();
+function getInitials(name: string | null, email: string | null) {
+  const base = name?.trim() || email?.split("@")[0] || "FA";
+  return base.slice(0, 2).toUpperCase();
 }
 
 const SEMAFORO_BADGE: Record<
@@ -81,11 +82,16 @@ const SEMAFORO_BADGE: Record<
 export function SuperAdminDashboard({
   data,
   actorEmail,
+  actorName,
+  actorAvatarUrl,
 }: {
   data: SuperAdminDashboardData;
   actorEmail: string | null;
+  actorName: string | null;
+  actorAvatarUrl: string | null;
 }) {
   const [tab, setTab] = useState<TabId>("visao");
+  const [darkMode, setDarkMode] = useState(false);
   const [busca, setBusca] = useState("");
   const [filtroSemaforo, setFiltroSemaforo] = useState<"todos" | SemaforoCor>(
     "todos"
@@ -108,12 +114,6 @@ export function SuperAdminDashboard({
       );
     });
   }, [data.lojas, busca, filtroSemaforo]);
-
-  const lojasAtencao = useMemo(() => {
-    return data.lojas
-      .filter((l) => l.semaforo === "vermelho" || l.semaforo === "amarelo")
-      .slice(0, 4);
-  }, [data.lojas]);
 
   const handleTogglePausa = (lojaId: string, nextPausada: boolean) => {
     setFeedback(null);
@@ -139,12 +139,14 @@ export function SuperAdminDashboard({
   const handleCopyForAi = async () => {
     const topCidades = data.cidadesRadar
       .slice(0, 5)
-      .map((c) => `${c.cidade}: ${c.lojas} lojas (${c.agendamentos30d} agend./30d)`)
+      .map(
+        (c) => `${c.cidade}: ${c.lojas} lojas (${c.agendamentos30d} agend./30d)`
+      )
       .join("; ");
 
     const prompt = [
       "Resumo Zelo Control Tower:",
-      `- MRR Líquido: ${formatBRL(data.kpis.mrrLiquidoCentavos)} | Bruto: ${formatBRL(data.kpis.mrrBrutoCentavos)}`,
+      `- MRR Bruto: ${formatBRL(data.kpis.mrrBrutoCentavos)} | MRR Líquido: ${formatBRL(data.kpis.mrrLiquidoCentavos)}`,
       `- Lojas: ${data.kpis.totalLojas} total (${data.kpis.lojasAtivas} ativas, ${data.kpis.lojasTrial} trial, ${data.kpis.lojasAtrasadas} atrasadas)`,
       `- Conversão Trial: ${data.kpis.conversaoTrialPct}% | Churn: ${data.kpis.churnPct}%`,
       `- Semáforo: ${data.semaforoResumo.verde} saudáveis, ${data.semaforoResumo.amarelo} atenção, ${data.semaforoResumo.vermelho} críticas`,
@@ -172,22 +174,329 @@ export function SuperAdminDashboard({
     data.cidadesRadar[0]?.agendamentos30d ?? data.cidadesRadar[0]?.lojas ?? 1
   );
 
+  // Tokens visuais Finexy (Light por padrão como no Stitch, com toggle p/ Dark)
+  const bgPage = darkMode ? "bg-[#0D0E12] text-[#F4F3F0]" : "bg-[#F6F5F1] text-[#1C1B1B]";
+  const bgCard = darkMode
+    ? "bg-[#17181C] shadow-[0_2px_20px_rgba(0,0,0,0.35)]"
+    : "bg-white shadow-[0_2px_20px_rgba(17,18,22,0.04)]";
+  const bgSub = darkMode ? "bg-white/[0.05]" : "bg-[#F7F6F3]";
+  const textMuted = darkMode ? "text-[#9CA3AF]" : "text-[#6B6963]";
+
+  const renderAvatar = (sizeClass = "h-8 w-8") =>
+    actorAvatarUrl ? (
+      <img
+        src={actorAvatarUrl}
+        alt={actorName ?? actorEmail ?? "Fundador"}
+        referrerPolicy="no-referrer"
+        className={`${sizeClass} rounded-full object-cover shrink-0`}
+      />
+    ) : (
+      <span
+        className={`${sizeClass} flex items-center justify-center rounded-full bg-[#111216] text-white text-[11px] font-bold shrink-0`}
+      >
+        {getInitials(actorName, actorEmail)}
+      </span>
+    );
+
+  const renderSemaforoTable = (limit?: number) => {
+    const rows = limit ? lojasFiltradas.slice(0, limit) : lojasFiltradas;
+    return (
+      <section className={`rounded-3xl ${bgCard} p-5 space-y-4`}>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div>
+            <h2 className="text-base font-bold tracking-tight">
+              Semáforo de Saúde das Lojas
+            </h2>
+            <p className={`text-xs ${textMuted}`}>
+              Monitoramento proativo contra churn e taxa de engajamento
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+              {(
+                [
+                  { id: "todos", label: `Todas (${data.lojas.length})` },
+                  { id: "verde", label: `Saudáveis (${data.semaforoResumo.verde})` },
+                  { id: "amarelo", label: `Atenção (${data.semaforoResumo.amarelo})` },
+                  { id: "vermelho", label: `Críticas (${data.semaforoResumo.vermelho})` },
+                ] as const
+              ).map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setFiltroSemaforo(f.id)}
+                  className={`min-h-[36px] rounded-full px-3 text-xs font-semibold transition-colors shrink-0 ${
+                    filtroSemaforo === f.id
+                      ? "bg-[#111216] text-white dark:bg-white dark:text-[#111216]"
+                      : `${bgSub} ${textMuted} hover:opacity-85`
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
+            <div
+              className={`flex items-center gap-2 rounded-full ${bgSub} px-3.5 h-9 min-w-[200px]`}
+            >
+              <Search className={`h-3.5 w-3.5 ${textMuted} shrink-0`} />
+              <input
+                type="text"
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                placeholder="Buscar loja ou slug..."
+                className="w-full bg-transparent text-xs outline-none"
+              />
+            </div>
+          </div>
+        </div>
+
+        {rows.length === 0 ? (
+          <EmptyState
+            icon={<Store className="h-5 w-5" />}
+            title="Nenhuma loja encontrada"
+            description="Ajuste a busca ou o filtro do semáforo."
+          />
+        ) : (
+          <>
+            {/* Desktop Table (Estilo Finexy) */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className={`text-[10px] font-bold uppercase tracking-wider ${textMuted}`}>
+                    <th className="py-2.5 px-3">Estabelecimento &amp; Nicho</th>
+                    <th className="py-2.5 px-3">Cidade / Bairro</th>
+                    <th className="py-2.5 px-3">Plano &amp; Volume</th>
+                    <th className="py-2.5 px-3">Status Operacional</th>
+                    <th className="py-2.5 px-3">Trial Até</th>
+                    <th className="py-2.5 px-3 text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-black/5 dark:divide-white/8 text-xs">
+                  {rows.map((loja) => {
+                    const sem = SEMAFORO_BADGE[loja.semaforo];
+                    return (
+                      <tr
+                        key={loja.id}
+                        className="hover:bg-black/[0.015] dark:hover:bg-white/[0.02] transition-colors"
+                      >
+                        <td className="py-3.5 px-3">
+                          <div className="flex items-center gap-2.5">
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#FF5A1F]/10 text-[#FF5A1F] font-bold text-xs">
+                              {loja.nome.slice(0, 1).toUpperCase()}
+                            </span>
+                            <div className="min-w-0">
+                              <p className="font-bold truncate">{loja.nome}</p>
+                              <p className={`text-[11px] font-mono-num ${textMuted}`}>
+                                /{loja.slug} • {loja.nicho}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-3 font-medium">
+                          {loja.cidade}
+                          {loja.bairro ? (
+                            <span className={`block text-[11px] ${textMuted}`}>
+                              {loja.bairro}
+                            </span>
+                          ) : null}
+                        </td>
+                        <td className="py-3.5 px-3 font-mono-num">
+                          <span className="font-semibold">
+                            {loja.plano.toUpperCase()} • {loja.assinatura_status}
+                          </span>
+                          <span className={`block text-[11px] ${textMuted}`}>
+                            {loja.servicos_count} serviços • {loja.agendamentos_30d} agend./30d
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-3">
+                          <div className="flex flex-col items-start gap-1">
+                            <StatusBadge tone={sem.tone} dot>
+                              {sem.label}
+                            </StatusBadge>
+                            <span className={`text-[11px] ${textMuted}`}>
+                              {loja.semaforoMotivo}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-3 font-mono-num text-[11px]">
+                          {formatDateBr(loja.trial_ate)}
+                          {loja.indicacoes_confirmadas > 0 && (
+                            <span className="mt-0.5 flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                              <Gift className="h-3 w-3" />
+                              {loja.indicacoes_confirmadas} ind.
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-3 text-right">
+                          <div className="inline-flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              disabled={isPending}
+                              onClick={() => handleExtendTrial(loja.id, 7)}
+                              className={`min-h-[34px] rounded-xl ${bgSub} px-2.5 text-[11px] font-semibold hover:opacity-80 disabled:opacity-50`}
+                            >
+                              +7d Trial
+                            </button>
+                            <button
+                              type="button"
+                              disabled={isPending}
+                              onClick={() =>
+                                handleTogglePausa(loja.id, !loja.pausada)
+                              }
+                              className={`min-h-[34px] rounded-xl px-2.5 text-[11px] font-semibold disabled:opacity-50 ${
+                                loja.pausada
+                                  ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                                  : "bg-rose-500/12 text-rose-700 dark:text-rose-300"
+                              }`}
+                            >
+                              {loja.pausada ? "Reativar" : "Pausar"}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="md:hidden space-y-2.5">
+              {rows.map((loja) => {
+                const sem = SEMAFORO_BADGE[loja.semaforo];
+                return (
+                  <article
+                    key={loja.id}
+                    className={`rounded-2xl ${bgSub} p-3.5 space-y-2.5`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-bold truncate">
+                            {loja.nome}
+                          </span>
+                          <StatusBadge tone={sem.tone} dot>
+                            {sem.label}
+                          </StatusBadge>
+                        </div>
+                        <p className={`text-xs font-mono-num ${textMuted} mt-0.5`}>
+                          /{loja.slug} • {loja.cidade} ({loja.nicho})
+                        </p>
+                      </div>
+                      <StatusBadge tone="neutral">
+                        {loja.plano.toUpperCase()}
+                      </StatusBadge>
+                    </div>
+
+                    <div className={`flex flex-wrap items-center gap-2.5 text-[11px] font-mono-num ${textMuted}`}>
+                      <span>{loja.semaforoMotivo}</span>
+                      <span>• {loja.servicos_count} serv.</span>
+                      <span>• {loja.agendamentos_30d} agend./30d</span>
+                      <span>• Trial {formatDateBr(loja.trial_ate)}</span>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        disabled={isPending}
+                        onClick={() => handleExtendTrial(loja.id, 7)}
+                        className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-xl ${bgCard} px-3 text-xs font-semibold disabled:opacity-50`}
+                      >
+                        <Clock className="h-3.5 w-3.5" />
+                        <span>+7d Trial</span>
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isPending}
+                        onClick={() => handleTogglePausa(loja.id, !loja.pausada)}
+                        className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-xl px-3 text-xs font-semibold disabled:opacity-50 ${
+                          loja.pausada
+                            ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                            : "bg-rose-500/12 text-rose-700 dark:text-rose-300"
+                        }`}
+                      >
+                        {loja.pausada ? (
+                          <>
+                            <PlayCircle className="h-3.5 w-3.5" />
+                            <span>Reativar</span>
+                          </>
+                        ) : (
+                          <>
+                            <PauseCircle className="h-3.5 w-3.5" />
+                            <span>Pausar</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {limit && lojasFiltradas.length > limit && (
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => setTab("lojas")}
+              className="text-xs font-semibold text-[#FF5A1F] hover:underline"
+            >
+              Ver todas as {lojasFiltradas.length} lojas
+            </button>
+          </div>
+        )}
+      </section>
+    );
+  };
+
   return (
-    <div className="min-h-dvh bg-[#FAF9F6] text-[#1C1B1B] dark:bg-[#0D0E12] dark:text-[#F4F3F0] pb-32 md:pb-12">
-      {/* Desktop Floating Pill Left Rail (Estilo Finexy) */}
+    <div className={`min-h-dvh ${bgPage} pb-32 md:pb-10 transition-colors`}>
+      {/* Desktop Floating Pill Left Rail (Idêntico ao Stitch Finexy) */}
       <aside
         aria-label="Navegação do Super Admin"
-        className="hidden md:flex fixed left-4 top-4 bottom-4 w-16 z-50 flex-col items-center justify-between py-5 rounded-full bg-white dark:bg-[#17181C] shadow-[0_6px_28px_rgba(0,0,0,0.06)] dark:shadow-[0_6px_28px_rgba(0,0,0,0.35)] select-none"
+        className={`hidden md:flex fixed left-4 top-4 bottom-4 w-16 z-50 flex-col items-center justify-between py-5 rounded-full ${bgCard} select-none`}
       >
-        <div className="flex flex-col items-center gap-5 w-full">
+        <div className="flex flex-col items-center gap-4 w-full">
           <Link
             href="/painel"
             title="Voltar ao Painel"
-            className="relative w-10 h-10 rounded-full bg-[#111216] dark:bg-white text-white dark:text-[#111216] flex items-center justify-center font-black text-sm shadow-sm transition-transform hover:scale-105"
+            className="relative w-10 h-10 rounded-full bg-[#FF5A1F] text-white flex items-center justify-center font-black text-sm shadow-sm transition-transform hover:scale-105"
           >
             <span>Z</span>
-            <span className="absolute top-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-[#FF5A1F] ring-2 ring-white dark:ring-[#17181C]" />
           </Link>
+
+          {/* Toggle Light / Dark (igual ao Stitch Finexy) */}
+          <div className={`flex flex-col items-center gap-1 p-1 rounded-full ${bgSub}`}>
+            <button
+              type="button"
+              onClick={() => setDarkMode(false)}
+              title="Tema Claro"
+              aria-label="Tema Claro"
+              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                !darkMode
+                  ? "bg-white text-[#111216] shadow-sm"
+                  : `${textMuted} hover:text-white`
+              }`}
+            >
+              <Sun className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setDarkMode(true)}
+              title="Tema Escuro"
+              aria-label="Tema Escuro"
+              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                darkMode
+                  ? "bg-[#111216] text-white shadow-sm"
+                  : `${textMuted} hover:text-[#111216]`
+              }`}
+            >
+              <Moon className="h-4 w-4" />
+            </button>
+          </div>
 
           <div className="w-8 h-px bg-black/8 dark:bg-white/10" />
 
@@ -204,13 +513,15 @@ export function SuperAdminDashboard({
                   aria-current={active ? "page" : undefined}
                   className={`relative w-11 h-11 rounded-2xl flex items-center justify-center transition-all ${
                     active
-                      ? "bg-[#111216] text-white dark:bg-white dark:text-[#111216] shadow-md scale-105"
-                      : "text-[#605E58] dark:text-[#9CA3AF] hover:text-[#1C1B1B] dark:hover:text-white hover:bg-[#F2F0EC] dark:hover:bg-white/8"
+                      ? darkMode
+                        ? "bg-white text-[#111216] shadow-md scale-105"
+                        : "bg-[#111216] text-white shadow-md scale-105"
+                      : `${textMuted} hover:bg-black/5 dark:hover:bg-white/8`
                   }`}
                 >
                   <Icon className="h-[19px] w-[19px]" />
                   {id === "lojas" && data.kpis.totalLojas > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[18px] px-1 py-0.5 bg-[#FF5A1F] text-white text-[9px] font-bold rounded-full font-mono-num leading-none text-center">
+                    <span className="absolute -top-1 -right-1 min-w-[18px] px-1 py-0.5 bg-[#111216] dark:bg-[#FF5A1F] text-white text-[9px] font-bold rounded-full font-mono-num leading-none text-center">
                       {data.kpis.totalLojas}
                     </span>
                   )}
@@ -225,7 +536,7 @@ export function SuperAdminDashboard({
             href="/super-admin/export"
             title="Exportar CSV"
             aria-label="Exportar CSV"
-            className="w-10 h-10 rounded-2xl text-[#605E58] dark:text-[#9CA3AF] hover:text-[#1C1B1B] dark:hover:text-white hover:bg-[#F2F0EC] dark:hover:bg-white/8 flex items-center justify-center transition-all"
+            className={`w-10 h-10 rounded-2xl ${textMuted} hover:bg-black/5 dark:hover:bg-white/8 flex items-center justify-center transition-all`}
           >
             <Download className="h-[18px] w-[18px]" />
           </a>
@@ -233,131 +544,63 @@ export function SuperAdminDashboard({
             href="/painel"
             title="Voltar ao Painel"
             aria-label="Voltar ao Painel"
-            className="w-10 h-10 rounded-2xl text-[#605E58] dark:text-[#9CA3AF] hover:text-[#1C1B1B] dark:hover:text-white hover:bg-[#F2F0EC] dark:hover:bg-white/8 flex items-center justify-center transition-all"
+            className={`w-10 h-10 rounded-2xl ${textMuted} hover:bg-black/5 dark:hover:bg-white/8 flex items-center justify-center transition-all`}
           >
             <ArrowLeft className="h-[18px] w-[18px]" />
           </Link>
         </div>
       </aside>
 
-      {/* Desktop Top Status Header */}
-      <header className="hidden md:flex fixed top-0 left-24 right-0 h-16 z-40 bg-[#FAF9F6]/85 dark:bg-[#0D0E12]/85 backdrop-blur-xl px-6 items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-[#17181C] rounded-full shadow-[0_1px_8px_rgba(0,0,0,0.04)] text-xs">
-            <Lock className="h-3.5 w-3.5 text-[#605E58] dark:text-[#9CA3AF]" />
-            <span className="font-mono-num font-semibold">MFA 2FA Ativo</span>
-          </div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-[#17181C] rounded-full shadow-[0_1px_8px_rgba(0,0,0,0.04)] text-xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span className="font-mono-num text-[#605E58] dark:text-[#9CA3AF]">
-              Agend.:
-            </span>
-            <span className="font-mono-num font-semibold">
-              {data.infra.agendamentosTotal}
-            </span>
-          </div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-[#17181C] rounded-full shadow-[0_1px_8px_rgba(0,0,0,0.04)] text-xs">
-            <span className="w-2 h-2 rounded-full bg-[#FF5A1F]" />
-            <span className="font-mono-num text-[#605E58] dark:text-[#9CA3AF]">
-              Push:
-            </span>
-            <span className="font-mono-num font-semibold">
-              {data.infra.pushSubscriptions}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={handleCopyForAi}
-            className="inline-flex h-10 items-center gap-2 rounded-full bg-gradient-to-r from-[#FF5A1F] to-[#FF7844] px-4 text-xs font-bold text-white shadow-sm hover:opacity-95 transition-opacity"
-          >
-            {copiedAi ? (
-              <Check className="h-3.5 w-3.5" />
-            ) : (
-              <Sparkles className="h-3.5 w-3.5" />
-            )}
-            <span>{copiedAi ? "Copiado!" : "Copiar p/ IA (Prompt)"}</span>
-          </button>
-          <a
-            href="/super-admin/export"
-            className="inline-flex h-10 items-center gap-1.5 rounded-full bg-white dark:bg-[#17181C] px-4 text-xs font-semibold shadow-[0_1px_8px_rgba(0,0,0,0.05)] hover:opacity-90 transition-opacity"
-          >
-            <Download className="h-3.5 w-3.5" />
-            <span>CSV</span>
-          </a>
-          <div
-            title={actorEmail ?? "Fundador"}
-            className="inline-flex h-10 items-center gap-2 rounded-full bg-[#111216] dark:bg-white text-white dark:text-[#111216] pl-1.5 pr-3.5 text-xs font-semibold"
-          >
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#FF5A1F] text-[11px] font-bold text-white">
-              {getInitials(actorEmail)}
-            </span>
-            <span className="hidden lg:inline max-w-[160px] truncate font-mono-num">
-              {actorEmail ?? "Fundador"}
-            </span>
-          </div>
-        </div>
-      </header>
-
-      {/* Mobile Header (Stitch Control Tower Mobile) */}
-      <header className="md:hidden sticky top-0 z-30 bg-[#FAF9F6]/90 dark:bg-[#0D0E12]/90 backdrop-blur-xl px-4 pt-3 pb-2.5 space-y-2.5">
+      {/* Mobile Header */}
+      <header
+        className={`md:hidden sticky top-0 z-30 ${
+          darkMode ? "bg-[#0D0E12]/90" : "bg-[#F6F5F1]/90"
+        } backdrop-blur-xl px-4 pt-3 pb-2.5 space-y-2.5`}
+      >
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
             <Link
               href="/painel"
               aria-label="Voltar ao Painel"
-              className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#111216] dark:bg-white text-white dark:text-[#111216] text-xs font-black"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#FF5A1F] text-white text-xs font-black"
             >
-              <span>Z</span>
-              <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-[#FF5A1F] ring-2 ring-[#FAF9F6] dark:ring-[#0D0E12]" />
+              Z
             </Link>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <span className="text-sm font-bold tracking-tight">Zelo</span>
-                <span className="rounded-full bg-[#111216] dark:bg-white/15 px-2 py-0.5 text-[9px] font-bold tracking-wider text-white uppercase">
+                <span className="rounded-full bg-[#111216] px-2 py-0.5 text-[9px] font-bold tracking-wider text-white uppercase">
                   Control Tower
                 </span>
               </div>
-              <p className="text-[11px] font-mono-num text-[#605E58] dark:text-[#9CA3AF] truncate">
-                {actorEmail ?? "Fundador"}
+              <p className={`text-[11px] font-mono-num ${textMuted} truncate`}>
+                {actorName ?? actorEmail ?? "Fundador"}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/12 px-2.5 py-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              2FA ATIVO
-            </span>
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#111216] dark:bg-white text-[11px] font-bold text-white dark:text-[#111216]">
-              {getInitials(actorEmail)}
-            </span>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setDarkMode((v) => !v)}
+              aria-label="Alternar tema"
+              className={`flex h-8 w-8 items-center justify-center rounded-full ${bgCard}`}
+            >
+              {darkMode ? (
+                <Sun className="h-3.5 w-3.5" />
+              ) : (
+                <Moon className="h-3.5 w-3.5" />
+              )}
+            </button>
+            {renderAvatar("h-8 w-8")}
           </div>
-        </div>
-
-        {/* Mobile Status Chips + Quick Actions */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-0.5">
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white dark:bg-[#17181C] px-3 py-1 text-[11px] font-mono-num shadow-[0_1px_6px_rgba(0,0,0,0.04)]">
-            <ShieldCheck className="h-3 w-3 text-emerald-500" />
-            MFA Ativo
-          </span>
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white dark:bg-[#17181C] px-3 py-1 text-[11px] font-mono-num shadow-[0_1px_6px_rgba(0,0,0,0.04)]">
-            <Store className="h-3 w-3 text-[#FF5A1F]" />
-            {data.kpis.totalLojas} lojas
-          </span>
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white dark:bg-[#17181C] px-3 py-1 text-[11px] font-mono-num shadow-[0_1px_6px_rgba(0,0,0,0.04)]">
-            <Server className="h-3 w-3 text-[#605E58] dark:text-[#9CA3AF]" />
-            {data.infra.agendamentosTotal} agend.
-          </span>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={handleCopyForAi}
-            className="flex-1 inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#FF5A1F] to-[#FF7844] px-4 text-xs font-bold text-white shadow-sm active:scale-[0.99]"
+            className="flex-1 inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#FF5A1F] to-[#FF7844] px-4 text-xs font-bold text-white shadow-sm"
           >
             {copiedAi ? (
               <Check className="h-3.5 w-3.5" />
@@ -368,7 +611,7 @@ export function SuperAdminDashboard({
           </button>
           <a
             href="/super-admin/export"
-            className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-full bg-white dark:bg-[#17181C] px-4 text-xs font-semibold shadow-[0_1px_8px_rgba(0,0,0,0.05)]"
+            className={`inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-full ${bgCard} px-4 text-xs font-semibold`}
           >
             <Download className="h-3.5 w-3.5" />
             <span>CSV</span>
@@ -376,9 +619,116 @@ export function SuperAdminDashboard({
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="md:pl-24 md:pt-20">
-        <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 md:pt-4 space-y-5">
+      {/* Main Container */}
+      <main className="md:pl-24">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 pt-3 md:pt-5 space-y-5">
+          {/* Desktop Top Navigation Bar (Estilo Finexy) */}
+          <div className="hidden md:flex items-center justify-between gap-4">
+            <div className="flex items-center gap-5">
+              <div className="flex items-center gap-2">
+                <span className="text-base font-extrabold tracking-tight">
+                  Zelo
+                </span>
+                <span className="rounded-full bg-[#111216] px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-white uppercase">
+                  Control Tower
+                </span>
+              </div>
+
+              <nav className="flex items-center gap-1">
+                {NAV_ITEMS.map(({ id, label }) => {
+                  const active = tab === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setTab(id)}
+                      className={`h-9 rounded-full px-4 text-xs font-semibold transition-all ${
+                        active
+                          ? darkMode
+                            ? "bg-white text-[#111216]"
+                            : "bg-[#111216] text-white"
+                          : `${textMuted} hover:opacity-80`
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <div
+                className={`inline-flex items-center gap-2 rounded-full ${bgCard} px-3.5 h-10 text-[11px] font-mono-num`}
+              >
+                <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+                  <Lock className="h-3 w-3" />
+                  MFA / PIN
+                </span>
+                <span className={textMuted}>•</span>
+                <span>
+                  Agend.: <strong>{data.infra.agendamentosTotal}</strong>
+                </span>
+                <span className={textMuted}>•</span>
+                <span>
+                  Push: <strong>{data.infra.pushSubscriptions}</strong>
+                </span>
+              </div>
+
+              <div
+                className={`inline-flex items-center gap-2.5 rounded-full ${bgCard} pl-1.5 pr-3.5 h-10`}
+              >
+                {renderAvatar("h-7 w-7")}
+                <div className="leading-tight text-left">
+                  <p className="text-xs font-bold truncate max-w-[140px]">
+                    {actorName ?? "Fundador Admin"}
+                  </p>
+                  <p className={`text-[10px] font-mono-num ${textMuted} truncate max-w-[160px]`}>
+                    {actorEmail ?? "Super Admin"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop Title + Action Buttons */}
+          <div className="hidden md:flex items-end justify-between gap-4 pt-1">
+            <div>
+              <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                <span>Operação em Tempo Real</span>
+              </div>
+              <h1 className="text-2xl font-extrabold tracking-tight mt-0.5">
+                Torre de Controle do Fundador
+              </h1>
+              <p className={`text-xs ${textMuted}`}>
+                Visão executiva unificada da operação Zelo Micro SaaS
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <a
+                href="/super-admin/export"
+                className={`inline-flex h-10 items-center gap-1.5 rounded-full ${bgCard} px-4 text-xs font-semibold hover:opacity-90`}
+              >
+                <Download className="h-3.5 w-3.5" />
+                <span>Exportar .CSV</span>
+              </a>
+              <button
+                type="button"
+                onClick={handleCopyForAi}
+                className="inline-flex h-10 items-center gap-2 rounded-full bg-gradient-to-r from-[#FF5A1F] to-[#FF7844] px-4 text-xs font-bold text-white shadow-sm hover:opacity-95"
+              >
+                {copiedAi ? (
+                  <Check className="h-3.5 w-3.5" />
+                ) : (
+                  <Sparkles className="h-3.5 w-3.5" />
+                )}
+                <span>{copiedAi ? "Copiado!" : "Copiar p/ IA (Prompt)"}</span>
+              </button>
+            </div>
+          </div>
+
           {feedback && (
             <div className="rounded-2xl bg-emerald-500/12 text-emerald-800 dark:text-emerald-200 px-4 py-3 text-xs font-semibold flex items-center justify-between gap-2">
               <span>{feedback}</span>
@@ -394,248 +744,177 @@ export function SuperAdminDashboard({
 
           {tab === "visao" && (
             <div className="space-y-4">
-              {/* Row 1: Hero Orange MRR Card + Lojas Ativas + Churn/Atrasadas */}
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5">
-                {/* Hero Card (Finexy Orange) */}
-                <div className="md:col-span-6 rounded-3xl bg-gradient-to-br from-[#FF5A1F] to-[#FF7844] p-5 text-white shadow-[0_10px_30px_rgba(255,90,31,0.22)] flex flex-col justify-between gap-4">
+              {/* Row 1: 4 KPI Cards (Estilo Finexy) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                {/* 1. MRR Bruto Mensal */}
+                <div className={`rounded-3xl ${bgCard} p-5 flex flex-col justify-between gap-3`}>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-white/85">
-                      MRR Líquido Consolidado
+                    <span className={`text-xs font-semibold ${textMuted}`}>
+                      MRR Bruto Mensal
                     </span>
-                    <span className="rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-mono-num font-semibold">
-                      Bruto: {formatBRL(data.kpis.mrrBrutoCentavos)}
+                    <span className="rounded-full bg-emerald-500/12 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 font-mono-num">
+                      Conv. {data.kpis.conversaoTrialPct}%
                     </span>
                   </div>
-                  <div className="font-mono-num text-3xl sm:text-4xl font-extrabold tracking-tight">
+                  <div className="font-mono-num text-2xl sm:text-3xl font-extrabold tracking-tight">
+                    {formatBRL(data.kpis.mrrBrutoCentavos)}
+                  </div>
+                  <div className={`text-[11px] ${textMuted} font-mono-num`}>
+                    Receita bruta de assinaturas ativas
+                  </div>
+                </div>
+
+                {/* 2. Lucro / MRR Líquido (Hero Laranja) */}
+                <div className="rounded-3xl bg-gradient-to-br from-[#FF5A1F] to-[#FF7844] p-5 text-white shadow-[0_10px_28px_rgba(255,90,31,0.22)] flex flex-col justify-between gap-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-white/90">
+                      MRR Líquido Real
+                    </span>
+                    <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold font-mono-num">
+                      Pós gateway
+                    </span>
+                  </div>
+                  <div className="font-mono-num text-2xl sm:text-3xl font-extrabold tracking-tight">
                     {formatBRL(data.kpis.mrrLiquidoCentavos)}
-                    <span className="text-sm font-medium text-white/80 ml-1">
-                      /mês
-                    </span>
                   </div>
-                  <div className="flex items-center justify-between gap-3 pt-2 border-t border-white/15 text-xs">
-                    <span className="font-mono-num">
-                      Conversão Trial: <strong>{data.kpis.conversaoTrialPct}%</strong>
-                    </span>
-                    <span className="font-mono-num">
-                      Churn: <strong>{data.kpis.churnPct}%</strong>
-                    </span>
+                  <div className="text-[11px] text-white/85 font-mono-num">
+                    {data.kpis.lojasAtivas} assinantes ativos • {data.kpis.lojasTrial} em trial
                   </div>
                 </div>
 
-                {/* Lojas Ativas */}
-                <div className="md:col-span-3 rounded-3xl bg-white dark:bg-[#17181C] p-5 shadow-[0_2px_16px_rgba(0,0,0,0.04)] flex flex-col justify-between gap-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#605E58] dark:text-[#9CA3AF]">
-                      Lojas Ativas
+                {/* 3. Base de Lojas */}
+                <div className={`rounded-3xl ${bgCard} p-5 flex flex-col justify-between gap-3`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={`text-xs font-semibold ${textMuted}`}>
+                      Base de Lojas
                     </span>
-                    <Store className="h-4 w-4 text-[#FF5A1F]" />
-                  </div>
-                  <div className="font-mono-num text-3xl font-extrabold">
-                    {data.kpis.lojasAtivas}
-                  </div>
-                  <div className="text-xs text-[#605E58] dark:text-[#9CA3AF] font-mono-num">
-                    {data.kpis.lojasTrial} em trial • {data.kpis.totalLojas} total
-                  </div>
-                </div>
-
-                {/* Atrasadas / Risco */}
-                <div className="md:col-span-3 rounded-3xl bg-white dark:bg-[#17181C] p-5 shadow-[0_2px_16px_rgba(0,0,0,0.04)] flex flex-col justify-between gap-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#605E58] dark:text-[#9CA3AF]">
-                      Atrasadas
+                    <span className={`rounded-full ${bgSub} px-2 py-0.5 text-[10px] font-bold font-mono-num`}>
+                      {data.kpis.totalLojas} total
                     </span>
-                    <AlertTriangle
-                      className={`h-4 w-4 ${
-                        data.kpis.lojasAtrasadas > 0
-                          ? "text-rose-500"
-                          : "text-emerald-500"
-                      }`}
+                  </div>
+                  <div className="flex items-baseline gap-1.5 font-mono-num">
+                    <span className="text-2xl sm:text-3xl font-extrabold">
+                      {data.kpis.lojasAtivas}
+                    </span>
+                    <span className={`text-xs ${textMuted}`}>ativas</span>
+                    <span className={`text-xs ${textMuted}`}>/</span>
+                    <span className="text-lg font-bold">{data.kpis.lojasTrial}</span>
+                    <span className={`text-xs ${textMuted}`}>trial</span>
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-[#111216] dark:bg-[#FF5A1F]"
+                      style={{
+                        width: `${Math.max(
+                          8,
+                          Math.round(
+                            (data.kpis.lojasAtivas /
+                              Math.max(1, data.kpis.totalLojas)) *
+                              100
+                          )
+                        )}%`,
+                      }}
                     />
                   </div>
-                  <div
-                    className={`font-mono-num text-3xl font-extrabold ${
-                      data.kpis.lojasAtrasadas > 0 ? "text-rose-500" : ""
-                    }`}
-                  >
-                    {data.kpis.lojasAtrasadas}
+                </div>
+
+                {/* 4. Churn & Atrasadas */}
+                <div className={`rounded-3xl ${bgCard} p-5 flex flex-col justify-between gap-3`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={`text-xs font-semibold ${textMuted}`}>
+                      Churn Mensal
+                    </span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-bold font-mono-num ${
+                        data.semaforoResumo.vermelho > 0
+                          ? "bg-rose-500/12 text-rose-600 dark:text-rose-300"
+                          : "bg-amber-500/12 text-amber-700 dark:text-amber-300"
+                      }`}
+                    >
+                      {data.semaforoResumo.vermelho + data.semaforoResumo.amarelo} sob radar
+                    </span>
                   </div>
-                  <div className="text-xs text-[#605E58] dark:text-[#9CA3AF] font-mono-num">
-                    {data.semaforoResumo.vermelho} críticas •{" "}
-                    {data.semaforoResumo.amarelo} atenção
+                  <div className="font-mono-num text-2xl sm:text-3xl font-extrabold tracking-tight">
+                    {data.kpis.churnPct}%
+                  </div>
+                  <div className={`text-[11px] font-mono-num ${textMuted}`}>
+                    Atrasadas: <strong>{data.kpis.lojasAtrasadas}</strong> • Críticas:{" "}
+                    <strong>{data.semaforoResumo.vermelho}</strong>
                   </div>
                 </div>
               </div>
 
-              {/* Row 2: Semáforo + Funil 14d */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                <section className="rounded-3xl bg-white dark:bg-[#17181C] p-5 shadow-[0_2px_16px_rgba(0,0,0,0.04)] space-y-4">
+              {/* Row 2: 3-Column Bento (Funil + Radar + Capacidade) */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5">
+                {/* Funil de Ativação */}
+                <section className={`rounded-3xl ${bgCard} p-5 space-y-4`}>
                   <div className="flex items-center justify-between gap-2">
-                    <h2 className="text-sm font-bold">Semáforo das Lojas</h2>
-                    <button
-                      type="button"
-                      onClick={() => setTab("lojas")}
-                      className="text-xs font-semibold text-[#FF5A1F] hover:underline"
-                    >
-                      Ver todas
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2.5">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFiltroSemaforo("verde");
-                        setTab("lojas");
-                      }}
-                      className="rounded-2xl bg-emerald-500/10 p-3.5 text-left transition-transform active:scale-[0.98]"
-                    >
-                      <span className="block text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
-                        Saudáveis
-                      </span>
-                      <span className="mt-1.5 block font-mono-num text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">
-                        {data.semaforoResumo.verde}
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFiltroSemaforo("amarelo");
-                        setTab("lojas");
-                      }}
-                      className="rounded-2xl bg-amber-500/10 p-3.5 text-left transition-transform active:scale-[0.98]"
-                    >
-                      <span className="block text-[11px] font-semibold text-amber-700 dark:text-amber-300">
-                        Atenção
-                      </span>
-                      <span className="mt-1.5 block font-mono-num text-2xl font-extrabold text-amber-600 dark:text-amber-400">
-                        {data.semaforoResumo.amarelo}
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFiltroSemaforo("vermelho");
-                        setTab("lojas");
-                      }}
-                      className="rounded-2xl bg-rose-500/10 p-3.5 text-left transition-transform active:scale-[0.98]"
-                    >
-                      <span className="block text-[11px] font-semibold text-rose-700 dark:text-rose-300">
-                        Críticas
-                      </span>
-                      <span className="mt-1.5 block font-mono-num text-2xl font-extrabold text-rose-600 dark:text-rose-400">
-                        {data.semaforoResumo.vermelho}
-                      </span>
-                    </button>
-                  </div>
-                </section>
-
-                <section className="rounded-3xl bg-white dark:bg-[#17181C] p-5 shadow-[0_2px_16px_rgba(0,0,0,0.04)] space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-sm font-bold">
-                      Funil de Ativação (14 dias)
-                    </h2>
-                    <span className="text-[11px] font-mono-num text-[#605E58] dark:text-[#9CA3AF]">
-                      Coorte recente
+                    <div>
+                      <h2 className="text-sm font-bold">
+                        Funil de Ativação (14 dias)
+                      </h2>
+                      <p className={`text-[11px] ${textMuted}`}>
+                        Jornada de onboarding
+                      </p>
+                    </div>
+                    <span className={`rounded-full ${bgSub} px-2.5 py-0.5 text-[10px] font-semibold ${textMuted}`}>
+                      Coorte 14d
                     </span>
                   </div>
-                  <div className="space-y-3">
+
+                  <div className="space-y-2.5">
                     {[
-                      { label: "1. Cadastradas", val: data.funil14d.cadastradas },
-                      { label: "2. Com Serviços", val: data.funil14d.comServicos },
+                      { code: "01", label: "Cadastradas", val: data.funil14d.cadastradas },
+                      { code: "02", label: "Com Serviços", val: data.funil14d.comServicos },
                       {
-                        label: "3. Com 1º Agendamento",
+                        code: "03",
+                        label: "Com 1º Agendamento",
                         val: data.funil14d.comPrimeiroAgendamento,
                       },
-                      { label: "4. Assinantes Pagos", val: data.funil14d.assinantes },
-                    ].map((step) => (
-                      <div key={step.label} className="space-y-1">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-medium">{step.label}</span>
-                          <span className="font-mono-num font-bold">
-                            {step.val}
-                          </span>
-                        </div>
-                        <div className="h-2 w-full rounded-full bg-[#F2F0EC] dark:bg-white/8 overflow-hidden">
-                          <div
-                            className="h-full rounded-full bg-[#111216] dark:bg-[#FF5A1F]"
-                            style={{
-                              width: `${Math.max(
-                                step.val > 0 ? 8 : 0,
-                                Math.round((step.val / funilMax) * 100)
-                              )}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              </div>
-
-              {/* Row 3: Atenção Imediata + Radar Preview */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                <section className="rounded-3xl bg-white dark:bg-[#17181C] p-5 shadow-[0_2px_16px_rgba(0,0,0,0.04)] space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4 text-amber-500" />
-                      <h2 className="text-sm font-bold">Atenção Imediata</h2>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFiltroSemaforo("vermelho");
-                        setTab("lojas");
-                      }}
-                      className="text-xs font-semibold text-[#FF5A1F] hover:underline"
-                    >
-                      Ver lojas
-                    </button>
-                  </div>
-                  {lojasAtencao.length === 0 ? (
-                    <p className="text-xs text-[#605E58] dark:text-[#9CA3AF] py-3">
-                      Nenhuma loja crítica ou em atenção no momento.
-                    </p>
-                  ) : (
-                    <div className="space-y-2">
-                      {lojasAtencao.map((loja) => {
-                        const sem = SEMAFORO_BADGE[loja.semaforo];
-                        return (
-                          <div
-                            key={loja.id}
-                            className="flex items-center justify-between gap-3 rounded-2xl bg-[#FAF9F6] dark:bg-white/5 px-3.5 py-2.5"
-                          >
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-bold truncate">
-                                  {loja.nome}
-                                </span>
-                                <StatusBadge tone={sem.tone} dot>
-                                  {sem.label}
-                                </StatusBadge>
-                              </div>
-                              <p className="text-[11px] font-mono-num text-[#605E58] dark:text-[#9CA3AF] truncate mt-0.5">
-                                /{loja.slug} • {loja.semaforoMotivo}
-                              </p>
-                            </div>
-                            <button
-                              type="button"
-                              disabled={isPending}
-                              onClick={() => handleExtendTrial(loja.id, 7)}
-                              className="shrink-0 min-h-[36px] rounded-xl bg-white dark:bg-[#17181C] px-2.5 text-[11px] font-semibold shadow-sm hover:opacity-80 disabled:opacity-50"
-                            >
-                              +7d
-                            </button>
+                      { code: "04", label: "Assinantes Pagos", val: data.funil14d.assinantes },
+                    ].map((step) => {
+                      const pct = Math.round((step.val / funilMax) * 100);
+                      return (
+                        <div
+                          key={step.code}
+                          className={`rounded-2xl ${bgSub} px-3.5 py-2.5 space-y-1.5`}
+                        >
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-semibold">
+                              <span className={`font-mono-num mr-1.5 ${textMuted}`}>
+                                {step.code}
+                              </span>
+                              {step.label}
+                            </span>
+                            <span className="font-mono-num font-bold">
+                              {step.val}{" "}
+                              <span className={`font-normal ${textMuted}`}>
+                                ({pct}%)
+                              </span>
+                            </span>
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                          <div className="h-1.5 w-full rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-[#111216] dark:bg-[#FF5A1F]"
+                              style={{
+                                width: `${Math.max(step.val > 0 ? 8 : 0, pct)}%`,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </section>
 
-                <section className="rounded-3xl bg-white dark:bg-[#17181C] p-5 shadow-[0_2px_16px_rgba(0,0,0,0.04)] space-y-3">
+                {/* Radar Geográfico */}
+                <section className={`rounded-3xl ${bgCard} p-5 space-y-4`}>
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <Globe className="h-4 w-4 text-[#FF5A1F]" />
-                      <h2 className="text-sm font-bold">Radar de Cidades</h2>
+                    <div>
+                      <h2 className="text-sm font-bold">Radar Geográfico</h2>
+                      <p className={`text-[11px] ${textMuted}`}>
+                        Concentração por cidade
+                      </p>
                     </div>
                     <button
                       type="button"
@@ -645,8 +924,9 @@ export function SuperAdminDashboard({
                       Ver ranking
                     </button>
                   </div>
+
                   {data.cidadesRadar.length === 0 ? (
-                    <p className="text-xs text-[#605E58] dark:text-[#9CA3AF] py-3">
+                    <p className={`text-xs ${textMuted} py-4`}>
                       Sem cidades registradas ainda.
                     </p>
                   ) : (
@@ -654,159 +934,124 @@ export function SuperAdminDashboard({
                       {data.cidadesRadar.slice(0, 4).map((c, idx) => (
                         <div
                           key={c.cidade}
-                          className="flex items-center justify-between rounded-2xl bg-[#FAF9F6] dark:bg-white/5 px-3.5 py-2.5 text-xs"
+                          className={`flex items-center justify-between rounded-2xl ${bgSub} px-3.5 py-3 text-xs`}
                         >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="font-mono-num text-[#605E58] dark:text-[#9CA3AF] w-5">
-                              #{idx + 1}
-                            </span>
-                            <span className="font-semibold truncate">
-                              {c.cidade}
-                            </span>
+                          <div className="min-w-0">
+                            <p className="font-bold truncate">
+                              #{idx + 1} {c.cidade}
+                            </p>
+                            <p className={`text-[11px] font-mono-num ${textMuted}`}>
+                              {c.agendamentos30d} agendamentos / 30d
+                            </p>
                           </div>
-                          <span className="font-mono-num text-[#605E58] dark:text-[#9CA3AF] shrink-0">
-                            {c.lojas} lojas • {c.agendamentos30d} agend.
+                          <span className={`rounded-full ${bgCard} px-2.5 py-1 font-mono-num text-[11px] font-bold shrink-0`}>
+                            {c.lojas} lojas
                           </span>
                         </div>
                       ))}
                     </div>
                   )}
                 </section>
+
+                {/* Capacidade & Provedores */}
+                <section className={`rounded-3xl ${bgCard} p-5 space-y-4`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <h2 className="text-sm font-bold">
+                        Capacidade &amp; Provedores
+                      </h2>
+                      <p className={`text-[11px] ${textMuted}`}>
+                        Uso real Free Tier
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-emerald-500/12 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                      Custo Zero
+                    </span>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    <div className={`rounded-2xl ${bgSub} p-3.5 space-y-1`}>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold">Agendamentos Totais</span>
+                        <span className="font-mono-num font-bold">
+                          {data.infra.agendamentosTotal}
+                        </span>
+                      </div>
+                      <p className={`text-[11px] ${textMuted}`}>
+                        Postgres Supabase (limite Free 500 MB)
+                      </p>
+                    </div>
+
+                    <div className={`rounded-2xl ${bgSub} p-3.5 space-y-1`}>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold">Dispositivos Web Push</span>
+                        <span className="font-mono-num font-bold">
+                          {data.infra.pushSubscriptions}
+                        </span>
+                      </div>
+                      <p className={`text-[11px] ${textMuted}`}>
+                        Notificações PWA sem custo (VAPID)
+                      </p>
+                    </div>
+
+                    <div className={`rounded-2xl ${bgSub} p-3.5 space-y-1`}>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold">Webhooks Asaas</span>
+                        <span className="font-mono-num font-bold">
+                          {data.infra.webhooksRecentes.length}
+                        </span>
+                      </div>
+                      <p className={`text-[11px] ${textMuted}`}>
+                        Eventos recentes idempotentes
+                      </p>
+                    </div>
+                  </div>
+                </section>
+              </div>
+
+              {/* Row 3: Full-Width Table (Semáforo das Lojas) */}
+              {renderSemaforoTable(8)}
+
+              {/* Row 4: Infra Live Footer Strip */}
+              <div className={`rounded-2xl ${bgCard} px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-[11px] font-mono-num`}>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={`font-bold uppercase ${textMuted}`}>
+                    Infra Live:
+                  </span>
+                  <span className={`inline-flex items-center gap-1.5 rounded-full ${bgSub} px-2.5 py-1`}>
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    Auth Supabase (OK)
+                  </span>
+                  <span className={`inline-flex items-center gap-1.5 rounded-full ${bgSub} px-2.5 py-1`}>
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    Web Push PWA ({data.infra.pushSubscriptions})
+                  </span>
+                  <span className={`inline-flex items-center gap-1.5 rounded-full ${bgSub} px-2.5 py-1`}>
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    Webhooks Asaas ({data.infra.webhooksRecentes.length})
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setTab("infra")}
+                  className="font-semibold text-[#FF5A1F] hover:underline"
+                >
+                  Ver Logs Técnicos
+                </button>
               </div>
             </div>
           )}
 
-          {tab === "lojas" && (
-            <div className="space-y-3.5">
-              <div className="flex flex-col sm:flex-row gap-2.5">
-                <div className="flex-1 flex items-center gap-2.5 rounded-2xl bg-white dark:bg-[#17181C] px-3.5 h-11 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
-                  <Search className="h-4 w-4 text-[#605E58] dark:text-[#9CA3AF] shrink-0" />
-                  <input
-                    type="text"
-                    value={busca}
-                    onChange={(e) => setBusca(e.target.value)}
-                    placeholder="Buscar por nome, @slug ou cidade..."
-                    className="w-full bg-transparent text-sm outline-none"
-                  />
-                </div>
-                <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
-                  {(["todos", "verde", "amarelo", "vermelho"] as const).map(
-                    (f) => (
-                      <button
-                        key={f}
-                        type="button"
-                        onClick={() => setFiltroSemaforo(f)}
-                        className={`min-h-[44px] rounded-2xl px-3.5 text-xs font-semibold capitalize shrink-0 transition-colors ${
-                          filtroSemaforo === f
-                            ? "bg-[#111216] text-white dark:bg-white dark:text-[#111216]"
-                            : "bg-white dark:bg-[#17181C] text-[#605E58] dark:text-[#9CA3AF] shadow-[0_1px_8px_rgba(0,0,0,0.04)]"
-                        }`}
-                      >
-                        {f === "todos" ? "Todas" : SEMAFORO_BADGE[f].label}
-                      </button>
-                    )
-                  )}
-                </div>
-              </div>
-
-              {lojasFiltradas.length === 0 ? (
-                <EmptyState
-                  icon={<Store className="h-5 w-5" />}
-                  title="Nenhuma loja encontrada"
-                  description="Ajuste a busca ou o filtro do semáforo."
-                />
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {lojasFiltradas.map((loja) => {
-                    const sem = SEMAFORO_BADGE[loja.semaforo];
-                    return (
-                      <article
-                        key={loja.id}
-                        className="rounded-3xl bg-white dark:bg-[#17181C] p-5 shadow-[0_2px_16px_rgba(0,0,0,0.04)] space-y-3"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-sm font-bold truncate">
-                                {loja.nome}
-                              </span>
-                              <StatusBadge tone={sem.tone} dot>
-                                {sem.label}
-                              </StatusBadge>
-                            </div>
-                            <p className="text-xs font-mono-num text-[#605E58] dark:text-[#9CA3AF] mt-0.5">
-                              /{loja.slug} • {loja.cidade} ({loja.nicho})
-                            </p>
-                          </div>
-                          <StatusBadge tone="neutral">
-                            {loja.plano.toUpperCase()} • {loja.assinatura_status}
-                          </StatusBadge>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-3 text-[11px] font-mono-num text-[#605E58] dark:text-[#9CA3AF]">
-                          <span>{loja.semaforoMotivo}</span>
-                          <span>• {loja.servicos_count} serviços</span>
-                          <span>• {loja.agendamentos_30d} agend./30d</span>
-                          <span>• Trial até {formatDateBr(loja.trial_ate)}</span>
-                          {loja.indicacoes_confirmadas > 0 && (
-                            <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                              <Gift className="h-3 w-3" />
-                              {loja.indicacoes_confirmadas} ind.
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex flex-wrap gap-2 pt-1">
-                          <button
-                            type="button"
-                            disabled={isPending}
-                            onClick={() => handleExtendTrial(loja.id, 7)}
-                            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-2xl bg-[#FAF9F6] dark:bg-white/8 px-3.5 text-xs font-semibold hover:opacity-80 disabled:opacity-50"
-                          >
-                            <Clock className="h-3.5 w-3.5" />
-                            <span>+7d Trial</span>
-                          </button>
-                          <button
-                            type="button"
-                            disabled={isPending}
-                            onClick={() =>
-                              handleTogglePausa(loja.id, !loja.pausada)
-                            }
-                            className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-2xl px-3.5 text-xs font-semibold disabled:opacity-50 ${
-                              loja.pausada
-                                ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                                : "bg-rose-500/12 text-rose-700 dark:text-rose-300"
-                            }`}
-                          >
-                            {loja.pausada ? (
-                              <>
-                                <PlayCircle className="h-3.5 w-3.5" />
-                                <span>Reativar</span>
-                              </>
-                            ) : (
-                              <>
-                                <PauseCircle className="h-3.5 w-3.5" />
-                                <span>Pausar</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </article>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
+          {tab === "lojas" && renderSemaforoTable()}
 
           {tab === "crescimento" && (
             <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5">
-              <section className="md:col-span-5 rounded-3xl bg-white dark:bg-[#17181C] p-5 shadow-[0_2px_16px_rgba(0,0,0,0.04)] space-y-4">
+              <section className={`md:col-span-5 rounded-3xl ${bgCard} p-5 space-y-4`}>
                 <div className="flex items-center justify-between">
                   <h2 className="text-sm font-bold">
                     Funil de Ativação (14 dias)
                   </h2>
-                  <span className="text-[11px] font-mono-num text-[#605E58] dark:text-[#9CA3AF]">
+                  <span className={`text-[11px] font-mono-num ${textMuted}`}>
                     Coorte recente
                   </span>
                 </div>
@@ -827,7 +1072,7 @@ export function SuperAdminDashboard({
                           {step.val}
                         </span>
                       </div>
-                      <div className="h-2 w-full rounded-full bg-[#F2F0EC] dark:bg-white/8 overflow-hidden">
+                      <div className="h-2 w-full rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
                         <div
                           className="h-full rounded-full bg-[#FF5A1F]"
                           style={{
@@ -843,7 +1088,7 @@ export function SuperAdminDashboard({
                 </div>
               </section>
 
-              <section className="md:col-span-7 rounded-3xl bg-white dark:bg-[#17181C] p-5 shadow-[0_2px_16px_rgba(0,0,0,0.04)] space-y-4">
+              <section className={`md:col-span-7 rounded-3xl ${bgCard} p-5 space-y-4`}>
                 <div className="flex items-center gap-2">
                   <Globe className="h-4 w-4 text-[#FF5A1F]" />
                   <h2 className="text-sm font-bold">
@@ -866,11 +1111,11 @@ export function SuperAdminDashboard({
                       return (
                         <div
                           key={c.cidade}
-                          className="rounded-2xl bg-[#FAF9F6] dark:bg-white/5 px-3.5 py-3 space-y-2"
+                          className={`rounded-2xl ${bgSub} px-3.5 py-3 space-y-2`}
                         >
                           <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-2.5 min-w-0">
-                              <span className="font-mono-num text-xs text-[#605E58] dark:text-[#9CA3AF] w-5">
+                              <span className={`font-mono-num text-xs ${textMuted} w-5`}>
                                 #{idx + 1}
                               </span>
                               <span className="text-sm font-semibold truncate">
@@ -881,7 +1126,7 @@ export function SuperAdminDashboard({
                               <span className="font-semibold">
                                 {c.lojas} lojas
                               </span>
-                              <span className="text-[#605E58] dark:text-[#9CA3AF]">
+                              <span className={textMuted}>
                                 {c.agendamentos30d} agend.
                               </span>
                             </div>
@@ -904,48 +1149,48 @@ export function SuperAdminDashboard({
           {tab === "infra" && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <div className="rounded-3xl bg-white dark:bg-[#17181C] p-4 shadow-[0_2px_16px_rgba(0,0,0,0.04)] space-y-1">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#605E58] dark:text-[#9CA3AF]">
+                <div className={`rounded-3xl ${bgCard} p-4 space-y-1`}>
+                  <span className={`text-[11px] font-bold uppercase tracking-wider ${textMuted}`}>
                     Agendamentos Totais
                   </span>
                   <div className="font-mono-num text-2xl font-extrabold">
                     {data.infra.agendamentosTotal}
                   </div>
-                  <span className="text-[11px] text-[#605E58] dark:text-[#9CA3AF]">
+                  <span className={`text-[11px] ${textMuted}`}>
                     Banco Postgres Free
                   </span>
                 </div>
-                <div className="rounded-3xl bg-white dark:bg-[#17181C] p-4 shadow-[0_2px_16px_rgba(0,0,0,0.04)] space-y-1">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#605E58] dark:text-[#9CA3AF]">
+                <div className={`rounded-3xl ${bgCard} p-4 space-y-1`}>
+                  <span className={`text-[11px] font-bold uppercase tracking-wider ${textMuted}`}>
                     Dispositivos Push
                   </span>
                   <div className="font-mono-num text-2xl font-extrabold">
                     {data.infra.pushSubscriptions}
                   </div>
-                  <span className="text-[11px] text-[#605E58] dark:text-[#9CA3AF]">
+                  <span className={`text-[11px] ${textMuted}`}>
                     Web Push VAPID
                   </span>
                 </div>
-                <div className="col-span-2 sm:col-span-1 rounded-3xl bg-white dark:bg-[#17181C] p-4 shadow-[0_2px_16px_rgba(0,0,0,0.04)] space-y-1">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#605E58] dark:text-[#9CA3AF]">
+                <div className={`col-span-2 sm:col-span-1 rounded-3xl ${bgCard} p-4 space-y-1`}>
+                  <span className={`text-[11px] font-bold uppercase tracking-wider ${textMuted}`}>
                     Webhooks Asaas
                   </span>
                   <div className="font-mono-num text-2xl font-extrabold">
                     {data.infra.webhooksRecentes.length}
                   </div>
-                  <span className="text-[11px] text-[#605E58] dark:text-[#9CA3AF]">
+                  <span className={`text-[11px] ${textMuted}`}>
                     Últimos eventos
                   </span>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                <section className="rounded-3xl bg-white dark:bg-[#17181C] p-5 shadow-[0_2px_16px_rgba(0,0,0,0.04)] space-y-3">
+                <section className={`rounded-3xl ${bgCard} p-5 space-y-3`}>
                   <h2 className="text-sm font-bold">
                     Webhooks Recentes (Idempotência)
                   </h2>
                   {data.infra.webhooksRecentes.length === 0 ? (
-                    <p className="text-xs text-[#605E58] dark:text-[#9CA3AF]">
+                    <p className={`text-xs ${textMuted}`}>
                       Nenhum evento de webhook recebido ainda.
                     </p>
                   ) : (
@@ -953,13 +1198,13 @@ export function SuperAdminDashboard({
                       {data.infra.webhooksRecentes.map((w) => (
                         <div
                           key={w.id}
-                          className="flex items-center justify-between gap-2 rounded-2xl bg-[#FAF9F6] dark:bg-white/5 px-3.5 py-2.5 text-xs"
+                          className={`flex items-center justify-between gap-2 rounded-2xl ${bgSub} px-3.5 py-2.5 text-xs`}
                         >
                           <div className="min-w-0">
                             <span className="font-mono-num font-semibold block truncate">
                               {w.event_type}
                             </span>
-                            <span className="font-mono-num text-[10px] text-[#605E58] dark:text-[#9CA3AF] block truncate">
+                            <span className={`font-mono-num text-[10px] ${textMuted} block truncate`}>
                               {w.id}
                             </span>
                           </div>
@@ -975,12 +1220,12 @@ export function SuperAdminDashboard({
                   )}
                 </section>
 
-                <section className="rounded-3xl bg-white dark:bg-[#17181C] p-5 shadow-[0_2px_16px_rgba(0,0,0,0.04)] space-y-3">
+                <section className={`rounded-3xl ${bgCard} p-5 space-y-3`}>
                   <h2 className="text-sm font-bold">
                     Log de Auditoria do Fundador
                   </h2>
                   {data.infra.auditLogsRecentes.length === 0 ? (
-                    <p className="text-xs text-[#605E58] dark:text-[#9CA3AF]">
+                    <p className={`text-xs ${textMuted}`}>
                       Nenhuma ação administrativa registrada ainda.
                     </p>
                   ) : (
@@ -988,12 +1233,12 @@ export function SuperAdminDashboard({
                       {data.infra.auditLogsRecentes.map((log) => (
                         <div
                           key={log.id}
-                          className="flex items-center justify-between gap-2 rounded-2xl bg-[#FAF9F6] dark:bg-white/5 px-3.5 py-2.5 text-xs"
+                          className={`flex items-center justify-between gap-2 rounded-2xl ${bgSub} px-3.5 py-2.5 text-xs`}
                         >
                           <span className="font-mono-num font-semibold">
                             {log.acao}
                           </span>
-                          <span className="font-mono-num text-[11px] text-[#605E58] dark:text-[#9CA3AF]">
+                          <span className={`font-mono-num text-[11px] ${textMuted}`}>
                             {formatDateBr(log.created_at)}
                           </span>
                         </div>
@@ -1007,7 +1252,7 @@ export function SuperAdminDashboard({
         </div>
       </main>
 
-      {/* Mobile iPhone Floating Pill Dock (substitui dock plana do Stitch) */}
+      {/* Mobile iPhone Floating Pill Dock */}
       <div className="md:hidden pointer-events-none fixed inset-x-0 bottom-[max(24px,calc(env(safe-area-inset-bottom)+12px))] z-40 flex justify-center px-4">
         <nav
           aria-label="Navegação do Super Admin"

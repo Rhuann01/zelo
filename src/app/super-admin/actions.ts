@@ -1,9 +1,16 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { verifySuperAdminAccess } from "@/lib/super-admin/guard";
+import {
+  SUPER_ADMIN_PIN_COOKIE,
+  createSuperAdminPinToken,
+  verifySuperAdminAccess,
+  verifySuperAdminBaseIdentity,
+  verifySuperAdminPinInput,
+} from "@/lib/super-admin/guard";
 
 const togglePausaSchema = z.object({
   lojaId: z.string().uuid(),
@@ -88,6 +95,47 @@ export async function superAdminExtendTrialAction(
 
   revalidateTag(`loja-${current.slug}`);
   revalidateTag("vitrine-explorar");
+  revalidatePath("/super-admin");
+  return {};
+}
+
+const pinSchema = z.object({
+  pin: z.string().min(4).max(32),
+});
+
+export async function verifySuperAdminPinAction(
+  rawInput: z.infer<typeof pinSchema>
+): Promise<{ error?: string }> {
+  const base = await verifySuperAdminBaseIdentity();
+  if (!base.ok) {
+    return { error: "Sessão sem permissão de Super Admin." };
+  }
+
+  const parsed = pinSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    return { error: "Informe um PIN válido." };
+  }
+
+  if (!verifySuperAdminPinInput(parsed.data.pin)) {
+    return { error: "PIN incorreto." };
+  }
+
+  const configuredPin = process.env.SUPER_ADMIN_PIN?.trim() ?? "";
+  if (configuredPin) {
+    const cookieStore = await cookies();
+    cookieStore.set(
+      SUPER_ADMIN_PIN_COOKIE,
+      createSuperAdminPinToken(base.session.userId, configuredPin),
+      {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        maxAge: 60 * 60 * 8,
+      }
+    );
+  }
+
   revalidatePath("/super-admin");
   return {};
 }

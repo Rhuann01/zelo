@@ -3,6 +3,7 @@ import { ShieldAlert } from "lucide-react";
 import { verifySuperAdminAccess } from "@/lib/super-admin/guard";
 import { loadSuperAdminDashboardData } from "@/lib/super-admin/metrics";
 import { SuperAdminDashboard } from "@/components/super-admin-dashboard";
+import { SuperAdminPinGate } from "@/components/super-admin-pin-gate";
 import { SurfaceCard } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +12,14 @@ export default async function SuperAdminPage() {
   const guard = await verifySuperAdminAccess();
 
   if (!guard.ok) {
-    const messages: Record<typeof guard.reason, string> = {
+    if (guard.reason === "pin_required") {
+      return <SuperAdminPinGate />;
+    }
+
+    const messages: Record<
+      Exclude<typeof guard.reason, "pin_required">,
+      string
+    > = {
       unauthenticated: "Faça login com a conta do fundador para continuar.",
       not_allowlisted: "Esta conta não faz parte da allowlist do Super Admin.",
       mfa_required: "Autenticação em 2 fatores (MFA AAL2) obrigatória.",
@@ -40,5 +48,12 @@ export default async function SuperAdminPage() {
   }
 
   const data = await loadSuperAdminDashboardData();
-  return <SuperAdminDashboard data={data} actorEmail={guard.session.email} />;
+  return (
+    <SuperAdminDashboard
+      data={data}
+      actorEmail={guard.session.email}
+      actorName={guard.session.nome}
+      actorAvatarUrl={guard.session.avatarUrl}
+    />
+  );
 }
