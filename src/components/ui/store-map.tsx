@@ -151,10 +151,14 @@ export function StoreMapEmbed({
 function InteractiveLeafletPicker({
   latitude,
   longitude,
+  cidade,
+  bairro,
   onChangeCoords,
 }: {
   latitude: number | null;
   longitude: number | null;
+  cidade: string;
+  bairro: string;
   onChangeCoords: (lat: number, lng: number) => void;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -165,8 +169,9 @@ function InteractiveLeafletPicker({
 
   useEffect(() => {
     let active = true;
-    const defaultLat = latitude ?? -19.9191;
-    const defaultLng = longitude ?? -43.9386;
+    const hasCoords = latitude != null && longitude != null;
+    const defaultLat = latitude ?? -14.235;
+    const defaultLng = longitude ?? -51.9253;
 
     (async () => {
       const L = (await import("leaflet")).default;
@@ -176,7 +181,7 @@ function InteractiveLeafletPicker({
 
       const map = L.map(containerRef.current, {
         center: [defaultLat, defaultLng],
-        zoom: latitude != null && longitude != null ? 17 : 13,
+        zoom: hasCoords ? 17 : 4,
         zoomControl: true,
       });
 
@@ -205,8 +210,22 @@ function InteractiveLeafletPicker({
         }
       };
 
-      if (latitude != null && longitude != null) {
+      if (hasCoords && latitude != null && longitude != null) {
         placeMarker(latitude, longitude);
+      } else if (cidade.trim().length >= 2) {
+        // Centraliza na cidade da loja quando ainda não há pino salvo
+        const q = [bairro, cidade, "Brasil"].filter(Boolean).join(", ");
+        fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(
+            q
+          )}`
+        )
+          .then((r) => r.json())
+          .then((arr: Array<{ lat: string; lon: string }>) => {
+            if (!active || !arr[0] || markerRef.current) return;
+            map.setView([Number(arr[0].lat), Number(arr[0].lon)], 13, { animate: false });
+          })
+          .catch(() => null);
       }
 
       map.on("click", (e: import("leaflet").LeafletMouseEvent) => {
@@ -217,6 +236,7 @@ function InteractiveLeafletPicker({
       });
 
       mapRef.current = map;
+      setTimeout(() => map.invalidateSize(), 100);
     })();
 
     return () => {
@@ -232,7 +252,15 @@ function InteractiveLeafletPicker({
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || latitude == null || longitude == null) return;
+    if (!map) return;
+
+    if (latitude == null || longitude == null) {
+      if (markerRef.current) {
+        markerRef.current.remove();
+        markerRef.current = null;
+      }
+      return;
+    }
 
     (async () => {
       const L = (await import("leaflet")).default;
@@ -255,9 +283,8 @@ function InteractiveLeafletPicker({
       } else {
         markerRef.current.setLatLng([latitude, longitude]);
       }
-      map.setView([latitude, longitude], Math.max(map.getZoom(), 16), {
-        animate: true,
-      });
+      map.invalidateSize();
+      map.setView([latitude, longitude], 17, { animate: false });
     })();
   }, [latitude, longitude]);
 
@@ -303,17 +330,39 @@ export function StoreMapPicker({
     }
     setLoadingGps(true);
     setFeedback(null);
+
+    const onSuccess = (pos: GeolocationPosition) => {
+      onChangeCoords(round6(pos.coords.latitude), round6(pos.coords.longitude));
+      setLoadingGps(false);
+      setFeedback("Localização marcada! Se precisar, arraste o pino para ajustar.");
+    };
+
+    const onFinalError = (err: GeolocationPositionError) => {
+      setLoadingGps(false);
+      if (err.code === 1) {
+        setFeedback("Permissão de localização bloqueada no navegador. Libere ou toque direto no mapa.");
+      } else {
+        setFeedback(
+          "GPS indisponível neste dispositivo/navegador. Use 'Buscar endereço no mapa', cole o link do Google Maps ou toque direto no mapa."
+        );
+      }
+    };
+
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        onChangeCoords(round6(pos.coords.latitude), round6(pos.coords.longitude));
-        setLoadingGps(false);
-        setFeedback("Localização atual marcada! Se precisar, arraste o pino.");
+      onSuccess,
+      (err) => {
+        if (err.code === 1) {
+          onFinalError(err);
+          return;
+        }
+        // Fallback sem highAccuracy (comum em desktop Linux/Wi-Fi)
+        navigator.geolocation.getCurrentPosition(onSuccess, onFinalError, {
+          enableHighAccuracy: false,
+          timeout: 8_000,
+          maximumAge: 60_000,
+        });
       },
-      () => {
-        setLoadingGps(false);
-        setFeedback("Permita o acesso ao GPS ou marque direto no mapa.");
-      },
-      { enableHighAccuracy: true, timeout: 10_000 }
+      { enableHighAccuracy: true, timeout: 6_000 }
     );
   };
 
@@ -416,6 +465,8 @@ export function StoreMapPicker({
       <InteractiveLeafletPicker
         latitude={latitude}
         longitude={longitude}
+        cidade={cidade}
+        bairro={bairro}
         onChangeCoords={(lat, lng) => onChangeCoords(lat, lng)}
       />
 
