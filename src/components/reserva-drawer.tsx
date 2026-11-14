@@ -857,16 +857,20 @@ export function ReservaDrawer({
                         type="button"
                         role="switch"
                         aria-checked={paraOutro}
+                        aria-label="Agendamento para outra pessoa"
                         onClick={() => setParaOutro((v) => !v)}
-                        className="flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full p-0.5 transition-colors"
+                        className="flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border p-0.5 transition-colors"
                         style={{
                           backgroundColor: paraOutro
                             ? "var(--t-accent)"
-                            : "var(--t-card)",
+                            : "rgba(100, 116, 139, 0.35)",
+                          borderColor: paraOutro
+                            ? "var(--t-accent)"
+                            : "rgba(100, 116, 139, 0.45)",
                         }}
                       >
                         <span
-                          className={`h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                          className={`h-5 w-5 rounded-full bg-white shadow-md transition-transform ${
                             paraOutro ? "translate-x-5" : "translate-x-0"
                           }`}
                         />
