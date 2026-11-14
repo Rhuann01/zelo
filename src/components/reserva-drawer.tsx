@@ -799,8 +799,8 @@ export function ReservaDrawer({
                   className="space-y-3 px-5 py-4"
                   style={{ backgroundColor: "var(--t-inner)" }}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
                       <p
                         className="text-xs font-bold uppercase tracking-wider"
                         style={{ color: "var(--t-muted)" }}
@@ -812,8 +812,8 @@ export function ReservaDrawer({
                       </p>
                     </div>
                     {whatsappCliente.trim().length >= 8 && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-500">
-                        <Check className="h-3 w-3" />
+                      <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-500">
+                        <Check className="h-3 w-3 shrink-0" />
                         <span>WhatsApp Ativo</span>
                       </span>
                     )}
@@ -926,19 +926,19 @@ export function ReservaDrawer({
                   >
                     {sinalCentavos > 0 ? (
                       <>
-                        <div className="flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-2">
-                            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                        <div className="flex items-center justify-between gap-3 text-xs">
+                          <div className="flex min-w-0 items-center gap-2">
+                            <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
                             <span className="font-medium">Sinal de garantia de vaga</span>
                           </div>
-                          <span className="font-mono-num font-bold">
+                          <span className="shrink-0 whitespace-nowrap font-mono-num font-bold">
                             {formatPrice(sinalCentavos)}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-between gap-3 text-xs">
+                          <div className="flex min-w-0 items-center gap-2">
                             <span
-                              className="h-2 w-2 rounded-full"
+                              className="h-2 w-2 shrink-0 rounded-full"
                               style={{ backgroundColor: "var(--t-muted)" }}
                             />
                             <span style={{ color: "var(--t-muted)" }}>
@@ -946,7 +946,7 @@ export function ReservaDrawer({
                             </span>
                           </div>
                           <span
-                            className="font-mono-num font-medium"
+                            className="shrink-0 whitespace-nowrap font-mono-num font-medium"
                             style={{ color: "var(--t-muted)" }}
                           >
                             {formatPrice(restanteCentavos)}
@@ -954,14 +954,14 @@ export function ReservaDrawer({
                         </div>
                       </>
                     ) : (
-                      <div className="flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                      <div className="flex items-center justify-between gap-3 text-xs">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
                           <span className="font-medium">
-                            Reserva gratuita — pagamento direto no local
+                            Reserva gratuita — pagamento no local
                           </span>
                         </div>
-                        <span className="font-mono-num font-bold">
+                        <span className="shrink-0 whitespace-nowrap font-mono-num font-bold">
                           {formatPrice(totalCentavos)}
                         </span>
                       </div>
