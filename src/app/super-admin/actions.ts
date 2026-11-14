@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { checkRateLimit } from "@/lib/security/rate-limit";
 import {
   SUPER_ADMIN_PIN_COOKIE,
   createSuperAdminPinToken,
@@ -109,6 +110,17 @@ export async function verifySuperAdminPinAction(
   const base = await verifySuperAdminBaseIdentity();
   if (!base.ok) {
     return { error: "Sessão sem permissão de Super Admin." };
+  }
+
+  const rl = checkRateLimit(
+    `super-admin:pin:${base.session.userId}`,
+    10,
+    15 * 60_000
+  );
+  if (!rl.allowed) {
+    return {
+      error: `Muitas tentativas. Aguarde ${Math.ceil(rl.retryAfterSec / 60)} min.`,
+    };
   }
 
   const parsed = pinSchema.safeParse(rawInput);

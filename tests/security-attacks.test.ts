@@ -80,7 +80,12 @@ describe("Segurança — Testes Defensivos Contra Ataques Conhecidos", () => {
   it("bloqueia acesso anônimo ao /super-admin, webhook Asaas sem token e Open Redirect HTTP", async () => {
     const adminRes = await fetch(`${BASE_URL}/super-admin`, { redirect: "manual" });
     const adminHtml = await adminRes.text();
-    expect(adminHtml).toContain("Acesso Restrito");
+    expect([307, 401, 403]).toContain(adminRes.status);
+    if (adminRes.status === 307) {
+      expect(adminRes.headers.get("location") ?? "").toContain("/entrar");
+    } else {
+      expect(adminHtml).toContain("Acesso Restrito");
+    }
     expect(adminHtml).not.toContain("Exportar .CSV");
 
     const exportRes = await fetch(`${BASE_URL}/super-admin/export`, {

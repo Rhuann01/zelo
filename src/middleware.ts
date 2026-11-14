@@ -28,13 +28,44 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
-  const isProtected = pathname.startsWith("/painel") || pathname.startsWith("/onboarding");
+  const isProtected =
+    pathname.startsWith("/painel") ||
+    pathname.startsWith("/onboarding") ||
+    pathname.startsWith("/super-admin");
 
   if (isProtected && !user) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/entrar";
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  if (pathname.startsWith("/super-admin") && user) {
+    const uidAllowlist = new Set(
+      (process.env.SUPER_ADMIN_UIDS ?? "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+    );
+    const emailAllowlist = new Set(
+      (process.env.SUPER_ADMIN_EMAILS ?? "")
+        .split(",")
+        .map((s) => s.trim().toLowerCase())
+        .filter(Boolean)
+    );
+    const userEmail = user.email?.trim().toLowerCase() ?? "";
+    const allowedByUid = uidAllowlist.has(user.id);
+    const allowedByEmail =
+      Boolean(userEmail) &&
+      Boolean(user.email_confirmed_at) &&
+      emailAllowlist.has(userEmail);
+
+    if (!allowedByUid && !allowedByEmail) {
+      const fallbackUrl = request.nextUrl.clone();
+      fallbackUrl.pathname = "/painel";
+      fallbackUrl.search = "";
+      return NextResponse.redirect(fallbackUrl);
+    }
   }
 
   return supabaseResponse;

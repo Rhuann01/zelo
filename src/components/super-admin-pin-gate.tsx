@@ -59,7 +59,7 @@ export function SuperAdminPinGate() {
               required
               value={pin}
               onChange={(e) => setPin(e.target.value)}
-              placeholder="Digite o PIN do .env"
+              placeholder="••••••"
               className="w-full bg-transparent text-sm font-mono-num outline-none"
             />
           </div>
