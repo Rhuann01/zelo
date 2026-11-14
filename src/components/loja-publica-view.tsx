@@ -168,25 +168,16 @@ export function LojaPublicaView({
         } as React.CSSProperties
       }
     >
-      <main className="mx-auto flex w-full max-w-[480px] flex-1 flex-col pb-32">
+      <main
+        className={`mx-auto flex w-full max-w-[480px] flex-1 flex-col ${
+          estiloBarra === "dock_flutuante" || selecionados.length > 0 ? "pb-20" : "pb-8"
+        }`}
+      >
         {isLiquidGlass && <LiquidGlassSvgDefs />}
         {/* Top App Profile Header (estilo aplicativo próprio) */}
         <header className="px-4 pt-4 pb-3">
           <div className="flex items-center justify-between gap-2.5">
             <div className="flex min-w-0 items-center gap-2.5">
-              <Link
-                href="/explorar"
-                aria-label="Voltar para explorar"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-transform active:scale-95"
-                style={{
-                  backgroundColor: "var(--t-surface)",
-                  color: "var(--t-ink)",
-                  border: isBrutal ? "2px solid #000000" : "1px solid var(--t-border)",
-                }}
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </Link>
-
               {loja.logo_url ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
@@ -230,19 +221,34 @@ export function LojaPublicaView({
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={handleShare}
-              aria-label="Compartilhar página"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-transform active:scale-95"
-              style={{
-                backgroundColor: "var(--t-surface)",
-                color: copiedShare ? "var(--t-accent)" : "var(--t-ink)",
-                border: isBrutal ? "2px solid #000000" : "1px solid var(--t-border)",
-              }}
-            >
-              <Share2 className="h-4 w-4" />
-            </button>
+            <div className="flex shrink-0 items-center gap-2">
+              <Link
+                href="/explorar"
+                aria-label="Voltar para explorar"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-transform active:scale-95"
+                style={{
+                  backgroundColor: "var(--t-surface)",
+                  color: "var(--t-ink)",
+                  border: isBrutal ? "2px solid #000000" : "1px solid var(--t-border)",
+                }}
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Link>
+
+              <button
+                type="button"
+                onClick={handleShare}
+                aria-label="Compartilhar página"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-transform active:scale-95"
+                style={{
+                  backgroundColor: "var(--t-surface)",
+                  color: copiedShare ? "var(--t-accent)" : "var(--t-ink)",
+                  border: isBrutal ? "2px solid #000000" : "1px solid var(--t-border)",
+                }}
+              >
+                <Share2 className="h-4 w-4" />
+              </button>
+            </div>
           </div>
 
           {loja.pausada && (
@@ -592,7 +598,7 @@ export function LojaPublicaView({
             </section>
           )}
 
-          <footer className="pt-6 text-center">
+          <footer className="pt-3 text-center">
             <Link
               href="/"
               className="text-[11px] font-medium transition-opacity hover:opacity-80"
