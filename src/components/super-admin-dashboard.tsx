@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   Check,
   CheckCircle2,
+  ChevronDown,
   Clock,
   Copy,
   Download,
@@ -98,6 +99,7 @@ export function SuperAdminDashboard({
   const [darkMode, setDarkMode] = useState(false);
   const [periodo, setPeriodo] = useState<"hoje" | "7d" | "30d" | "mes">("30d");
   const [quickActionsOpen, setQuickActionsOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [busca, setBusca] = useState("");
   const [filtroSemaforo, setFiltroSemaforo] = useState<"todos" | SemaforoCor>(
     "todos"
@@ -907,18 +909,42 @@ export function SuperAdminDashboard({
                 </span>
               </div>
 
-              <div
-                className={`inline-flex items-center gap-2.5 rounded-full ${bgCard} pl-1.5 pr-3.5 h-10`}
-              >
-                {renderAvatar("h-7 w-7")}
-                <div className="leading-tight text-left">
-                  <p className="text-xs font-bold truncate max-w-[140px]">
-                    {actorName ?? "Fundador Admin"}
-                  </p>
-                  <p className={`text-[10px] font-mono-num ${textMuted} truncate max-w-[160px]`}>
-                    {actorEmail ?? "Super Admin"}
-                  </p>
-                </div>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setProfileMenuOpen((v) => !v)}
+                  className={`inline-flex items-center gap-2.5 rounded-full ${bgCard} pl-1.5 pr-3 h-10 hover:opacity-95 transition-opacity`}
+                >
+                  {renderAvatar("h-7 w-7")}
+                  <div className="leading-tight text-left">
+                    <p className="text-xs font-bold truncate max-w-[140px]">
+                      {actorName ?? "Fundador Admin"}
+                    </p>
+                    <p className={`text-[10px] font-mono-num ${textMuted} truncate max-w-[160px]`}>
+                      {actorEmail ?? "Super Admin"}
+                    </p>
+                  </div>
+                  <ChevronDown className={`h-3.5 w-3.5 ${textMuted} shrink-0`} />
+                </button>
+
+                {profileMenuOpen && (
+                  <div
+                    className={`absolute right-0 top-12 z-40 w-48 rounded-2xl ${bgCard} p-1.5 shadow-xl border border-black/8 dark:border-white/10 text-left space-y-1`}
+                  >
+                    <Link
+                      href="/painel"
+                      className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/8"
+                    >
+                      <span>Painel da Loja</span>
+                    </Link>
+                    <Link
+                      href="/explorar"
+                      className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/8"
+                    >
+                      <span>Vitrine Pública</span>
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1071,9 +1097,51 @@ export function SuperAdminDashboard({
               (data.kpis.mrrBrutoCentavos / metaMensalCentavos) *
               100
             ).toFixed(1);
-            const novasSemana = data.lojas.filter(
-              (l) => Date.now() - Date.parse(l.created_at) <= 7 * 86_400_000
+            const nowMs = Date.now();
+            const startOfMonthMs = new Date(
+              new Date().getFullYear(),
+              new Date().getMonth(),
+              1
+            ).getTime();
+            const periodoCutoffMs =
+              periodo === "hoje"
+                ? nowMs - 86_400_000
+                : periodo === "7d"
+                  ? nowMs - 7 * 86_400_000
+                  : periodo === "30d"
+                    ? nowMs - 30 * 86_400_000
+                    : startOfMonthMs;
+            const periodoLabel =
+              periodo === "hoje"
+                ? "hoje"
+                : periodo === "7d"
+                  ? "nesta semana"
+                  : periodo === "30d"
+                    ? "nos últimos 30d"
+                    : "neste mês";
+            const novasNoPeriodo = data.lojas.filter(
+              (l) => Date.parse(l.created_at) >= periodoCutoffMs
             ).length;
+
+            // Sparkline real baseada no histórico de crescimento das lojas (6 intervalos)
+            const bucketCount = 6;
+            const spanMs = Math.max(86_400_000, nowMs - periodoCutoffMs);
+            const stepMs = spanMs / bucketCount;
+            const sparkValues = Array.from({ length: bucketCount }, (_, idx) => {
+              const bucketEnd = periodoCutoffMs + (idx + 1) * stepMs;
+              return data.lojas.filter(
+                (l) => Date.parse(l.created_at) <= bucketEnd
+              ).length;
+            });
+            const sparkMax = Math.max(1, ...sparkValues);
+            const sparkPoints = sparkValues
+              .map((v, idx) => {
+                const x = Math.round((idx / (bucketCount - 1)) * 60) + 2;
+                const y = Math.round(22 - (v / sparkMax) * 18);
+                return `${idx === 0 ? "M" : "L"}${x} ${y}`;
+              })
+              .join(" ");
+
             const sobRadar =
               data.semaforoResumo.vermelho + data.semaforoResumo.amarelo;
 
@@ -1106,10 +1174,12 @@ export function SuperAdminDashboard({
                         viewBox="0 0 64 26"
                         className="h-7 w-14 shrink-0 text-emerald-500"
                         fill="none"
-                        aria-hidden="true"
+                        role="img"
+                        aria-label={`Tendência da base (${sparkValues.join(", ")})`}
                       >
+                        <title>{`Lojas acumuladas no período: ${sparkValues.join(" → ")}`}</title>
                         <path
-                          d="M2 22 L16 18 L26 20 L38 11 L49 13 L62 4"
+                          d={sparkPoints}
                           stroke="currentColor"
                           strokeWidth="2.4"
                           strokeLinecap="round"
@@ -1198,7 +1268,7 @@ export function SuperAdminDashboard({
                     </div>
                     <div className="flex items-center justify-between gap-2 text-[11px] font-mono-num">
                       <span className={textMuted}>
-                        +{novasSemana} lojas nesta semana
+                        +{novasNoPeriodo} lojas {periodoLabel}
                       </span>
                       <span className="font-bold text-emerald-600 dark:text-emerald-400">
                         Capacidade Alta
