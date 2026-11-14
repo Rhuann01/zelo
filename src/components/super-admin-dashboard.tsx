@@ -112,6 +112,11 @@ export function SuperAdminDashboard({
   const [showFilters, setShowFilters] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [menuPos, setMenuPos] = useState<{
+    top?: number;
+    bottom?: number;
+    right: number;
+  } | null>(null);
   const [page, setPage] = useState(1);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [copiedAi, setCopiedAi] = useState(false);
@@ -570,20 +575,45 @@ export function SuperAdminDashboard({
                           <button
                             type="button"
                             aria-label={`Ações para ${loja.nome}`}
-                            onClick={() =>
-                              setOpenMenuId((prev) =>
-                                prev === loja.id ? null : loja.id
-                              )
-                            }
+                            onClick={(e) => {
+                              if (openMenuId === loja.id) {
+                                setOpenMenuId(null);
+                                setMenuPos(null);
+                                return;
+                              }
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const openUp = window.innerHeight - rect.bottom < 270;
+                              setMenuPos({
+                                top: openUp ? undefined : rect.bottom + 6,
+                                bottom: openUp
+                                  ? window.innerHeight - rect.top + 6
+                                  : undefined,
+                                right: Math.max(12, window.innerWidth - rect.right),
+                              });
+                              setOpenMenuId(loja.id);
+                            }}
                             className={`inline-flex h-8 w-8 items-center justify-center rounded-full ${bgSub} hover:opacity-80`}
                           >
                             <MoreHorizontal className="h-4 w-4" />
                           </button>
 
-                          {openMenuId === loja.id && (
-                            <div
-                              className={`absolute right-2.5 top-12 z-30 w-48 rounded-2xl ${bgCard} p-1.5 shadow-xl border ${dividerBorder} text-left space-y-1`}
-                            >
+                          {openMenuId === loja.id && menuPos && (
+                            <>
+                              <div
+                                className="fixed inset-0 z-40"
+                                onClick={() => {
+                                  setOpenMenuId(null);
+                                  setMenuPos(null);
+                                }}
+                              />
+                              <div
+                                style={{
+                                  top: menuPos.top,
+                                  bottom: menuPos.bottom,
+                                  right: menuPos.right,
+                                }}
+                                className={`fixed z-50 w-48 rounded-2xl ${bgCard} p-1.5 shadow-xl border ${dividerBorder} text-left space-y-1`}
+                              >
                               <a
                                 href={`/${loja.slug}`}
                                 target="_blank"
@@ -668,6 +698,7 @@ export function SuperAdminDashboard({
                                 )}
                               </button>
                             </div>
+                            </>
                           )}
                         </td>
                       </tr>
