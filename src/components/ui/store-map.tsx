@@ -73,15 +73,7 @@ export function buildEmbedMapUrl(params: {
 }): string | null {
   const { latitude, longitude, addressQuery } = params;
   if (latitude != null && longitude != null) {
-    const dLon = 0.0045;
-    const dLat = 0.0035;
-    const bbox = [
-      (longitude - dLon).toFixed(6),
-      (latitude - dLat).toFixed(6),
-      (longitude + dLon).toFixed(6),
-      (latitude + dLat).toFixed(6),
-    ].join("%2C");
-    return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${latitude}%2C${longitude}`;
+    return `https://maps.google.com/maps?q=${latitude},${longitude}&z=17&output=embed`;
   }
   if (addressQuery && addressQuery.trim().length > 0) {
     return `https://maps.google.com/maps?q=${encodeURIComponent(
@@ -164,19 +156,22 @@ function InteractiveLeafletPicker({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<import("leaflet").Map | null>(null);
   const markerRef = useRef<import("leaflet").Marker | null>(null);
+  const tileLayerRef = useRef<import("leaflet").TileLayer | null>(null);
+  const [satellite, setSatellite] = useState(false);
   const onChangeRef = useRef(onChangeCoords);
   onChangeRef.current = onChangeCoords;
 
   useEffect(() => {
     let active = true;
+    let resizeObs: ResizeObserver | null = null;
     const hasCoords = latitude != null && longitude != null;
     const defaultLat = latitude ?? -14.235;
     const defaultLng = longitude ?? -51.9253;
 
     (async () => {
-      const L = (await import("leaflet")).default;
       // @ts-expect-error Leaflet CSS loaded dynamically only inside picker
       await import("leaflet/dist/leaflet.css");
+      const L = (await import("leaflet")).default;
       if (!active || !containerRef.current || mapRef.current) return;
 
       const map = L.map(containerRef.current, {
@@ -185,16 +180,21 @@ function InteractiveLeafletPicker({
         zoomControl: true,
       });
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "&copy; OpenStreetMap",
-        maxZoom: 19,
-      }).addTo(map);
+      const layer = L.tileLayer(
+        "https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
+        {
+          subdomains: ["0", "1", "2", "3"],
+          attribution: "&copy; Google Maps",
+          maxZoom: 20,
+        }
+      ).addTo(map);
+      tileLayerRef.current = layer;
 
       const pinIcon = L.divIcon({
         className: "",
-        html: `<div style="width:28px;height:28px;border-radius:9999px;background:#111111;border:3px solid #FFFFFF;box-shadow:0 4px 12px rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;"><div style="width:8px;height:8px;border-radius:9999px;background:#F59E0B;"></div></div>`,
-        iconSize: [28, 28],
-        iconAnchor: [14, 14],
+        html: `<div style="width:30px;height:30px;border-radius:9999px;background:#111111;border:3px solid #FFFFFF;box-shadow:0 4px 12px rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;"><div style="width:9px;height:9px;border-radius:9999px;background:#EF4444;"></div></div>`,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
       });
 
       const placeMarker = (lat: number, lng: number) => {
@@ -236,19 +236,34 @@ function InteractiveLeafletPicker({
       });
 
       mapRef.current = map;
-      setTimeout(() => map.invalidateSize(), 100);
+      setTimeout(() => map.invalidateSize(), 120);
+
+      if (typeof ResizeObserver !== "undefined" && containerRef.current) {
+        resizeObs = new ResizeObserver(() => {
+          map.invalidateSize();
+        });
+        resizeObs.observe(containerRef.current);
+      }
     })();
 
     return () => {
       active = false;
+      resizeObs?.disconnect();
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
         markerRef.current = null;
+        tileLayerRef.current = null;
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!tileLayerRef.current) return;
+    const lyrs = satellite ? "y" : "m";
+    tileLayerRef.current.setUrl(`https://mt{s}.google.com/vt/lyrs=${lyrs}&x={x}&y={y}&z={z}`);
+  }, [satellite]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -290,10 +305,17 @@ function InteractiveLeafletPicker({
 
   return (
     <div className="relative overflow-hidden rounded-xl bg-[var(--zelo-soft)]">
-      <div ref={containerRef} className="h-56 w-full z-0" />
+      <div ref={containerRef} className="h-60 w-full z-0" />
       <span className="pointer-events-none absolute top-2 left-2 z-[400] rounded-lg bg-black/75 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-xs">
         Toque no mapa ou arraste o pino para ajustar
       </span>
+      <button
+        type="button"
+        onClick={() => setSatellite((s) => !s)}
+        className="absolute top-2 right-2 z-[400] rounded-lg bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-[#111111] shadow-sm transition-colors hover:bg-white"
+      >
+        {satellite ? "Mapa" : "Satélite"}
+      </button>
     </div>
   );
 }
@@ -399,6 +421,12 @@ export function StoreMapPicker({
       );
     };
 
+    if (typeof window !== "undefined" && !window.isSecureContext) {
+      setFeedback("GPS automático exige HTTPS ou localhost. Toque direto no mapa ou cole o link do Google Maps.");
+      setLoadingGps(false);
+      return;
+    }
+
     if (!navigator.geolocation) {
       void applyIpFallback(false);
       return;
@@ -407,7 +435,7 @@ export function StoreMapPicker({
     const onSuccess = (pos: GeolocationPosition) => {
       onChangeCoords(round6(pos.coords.latitude), round6(pos.coords.longitude));
       setLoadingGps(false);
-      setFeedback("Localização marcada! Se precisar, arraste o pino para ajustar.");
+      setFeedback("Localização GPS marcada! Arraste o pino se quiser ajustar.");
     };
 
     const onFinalError = (err: GeolocationPositionError) => {
@@ -421,14 +449,14 @@ export function StoreMapPicker({
           onFinalError(err);
           return;
         }
-        // Fallback sem highAccuracy (comum em desktop Linux/Wi-Fi)
+        // Fallback sem highAccuracy (aproveita cache do navegador quando GPS puro dá timeout)
         navigator.geolocation.getCurrentPosition(onSuccess, onFinalError, {
           enableHighAccuracy: false,
-          timeout: 8_000,
-          maximumAge: 60_000,
+          timeout: 10_000,
+          maximumAge: 300_000,
         });
       },
-      { enableHighAccuracy: true, timeout: 6_000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 0 }
     );
   };
 
