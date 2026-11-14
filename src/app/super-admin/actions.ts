@@ -151,3 +151,55 @@ export async function verifySuperAdminPinAction(
   revalidatePath("/super-admin");
   return {};
 }
+
+const setPlanoSchema = z.object({
+  lojaId: z.string().uuid(),
+  plano: z.enum(["trial", "solo", "estudio"]),
+  assinaturaStatus: z.enum(["trial", "ativa", "atrasada", "cancelada"]),
+});
+
+export async function superAdminSetPlanoAction(
+  rawInput: z.infer<typeof setPlanoSchema>
+): Promise<{ error?: string }> {
+  const guard = await verifySuperAdminAccess();
+  if (!guard.ok) return { error: "Acesso negado ao Super Admin." };
+
+  const parsed = setPlanoSchema.safeParse(rawInput);
+  if (!parsed.success) return { error: "Parâmetros inválidos." };
+
+  const admin = createAdminClient();
+  const pausada =
+    parsed.data.assinaturaStatus === "atrasada" ||
+    parsed.data.assinaturaStatus === "cancelada";
+
+  const { data: loja, error } = await admin
+    .from("lojas")
+    .update({
+      plano: parsed.data.plano,
+      assinatura_status: parsed.data.assinaturaStatus,
+      pausada,
+    })
+    .eq("id", parsed.data.lojaId)
+    .select("slug")
+    .single();
+
+  if (error || !loja) {
+    return { error: "Não foi possível alterar o plano da loja." };
+  }
+
+  await admin.from("super_admin_audit_logs").insert({
+    actor_uid: guard.session.userId,
+    acao: "alterar_plano_manual",
+    alvo_loja_id: parsed.data.lojaId,
+    detalhes: {
+      slug: loja.slug,
+      plano: parsed.data.plano,
+      assinatura_status: parsed.data.assinaturaStatus,
+    },
+  });
+
+  revalidateTag(`loja-${loja.slug}`);
+  revalidateTag("vitrine-explorar");
+  revalidatePath("/super-admin");
+  return {};
+}

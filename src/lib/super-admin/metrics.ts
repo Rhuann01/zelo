@@ -12,6 +12,7 @@ export interface SuperAdminLojaRow {
   nicho: string;
   cidade: string;
   bairro: string;
+  whatsapp_loja: string;
   plano: "trial" | "solo" | "estudio";
   assinatura_status: "trial" | "ativa" | "atrasada" | "cancelada";
   pausada: boolean;
@@ -143,7 +144,7 @@ export async function loadSuperAdminDashboardData(): Promise<SuperAdminDashboard
     admin
       .from("lojas")
       .select(
-        "id, nome, slug, nicho, cidade, bairro, plano, assinatura_status, pausada, trial_ate, created_at, ultimo_acesso_painel_em, primeiro_agendamento_em, indicado_por_loja_id, bonus_indicacao_pago, taxa_asaas_centavos"
+        "id, nome, slug, nicho, cidade, bairro, whatsapp_loja, plano, assinatura_status, pausada, trial_ate, created_at, ultimo_acesso_painel_em, primeiro_agendamento_em, indicado_por_loja_id, bonus_indicacao_pago, taxa_asaas_centavos"
       )
       .order("created_at", { ascending: false }),
     admin.from("servicos").select("loja_id").eq("ativo", true),
@@ -258,6 +259,7 @@ export async function loadSuperAdminDashboardData(): Promise<SuperAdminDashboard
       nicho: l.nicho,
       cidade: l.cidade,
       bairro: l.bairro,
+      whatsapp_loja: l.whatsapp_loja ?? "",
       plano: l.plano as "trial" | "solo" | "estudio",
       assinatura_status: l.assinatura_status as
         | "trial"

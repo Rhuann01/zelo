@@ -43,11 +43,13 @@ export function ConfiguracoesForm({
   initialMinhaChavePix = "",
   canEditProfPix = false,
   initialTemSenhaSeguranca = false,
+  isSuperAdmin = false,
 }: {
   ctx: PainelContext;
   initialMinhaChavePix?: string;
   canEditProfPix?: boolean;
   initialTemSenhaSeguranca?: boolean;
+  isSuperAdmin?: boolean;
 }) {
   const router = useRouter();
   const [nome, setNome] = useState(ctx.perfil.nome);
@@ -286,6 +288,15 @@ export function ConfiguracoesForm({
           <Store className="h-[18px] w-[18px]" />
           <span>Mudar para Modo Cliente</span>
         </Link>
+        {isSuperAdmin && (
+          <Link
+            href="/super-admin"
+            className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg bg-[var(--zelo-soft)] px-4 text-sm font-semibold text-[var(--zelo-ink)] transition-opacity hover:opacity-90 active:scale-[0.99]"
+          >
+            <ShieldCheck className="h-[18px] w-[18px] text-[#FF5A1F]" />
+            <span>Torre de Controle (Super Admin)</span>
+          </Link>
+        )}
       </section>
 
       {/* Preferências do Sistema */}

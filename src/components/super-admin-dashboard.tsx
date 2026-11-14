@@ -10,11 +10,14 @@ import {
   ChevronDown,
   Clock,
   Copy,
+  CreditCard,
   Download,
+  ExternalLink,
   Gift,
   Globe,
   LayoutGrid,
   Lock,
+  MessageCircle,
   Moon,
   MoreHorizontal,
   PauseCircle,
@@ -34,6 +37,7 @@ import {
 import { EmptyState } from "@/components/ui";
 import {
   superAdminExtendTrialAction,
+  superAdminSetPlanoAction,
   superAdminTogglePausaAction,
 } from "@/app/super-admin/actions";
 import type {
@@ -162,6 +166,32 @@ export function SuperAdminDashboard({
       const res = await superAdminExtendTrialAction({ lojaId, dias });
       setFeedback(res.error ?? `Trial estendido em +${dias} dias.`);
     });
+  };
+
+  const handleSetPlano = (
+    lojaId: string,
+    plano: "trial" | "solo" | "estudio",
+    assinaturaStatus: "trial" | "ativa" | "atrasada" | "cancelada"
+  ) => {
+    setFeedback(null);
+    startTransition(async () => {
+      const res = await superAdminSetPlanoAction({
+        lojaId,
+        plano,
+        assinaturaStatus,
+      });
+      setFeedback(
+        res.error ??
+          `Plano atualizado para ${plano.toUpperCase()} (${assinaturaStatus}).`
+      );
+    });
+  };
+
+  const whatsappHref = (raw: string) => {
+    const digits = raw.replace(/\D/g, "");
+    if (digits.length < 10) return null;
+    const normalized = digits.startsWith("55") ? digits : `55${digits}`;
+    return `https://wa.me/${normalized}`;
   };
 
   const handleCopyForAi = async () => {
@@ -552,8 +582,54 @@ export function SuperAdminDashboard({
 
                           {openMenuId === loja.id && (
                             <div
-                              className={`absolute right-2.5 top-12 z-30 w-40 rounded-2xl ${bgCard} p-1.5 shadow-xl border ${dividerBorder} text-left space-y-1`}
+                              className={`absolute right-2.5 top-12 z-30 w-48 rounded-2xl ${bgCard} p-1.5 shadow-xl border ${dividerBorder} text-left space-y-1`}
                             >
+                              <a
+                                href={`/${loja.slug}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={() => setOpenMenuId(null)}
+                                className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold ${darkMode ? "hover:bg-white/8" : "hover:bg-black/5"}`}
+                              >
+                                <ExternalLink className="h-3.5 w-3.5" />
+                                <span>Abrir vitrine</span>
+                              </a>
+                              {whatsappHref(loja.whatsapp_loja) && (
+                                <a
+                                  href={whatsappHref(loja.whatsapp_loja)!}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={() => setOpenMenuId(null)}
+                                  className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-emerald-600 ${darkMode ? "hover:bg-white/8" : "hover:bg-black/5"}`}
+                                >
+                                  <MessageCircle className="h-3.5 w-3.5" />
+                                  <span>WhatsApp do lojista</span>
+                                </a>
+                              )}
+                              <button
+                                type="button"
+                                disabled={isPending}
+                                onClick={() => {
+                                  handleSetPlano(loja.id, "solo", "ativa");
+                                  setOpenMenuId(null);
+                                }}
+                                className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold ${darkMode ? "hover:bg-white/8" : "hover:bg-black/5"}`}
+                              >
+                                <CreditCard className="h-3.5 w-3.5 text-[#FF5A1F]" />
+                                <span>Ativar Solo (R$ 29)</span>
+                              </button>
+                              <button
+                                type="button"
+                                disabled={isPending}
+                                onClick={() => {
+                                  handleSetPlano(loja.id, "estudio", "ativa");
+                                  setOpenMenuId(null);
+                                }}
+                                className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold ${darkMode ? "hover:bg-white/8" : "hover:bg-black/5"}`}
+                              >
+                                <CreditCard className="h-3.5 w-3.5 text-[#FF5A1F]" />
+                                <span>Ativar Estúdio (R$ 59)</span>
+                              </button>
                               <button
                                 type="button"
                                 disabled={isPending}
@@ -643,7 +719,27 @@ export function SuperAdminDashboard({
                       <span>• Trial {formatDateBr(loja.trial_ate)}</span>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
+                      <a
+                        href={`/${loja.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-xl ${bgCard} px-3 text-xs font-semibold`}
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        <span>Vitrine</span>
+                      </a>
+                      {whatsappHref(loja.whatsapp_loja) && (
+                        <a
+                          href={whatsappHref(loja.whatsapp_loja)!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-xl ${badgeEmerald} px-3 text-xs font-semibold`}
+                        >
+                          <MessageCircle className="h-3.5 w-3.5" />
+                          <span>WhatsApp</span>
+                        </a>
+                      )}
                       <button
                         type="button"
                         disabled={isPending}
