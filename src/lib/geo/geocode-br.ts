@@ -167,7 +167,10 @@ export async function geocodeBrazilCascade(params: {
   uf?: string;
   signal?: AbortSignal;
 }): Promise<{ lat: number; lng: number; precision: "street" | "neighborhood" | "city" } | null> {
-  const end = params.endereco?.trim() ?? "";
+  const rawEnd = params.endereco?.trim() ?? "";
+  // Remove complemento (" - Sala 2") para não atrapalhar a busca pelo número da porta
+  const end = rawEnd.split(" - ")[0]?.trim() ?? "";
+  const streetOnly = end.replace(/,\s*(\d+[a-zA-Z]?|s\/n|sn)$/i, "").trim();
   const bai = params.bairro?.trim() ?? "";
   const cid = params.cidade?.trim() ?? "";
   const uf = params.uf?.trim() ?? "";
@@ -176,6 +179,10 @@ export async function geocodeBrazilCascade(params: {
   if (end && cid) {
     if (bai) attempts.push({ q: [end, bai, cid, uf, "Brasil"].filter(Boolean).join(", "), precision: "street" });
     attempts.push({ q: [end, cid, uf, "Brasil"].filter(Boolean).join(", "), precision: "street" });
+    if (streetOnly && streetOnly !== end) {
+      if (bai) attempts.push({ q: [streetOnly, bai, cid, uf, "Brasil"].filter(Boolean).join(", "), precision: "street" });
+      attempts.push({ q: [streetOnly, cid, uf, "Brasil"].filter(Boolean).join(", "), precision: "street" });
+    }
   } else if (end) {
     attempts.push({ q: [end, "Brasil"].join(", "), precision: "street" });
   }
