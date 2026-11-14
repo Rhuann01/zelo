@@ -195,11 +195,7 @@ export function LojaPublicaView({
         } as React.CSSProperties
       }
     >
-      <main
-        className={`mx-auto flex w-full max-w-[480px] flex-1 flex-col ${
-          estiloBarra === "dock_flutuante" || selecionados.length > 0 ? "pb-20" : "pb-8"
-        }`}
-      >
+      <main className="mx-auto flex w-full max-w-[480px] flex-1 flex-col pb-24">
         {isLiquidGlass && <LiquidGlassSvgDefs />}
         {/* Top App Profile Header (estilo aplicativo próprio) */}
         <header className="px-4 pt-4 pb-3">
@@ -314,17 +310,6 @@ export function LojaPublicaView({
             </div>
           )}
         </header>
-
-        {/* Navegação: Abas clássicas no topo OU Dock Flutuante no rodapé */}
-        {estiloBarra === "abas" && (
-          <StoreNavBar
-            tab={tab}
-            onChangeTab={setTab}
-            estiloBarra="abas"
-            isBrutal={isBrutal}
-            isLiquidGlass={isLiquidGlass}
-          />
-        )}
 
         {/* Content Area */}
         <div key={tab} className="zelo-panel-enter px-4 pt-3">
@@ -624,18 +609,16 @@ export function LojaPublicaView({
         </div>
       </main>
 
-      {/* Dock Flutuante quando configurado (oculto se houver serviços selecionados para não empilhar barras) */}
-      {estiloBarra === "dock_flutuante" && (
-        <StoreNavBar
-          tab={tab}
-          onChangeTab={setTab}
-          estiloBarra="dock_flutuante"
-          hidden={selecionados.length > 0 && !loja.pausada}
-          isBrutal={isBrutal}
-          isLiquidGlass={isLiquidGlass}
-          isDark={isDarkStore}
-        />
-      )}
+      {/* Barra de Navegação inferior (Abas clássicas ou Dock Flutuante; oculta se houver serviços selecionados) */}
+      <StoreNavBar
+        tab={tab}
+        onChangeTab={setTab}
+        estiloBarra={estiloBarra}
+        hidden={selecionados.length > 0 && !loja.pausada}
+        isBrutal={isBrutal}
+        isLiquidGlass={isLiquidGlass}
+        isDark={isDarkStore}
+      />
 
       {/* Floating Concentric Booking Capsule (Apple HIG / Stitch) */}
       {selecionados.length > 0 && !loja.pausada && (

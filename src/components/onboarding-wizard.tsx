@@ -2,12 +2,14 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
   Brush,
   Check,
   Clock,
+  ImagePlus,
   Loader2,
   Moon,
   Palette,
@@ -15,8 +17,10 @@ import {
   Plus,
   QrCode,
   Scissors,
+  Search,
   Sparkles,
   Store,
+  Upload,
   Users,
   X,
 } from "lucide-react";
@@ -29,7 +33,10 @@ import {
   slugifyNome,
   type PresetServico,
 } from "@/lib/schemas/loja";
-import { createLojaAction } from "@/app/onboarding/actions";
+import { createLojaAction, updateOnboardingMediaAction } from "@/app/onboarding/actions";
+import { createClient } from "@/lib/supabase/client";
+import { compressImageToWebP, STORE_MEDIA_COMPRESS_CONFIG } from "@/lib/image/compress-webp";
+import { StockPhotoSearch } from "@/components/ui/stock-photo-search";
 import { StatusBadge, SurfaceCard } from "@/components/ui";
 import { StoreLocationFields } from "@/components/ui/store-location-fields";
 
@@ -131,9 +138,14 @@ function formatBRL(centavos: number) {
 
 interface ServicoSelectable extends PresetServico {
   ativo: boolean;
+  imagem_url?: string | null;
+  exibir_imagem?: boolean;
+  localBlob?: Blob | null;
+  previewUrl?: string | null;
 }
 
 export function OnboardingWizard() {
+  const router = useRouter();
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [nome, setNome] = useState("");
   const [slug, setSlug] = useState("");
@@ -163,6 +175,13 @@ export function OnboardingWizard() {
   const [estiloBarra, setEstiloBarra] =
     useState<(typeof ESTILO_BARRA_OPTIONS)[number]>("abas");
   const [modoEscuro, setModoEscuro] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoBlob, setLogoBlob] = useState<Blob | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [capaUrl, setCapaUrl] = useState<string | null>(null);
+  const [capaBlob, setCapaBlob] = useState<Blob | null>(null);
+  const [capaPreview, setCapaPreview] = useState<string | null>(null);
+  const [stockTarget, setStockTarget] = useState<"logo" | "capa" | number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -241,15 +260,52 @@ export function OnboardingWizard() {
     }
   };
 
+  const handleSelectMediaFile = async (
+    target: "logo" | "capa" | number,
+    file: File | undefined
+  ) => {
+    if (!file) return;
+    setError(null);
+    try {
+      const blob = await compressImageToWebP(file, {
+        ...STORE_MEDIA_COMPRESS_CONFIG,
+        maxDimension: target === "logo" ? 512 : 1280,
+      });
+      const preview = URL.createObjectURL(blob);
+      if (target === "logo") {
+        setLogoBlob(blob);
+        setLogoUrl(null);
+        setLogoPreview(preview);
+      } else if (target === "capa") {
+        setCapaBlob(blob);
+        setCapaUrl(null);
+        setCapaPreview(preview);
+      } else {
+        setServicos((prev) =>
+          prev.map((s, idx) =>
+            idx === target
+              ? { ...s, localBlob: blob, previewUrl: preview, imagem_url: null, exibir_imagem: true }
+              : s
+          )
+        );
+      }
+    } catch {
+      setError("Não foi possível processar a imagem. Tente outro arquivo.");
+    }
+  };
+
   const handleSubmit = () => {
     setError(null);
-    const servicosAtivos = servicos
-      .filter((s) => s.ativo)
-      .map(({ nome: n, duracao_min, preco_centavos }) => ({
+    const servicosAtivosLista = servicos.filter((s) => s.ativo);
+    const servicosAtivos = servicosAtivosLista.map(
+      ({ nome: n, duracao_min, preco_centavos, imagem_url }) => ({
         nome: n,
         duracao_min,
         preco_centavos,
-      }));
+        imagem_url: imagem_url ?? null,
+        exibir_imagem: Boolean(imagem_url),
+      })
+    );
 
     startTransition(async () => {
       const res = await createLojaAction({
@@ -269,11 +325,72 @@ export function OnboardingWizard() {
         estilo_card: estiloCard,
         estilo_barra: estiloBarra,
         modo_escuro: tema === "glam" || tema === "urban" ? false : modoEscuro,
+        logo_url: logoUrl,
+        capa_url: capaUrl,
         servicos: servicosAtivos,
       });
-      if (res?.error) {
-        setError(res.error);
+      if (res?.error || !res?.lojaId) {
+        setError(res?.error ?? "Não foi possível criar a loja.");
+        return;
       }
+
+      const hasLocalUploads =
+        Boolean(logoBlob) ||
+        Boolean(capaBlob) ||
+        servicosAtivosLista.some((s) => Boolean(s.localBlob));
+
+      if (hasLocalUploads) {
+        const supabase = createClient();
+        let finalLogoUrl: string | undefined;
+        let finalCapaUrl: string | undefined;
+        const servicosMedia: Array<{ id: string; imagem_url: string }> = [];
+
+        if (logoBlob) {
+          const path = `${res.lojaId}/logo-${Date.now()}.webp`;
+          const { error: upErr } = await supabase.storage
+            .from("lojas-media")
+            .upload(path, logoBlob, { contentType: "image/webp", upsert: true });
+          if (!upErr) {
+            finalLogoUrl = supabase.storage.from("lojas-media").getPublicUrl(path).data.publicUrl;
+          }
+        }
+
+        if (capaBlob) {
+          const path = `${res.lojaId}/capa-${Date.now()}.webp`;
+          const { error: upErr } = await supabase.storage
+            .from("lojas-media")
+            .upload(path, capaBlob, { contentType: "image/webp", upsert: true });
+          if (!upErr) {
+            finalCapaUrl = supabase.storage.from("lojas-media").getPublicUrl(path).data.publicUrl;
+          }
+        }
+
+        const createdIds = res.servicoIds ?? [];
+        await Promise.all(
+          servicosAtivosLista.map(async (srv, idx) => {
+            const srvId = createdIds[idx];
+            if (!srv.localBlob || !srvId) return;
+            const path = `${res.lojaId}/srv-${srvId}-${Date.now()}.webp`;
+            const { error: upErr } = await supabase.storage
+              .from("lojas-media")
+              .upload(path, srv.localBlob, { contentType: "image/webp", upsert: true });
+            if (!upErr) {
+              const publicUrl = supabase.storage.from("lojas-media").getPublicUrl(path).data.publicUrl;
+              servicosMedia.push({ id: srvId, imagem_url: publicUrl });
+            }
+          })
+        );
+
+        await updateOnboardingMediaAction({
+          lojaId: res.lojaId,
+          ...(finalLogoUrl ? { logo_url: finalLogoUrl } : {}),
+          ...(finalCapaUrl ? { capa_url: finalCapaUrl } : {}),
+          ...(servicosMedia.length > 0 ? { servicosMedia } : {}),
+        });
+      }
+
+      router.push("/painel");
+      router.refresh();
     });
   };
 
@@ -288,13 +405,16 @@ export function OnboardingWizard() {
 
   return (
     <div className="relative min-h-dvh bg-[var(--zelo-bg)] text-[var(--zelo-ink)] flex flex-col">
-      {/* Textura sutil de bolinhas no fundo (padrão Stitch) */}
+      {/* Textura sutil de bolinhas no fundo com degradê (100% no topo -> transparente embaixo) */}
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed inset-0 opacity-20"
+        className="pointer-events-none fixed inset-0 opacity-35"
         style={{
-          backgroundImage: "radial-gradient(var(--zelo-muted) 0.75px, transparent 0.75px)",
-          backgroundSize: "12px 12px",
+          backgroundImage: "radial-gradient(var(--zelo-muted) 0.9px, transparent 0.9px)",
+          backgroundSize: "11px 11px",
+          maskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.4) 45%, rgba(0,0,0,0) 85%)",
+          WebkitMaskImage:
+            "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.4) 45%, rgba(0,0,0,0) 85%)",
         }}
       />
 
@@ -527,42 +647,106 @@ export function OnboardingWizard() {
               </div>
 
               <div className="space-y-2">
-                {servicos.map((srv, idx) => (
-                  <button
-                    key={`${srv.nome}-${idx}`}
-                    type="button"
-                    onClick={() => toggleServico(idx)}
-                    className={`w-full flex items-center justify-between p-3.5 rounded-xl text-left transition-all min-h-[60px] ${
-                      srv.ativo
-                        ? "bg-[var(--zelo-card)] shadow-xs"
-                        : "bg-[var(--zelo-soft)] opacity-60"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 min-w-0 pr-2">
-                      <div
-                        className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-colors ${
-                          srv.ativo
-                            ? "bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)]"
-                            : "bg-[var(--zelo-border)] text-transparent"
-                        }`}
+                {servicos.map((srv, idx) => {
+                  const thumbUrl = srv.previewUrl || srv.imagem_url;
+                  return (
+                    <div
+                      key={`${srv.nome}-${idx}`}
+                      className={`rounded-xl p-3 transition-all ${
+                        srv.ativo
+                          ? "bg-[var(--zelo-card)] shadow-xs"
+                          : "bg-[var(--zelo-soft)] opacity-60"
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => toggleServico(idx)}
+                        className="flex w-full items-center justify-between text-left min-h-[44px]"
                       >
-                        <Check className="h-3.5 w-3.5" />
-                      </div>
-                      <div className="min-w-0">
-                        <span className="block text-sm font-semibold truncate">
-                          {srv.nome}
+                        <div className="flex items-center gap-3 min-w-0 pr-2">
+                          <div
+                            className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-colors ${
+                              srv.ativo
+                                ? "bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)]"
+                                : "bg-[var(--zelo-border)] text-transparent"
+                            }`}
+                          >
+                            <Check className="h-3.5 w-3.5" />
+                          </div>
+                          {thumbUrl && (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img
+                              src={thumbUrl}
+                              alt={srv.nome}
+                              className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                            />
+                          )}
+                          <div className="min-w-0">
+                            <span className="block text-sm font-semibold truncate">
+                              {srv.nome}
+                            </span>
+                            <span className="inline-flex items-center gap-1 text-xs font-mono-num text-[var(--zelo-muted)] mt-0.5">
+                              <Clock className="h-3 w-3" />
+                              {srv.duracao_min} min
+                            </span>
+                          </div>
+                        </div>
+                        <span className="font-mono-num text-sm font-semibold shrink-0">
+                          {formatBRL(srv.preco_centavos)}
                         </span>
-                        <span className="inline-flex items-center gap-1 text-xs font-mono-num text-[var(--zelo-muted)] mt-0.5">
-                          <Clock className="h-3 w-3" />
-                          {srv.duracao_min} min
-                        </span>
-                      </div>
+                      </button>
+
+                      {srv.ativo && (
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5 pl-8">
+                          <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg bg-[var(--zelo-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--zelo-muted)] hover:text-[var(--zelo-ink)]">
+                            <Upload className="h-3 w-3" />
+                            <span>{thumbUrl ? "Trocar foto" : "Subir foto"}</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) =>
+                                handleSelectMediaFile(idx, e.target.files?.[0])
+                              }
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => setStockTarget(idx)}
+                            className="inline-flex items-center gap-1 rounded-lg bg-[var(--zelo-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--zelo-muted)] hover:text-[var(--zelo-ink)]"
+                          >
+                            <Search className="h-3 w-3" />
+                            <span>Buscar foto</span>
+                          </button>
+                          {thumbUrl && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setServicos((prev) =>
+                                  prev.map((item, i) =>
+                                    i === idx
+                                      ? {
+                                          ...item,
+                                          imagem_url: null,
+                                          localBlob: null,
+                                          previewUrl: null,
+                                          exibir_imagem: false,
+                                        }
+                                      : item
+                                  )
+                                )
+                              }
+                              className="inline-flex items-center gap-1 rounded-lg bg-red-500/10 px-2 py-1 text-[11px] font-semibold text-red-500"
+                            >
+                              <X className="h-3 w-3" />
+                              <span>Remover</span>
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <span className="font-mono-num text-sm font-semibold shrink-0">
-                      {formatBRL(srv.preco_centavos)}
-                    </span>
-                  </button>
-                ))}
+                  );
+                })}
               </div>
 
               {showAddSrv ? (
@@ -944,9 +1128,100 @@ export function OnboardingWizard() {
                             : "bg-[var(--zelo-soft)] text-[var(--zelo-muted)]"
                         }`}
                       >
-                        {opt === "abas" ? "Abas no topo" : "Dock flutuante"}
+                        {opt === "abas" ? "Barra inferior" : "Dock flutuante"}
                       </button>
                     ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Logo e Banner da Loja (opcional) */}
+              <div className="rounded-2xl bg-[var(--zelo-card)] p-3.5 shadow-xs space-y-3">
+                <span className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--zelo-muted)]">
+                  Logo e Banner da Loja (opcional)
+                </span>
+
+                <div className="grid grid-cols-1 gap-2.5">
+                  <div className="flex items-center justify-between gap-3 rounded-xl bg-[var(--zelo-soft)] p-2.5">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      {logoPreview || logoUrl ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          src={logoPreview || logoUrl || ""}
+                          alt="Preview da logo"
+                          className="h-11 w-11 shrink-0 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--zelo-card)] text-[var(--zelo-muted)]">
+                          <ImagePlus className="h-4 w-4" />
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <span className="block text-xs font-semibold">Logo do espaço</span>
+                        <span className="block text-[11px] text-[var(--zelo-muted)]">
+                          Foto quadrada ou circular
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <label className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-lg bg-[var(--zelo-card)] px-2.5 text-[11px] font-semibold shadow-xs">
+                        <Upload className="h-3 w-3" />
+                        <span>Subir</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleSelectMediaFile("logo", e.target.files?.[0])}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setStockTarget("logo")}
+                        className="inline-flex h-8 items-center gap-1 rounded-lg bg-[var(--zelo-card)] px-2.5 text-[11px] font-semibold shadow-xs"
+                      >
+                        <Search className="h-3 w-3" />
+                        <span>Buscar</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 rounded-xl bg-[var(--zelo-soft)] p-2.5">
+                    {(capaPreview || capaUrl) && (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={capaPreview || capaUrl || ""}
+                        alt="Preview do banner"
+                        className="h-24 w-full rounded-lg object-cover"
+                      />
+                    )}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <span className="block text-xs font-semibold">Banner da vitrine</span>
+                        <span className="block text-[11px] text-[var(--zelo-muted)]">
+                          Capa horizontal do topo
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <label className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-lg bg-[var(--zelo-card)] px-2.5 text-[11px] font-semibold shadow-xs">
+                          <Upload className="h-3 w-3" />
+                          <span>Subir</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleSelectMediaFile("capa", e.target.files?.[0])}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setStockTarget("capa")}
+                          className="inline-flex h-8 items-center gap-1 rounded-lg bg-[var(--zelo-card)] px-2.5 text-[11px] font-semibold shadow-xs"
+                        >
+                          <Search className="h-3 w-3" />
+                          <span>Buscar</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -954,6 +1229,69 @@ export function OnboardingWizard() {
           </div>
         )}
       </main>
+
+      {stockTarget !== null && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-3 backdrop-blur-xs">
+          <div className="w-full max-w-[460px] rounded-3xl bg-[var(--zelo-card)] p-4 shadow-xl space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-bold">
+                {stockTarget === "logo"
+                  ? "Buscar foto para Logo"
+                  : stockTarget === "capa"
+                    ? "Buscar foto para Banner"
+                    : "Buscar foto para Serviço"}
+              </span>
+              <button
+                type="button"
+                onClick={() => setStockTarget(null)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--zelo-soft)]"
+                aria-label="Fechar busca de fotos"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <StockPhotoSearch
+              tipo={stockTarget === "capa" ? "banner" : "servico"}
+              nicho={nicho}
+              selectedUrl={
+                stockTarget === "logo"
+                  ? logoUrl
+                  : stockTarget === "capa"
+                    ? capaUrl
+                    : typeof stockTarget === "number"
+                      ? servicos[stockTarget]?.imagem_url ?? null
+                      : null
+              }
+              onSelect={(url) => {
+                if (stockTarget === "logo") {
+                  setLogoUrl(url);
+                  setLogoBlob(null);
+                  setLogoPreview(url);
+                } else if (stockTarget === "capa") {
+                  setCapaUrl(url);
+                  setCapaBlob(null);
+                  setCapaPreview(url);
+                } else if (typeof stockTarget === "number") {
+                  setServicos((prev) =>
+                    prev.map((item, i) =>
+                      i === stockTarget
+                        ? {
+                            ...item,
+                            imagem_url: url,
+                            localBlob: null,
+                            previewUrl: url,
+                            exibir_imagem: true,
+                          }
+                        : item
+                    )
+                  );
+                }
+                setStockTarget(null);
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Bottom CTA Bar fixo estilo Stitch */}
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-[var(--zelo-bg)]/95 backdrop-blur-md pb-[max(0.75rem,env(safe-area-inset-bottom))]">

@@ -45,6 +45,10 @@ export function PainelShell({
   const router = useRouter();
 
   function handleStoreSwitch(lojaId: string) {
+    if (lojaId === "__new__") {
+      router.push("/onboarding");
+      return;
+    }
     document.cookie = `zelo_loja_id=${lojaId}; path=/; max-age=2592000; SameSite=Lax`;
     router.refresh();
   }
@@ -59,25 +63,30 @@ export function PainelShell({
           </Link>
 
           {lojas.length > 1 ? (
-            <div className="relative min-w-0 max-w-[160px]">
+            <div className="relative min-w-0 max-w-[185px]">
               <select
                 aria-label="Selecionar loja"
                 value={lojaAtual.id}
                 onChange={(e) => handleStoreSwitch(e.target.value)}
-                className="min-h-[44px] w-full appearance-none truncate rounded-lg bg-[var(--zelo-soft)] pl-2.5 pr-7 text-[13px] font-semibold text-[var(--zelo-ink)] outline-none transition-colors hover:bg-[var(--zelo-border)]"
+                className="min-h-[40px] w-full appearance-none truncate rounded-xl bg-[var(--zelo-soft)] pl-3 pr-8 text-[13px] font-semibold text-[var(--zelo-ink)] outline-none ring-1 ring-[var(--zelo-border)] transition-colors hover:bg-[var(--zelo-border)]"
               >
                 {lojas.map((l) => (
                   <option key={l.id} value={l.id}>
                     {l.nome}
                   </option>
                 ))}
+                <option value="__new__">+ Criar nova loja</option>
               </select>
-              <ChevronDown className="pointer-events-none absolute right-2 top-3.5 h-4 w-4 text-[var(--zelo-muted)]" />
+              <ChevronDown className="pointer-events-none absolute right-2.5 top-3 h-4 w-4 text-[var(--zelo-muted)]" />
             </div>
           ) : (
-            <span className="inline-flex min-h-[44px] max-w-[160px] items-center gap-1.5 truncate rounded-lg bg-[var(--zelo-soft)] px-2.5 text-[13px] font-semibold text-[var(--zelo-ink)]">
+            <Link
+              href="/onboarding"
+              title="Criar outra loja"
+              className="inline-flex min-h-[40px] max-w-[170px] items-center gap-1.5 truncate rounded-xl bg-[var(--zelo-soft)] px-2.5 text-[13px] font-semibold text-[var(--zelo-ink)] transition-colors hover:bg-[var(--zelo-border)]"
+            >
               <span className="truncate">{lojaAtual.nome}</span>
-            </span>
+            </Link>
           )}
 
           <div className="flex shrink-0 items-center gap-1">
@@ -111,7 +120,7 @@ export function PainelShell({
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-[480px] flex-1 flex-col px-4 pt-4 pb-28">
+      <main key={lojaAtual.id} className="mx-auto flex w-full max-w-[480px] flex-1 flex-col px-4 pt-4 pb-28">
         {children}
       </main>
 

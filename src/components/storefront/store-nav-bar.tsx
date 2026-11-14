@@ -144,35 +144,40 @@ export function StoreNavBar({
     );
   }
 
+  if (hidden) return null;
+
   return (
     <nav
       aria-label="Seções da loja"
-      className="no-scrollbar w-full overflow-x-auto"
+      className="fixed inset-x-0 bottom-0 z-40 pb-[max(0.25rem,env(safe-area-inset-bottom))] backdrop-blur-xl"
       style={{
         backgroundColor: "var(--t-surface)",
-        borderTop: "1px solid var(--t-border)",
-        borderBottom: "1px solid var(--t-border)",
+        borderTop: isBrutal ? "2px solid #000000" : "1px solid var(--t-border)",
+        boxShadow: isBrutal ? "none" : "0 -4px 20px rgba(0, 0, 0, 0.06)",
       }}
     >
-      <div className="flex min-w-max items-center gap-3.5 px-4">
-        {NAV_ITEMS.map(({ key, label, icon: Icon }) => {
+      <div className="mx-auto grid h-16 max-w-[480px] grid-cols-3 items-center px-2">
+        {NAV_ITEMS.map(({ key, shortLabel, icon: Icon }) => {
           const active = tab === key;
           return (
             <button
               key={key}
               type="button"
               onClick={() => onChangeTab(key)}
-              className="relative flex min-h-[44px] shrink-0 items-center gap-1.5 whitespace-nowrap py-2.5 text-xs sm:text-[13px] font-semibold transition-colors"
+              aria-current={active ? "page" : undefined}
+              className="relative flex min-h-[44px] flex-col items-center justify-center gap-0.5 rounded-xl py-1 transition-colors active:scale-95"
               style={{ color: active ? "var(--t-accent)" : "var(--t-muted)" }}
             >
-              <Icon className="h-4 w-4 shrink-0" />
-              <span>{label}</span>
               {active && (
                 <span
-                  className="absolute right-0 bottom-0 left-0 h-0.5 rounded-full"
+                  className="absolute top-0 h-0.5 w-8 rounded-full"
                   style={{ backgroundColor: "var(--t-accent)" }}
                 />
               )}
+              <Icon className="h-[20px] w-[20px] shrink-0" />
+              <span className={`text-[11px] leading-tight ${active ? "font-bold" : "font-medium"}`}>
+                {shortLabel}
+              </span>
             </button>
           );
         })}

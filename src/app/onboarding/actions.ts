@@ -1,11 +1,16 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createLojaSchema, type CreateLojaInput } from "@/lib/schemas/loja";
 
 export interface OnboardingResult {
+  ok?: boolean;
   error?: string;
+  lojaId?: string;
+  servicoIds?: string[];
 }
 
 const COR_PADRAO_POR_TEMA: Record<CreateLojaInput["tema"], string> = {
@@ -64,6 +69,8 @@ export async function createLojaAction(rawInput: CreateLojaInput): Promise<Onboa
       estilo_barra: input.estilo_barra,
       modo_escuro:
         input.tema === "glam" || input.tema === "urban" ? false : Boolean(input.modo_escuro),
+      logo_url: input.logo_url || null,
+      capa_url: input.capa_url || null,
       cor_primaria: COR_PADRAO_POR_TEMA[input.tema],
       raio_borda_px: RAIO_PADRAO_POR_TEMA[input.tema],
       horarios_loja: {
@@ -112,14 +119,101 @@ export async function createLojaAction(rawInput: CreateLojaInput): Promise<Onboa
     nome: s.nome,
     duracao_min: s.duracao_min,
     preco_centavos: s.preco_centavos,
+    imagem_url: s.imagem_url || null,
+    exibir_imagem: Boolean(s.imagem_url && s.exibir_imagem),
     ativo: true,
     ordem: idx,
   }));
 
-  const { error: srvError } = await supabase.from("servicos").insert(servicosPayload);
+  const { data: insertedServicos, error: srvError } = await supabase
+    .from("servicos")
+    .insert(servicosPayload)
+    .select("id");
   if (srvError) {
     return { error: "Loja criada, mas falhou ao salvar os serviços iniciais." };
   }
 
-  redirect("/painel");
+  const cookieStore = await cookies();
+  cookieStore.set("zelo_loja_id", loja.id, {
+    path: "/",
+    maxAge: 2592000,
+    sameSite: "lax",
+  });
+
+  revalidateTag("vitrine-explorar");
+  revalidatePath("/explorar");
+  revalidatePath("/painel", "layout");
+  revalidatePath(`/${input.slug}`);
+
+  return {
+    ok: true,
+    lojaId: loja.id,
+    servicoIds: (insertedServicos ?? []).map((s) => s.id),
+  };
+}
+
+const updateOnboardingMediaSchema = z
+  .object({
+    lojaId: z.string().uuid(),
+    logo_url: z.string().trim().max(500).nullable().optional(),
+    capa_url: z.string().trim().max(500).nullable().optional(),
+    servicosMedia: z
+      .array(
+        z.object({
+          id: z.string().uuid(),
+          imagem_url: z.string().trim().max(500),
+        })
+      )
+      .max(20)
+      .optional(),
+  })
+  .strict();
+
+export async function updateOnboardingMediaAction(raw: unknown): Promise<{ ok?: boolean; error?: string }> {
+  const parsed = updateOnboardingMediaSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { error: "Dados de mídia inválidos." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sessão expirada." };
+
+  const { lojaId, logo_url, capa_url, servicosMedia } = parsed.data;
+
+  const { data: loja } = await supabase
+    .from("lojas")
+    .select("id, slug, owner_id")
+    .eq("id", lojaId)
+    .eq("owner_id", user.id)
+    .maybeSingle();
+
+  if (!loja) return { error: "Sem permissão para atualizar esta loja." };
+
+  if (logo_url !== undefined || capa_url !== undefined) {
+    const patch: Record<string, string | null> = {};
+    if (logo_url !== undefined) patch.logo_url = logo_url;
+    if (capa_url !== undefined) patch.capa_url = capa_url;
+    await supabase.from("lojas").update(patch).eq("id", lojaId);
+  }
+
+  if (servicosMedia && servicosMedia.length > 0) {
+    await Promise.all(
+      servicosMedia.map((item) =>
+        supabase
+          .from("servicos")
+          .update({ imagem_url: item.imagem_url, exibir_imagem: true })
+          .eq("id", item.id)
+          .eq("loja_id", lojaId)
+      )
+    );
+  }
+
+  revalidateTag(`loja-${loja.slug}`);
+  revalidateTag("vitrine-explorar");
+  revalidatePath(`/${loja.slug}`);
+  revalidatePath("/painel", "layout");
+  return { ok: true };
 }
