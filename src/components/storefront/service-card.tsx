@@ -123,18 +123,18 @@ export function ServiceCard({
     );
   }
 
-  // Estilo "preenchido": Foto limpa no topo + rodapé sólido integrado ao tema
+  // Estilo "preenchido": Foto com borda arredondada interna + rodapé limpo estilo app
   return (
     <button
       type="button"
       disabled={disabled}
       onClick={() => onToggle(servico.id)}
       aria-pressed={selected}
-      className={`group relative flex w-full flex-col overflow-hidden text-left transition-transform duration-200 active:scale-[0.98] disabled:opacity-60 ${
+      className={`group relative flex w-full flex-col overflow-hidden p-2 text-left transition-transform duration-200 active:scale-[0.98] disabled:opacity-60 ${
         isLiquidGlass ? "store-glass-surface" : ""
       }`}
       style={{
-        borderRadius: "calc(var(--t-radius) * 1.15)",
+        borderRadius: "calc(var(--t-radius) * 1.25)",
         backgroundColor: "var(--t-surface)",
         boxShadow: "var(--t-shadow)",
         border: isBrutal
@@ -146,7 +146,10 @@ export function ServiceCard({
     >
       <div
         className="relative aspect-[4/3] w-full overflow-hidden"
-        style={{ backgroundColor: "var(--t-inner)" }}
+        style={{
+          borderRadius: "calc(var(--t-radius) * 0.85)",
+          backgroundColor: "var(--t-inner)",
+        }}
       >
         {hasImage ? (
           /* eslint-disable-next-line @next/next/no-img-element */
@@ -175,7 +178,7 @@ export function ServiceCard({
         </span>
       </div>
 
-      <div className="flex flex-1 flex-col justify-between gap-2 p-3">
+      <div className="flex flex-1 flex-col justify-between gap-2 px-1 pt-2.5 pb-1">
         <div>
           <h2 className="line-clamp-2 text-[13px] font-semibold leading-snug">
             {servico.nome}
@@ -195,8 +198,8 @@ export function ServiceCard({
           <span
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full shadow-sm transition-transform group-active:scale-90"
             style={{
-              backgroundColor: selected ? "var(--t-accent)" : "var(--t-inner)",
-              color: selected ? "var(--t-accent-ink)" : "var(--t-ink)",
+              backgroundColor: "var(--t-accent)",
+              color: "var(--t-accent-ink)",
               ...(isBrutal ? { border: "1.5px solid #000000" } : {}),
             }}
           >

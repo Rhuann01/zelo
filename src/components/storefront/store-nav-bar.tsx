@@ -31,18 +31,22 @@ export function StoreNavBar({
     if (hidden) return null;
 
     return (
-      <div className="pointer-events-none fixed inset-x-0 bottom-[max(12px,env(safe-area-inset-bottom))] z-40 flex justify-center px-4">
+      <div className="pointer-events-none fixed inset-x-0 bottom-[max(14px,env(safe-area-inset-bottom))] z-40 flex justify-center px-4">
         <nav
           aria-label="Navegação da loja"
-          className={`zelo-sheet-up pointer-events-auto flex items-center gap-1 rounded-full p-1.5 backdrop-blur-xl ${
+          className={`zelo-sheet-up pointer-events-auto flex items-center gap-1.5 rounded-full p-1.5 backdrop-blur-xl ${
             isLiquidGlass ? "store-glass-surface" : ""
           }`}
           style={{
-            backgroundColor: "color-mix(in srgb, var(--t-surface) 88%, #0A0A0D 12%)",
+            backgroundColor: isLiquidGlass
+              ? "rgba(15, 18, 28, 0.72)"
+              : "#111216",
             boxShadow: isBrutal
               ? "3px 3px 0px #000000"
-              : "0 12px 32px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.14)",
-            border: isBrutal ? "2px solid #000000" : "1px solid var(--t-border)",
+              : "0 14px 36px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.14)",
+            border: isBrutal
+              ? "2px solid #000000"
+              : "1px solid rgba(255, 255, 255, 0.12)",
           }}
         >
           {NAV_ITEMS.map(({ key, shortLabel, icon: Icon }) => {
@@ -52,21 +56,39 @@ export function StoreNavBar({
                 key={key}
                 type="button"
                 onClick={() => onChangeTab(key)}
-                className="flex min-h-[44px] items-center gap-1.5 rounded-full px-4 text-xs font-semibold transition-all duration-200 active:scale-95"
+                aria-label={shortLabel}
+                className={`flex min-h-[44px] items-center justify-center gap-2 rounded-full text-xs font-semibold transition-all duration-200 active:scale-95 ${
+                  active ? "px-4" : "w-11 px-0"
+                }`}
                 style={
                   active
                     ? {
-                        backgroundColor: "var(--t-accent)",
-                        color: "var(--t-accent-ink)",
+                        backgroundColor: "#FFFFFF",
+                        color: "#111216",
                         ...(isBrutal ? { border: "1.5px solid #000000" } : {}),
                       }
                     : {
-                        color: "var(--t-muted)",
+                        backgroundColor: "rgba(255, 255, 255, 0.08)",
+                        color: "rgba(255, 255, 255, 0.72)",
                       }
                 }
               >
-                <Icon className="h-4 w-4 shrink-0" />
-                <span>{shortLabel}</span>
+                <span
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
+                    active ? "" : ""
+                  }`}
+                  style={
+                    active
+                      ? {
+                          backgroundColor: "var(--t-accent)",
+                          color: "var(--t-accent-ink)",
+                        }
+                      : undefined
+                  }
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                </span>
+                {active && <span>{shortLabel}</span>}
               </button>
             );
           })}
@@ -85,7 +107,7 @@ export function StoreNavBar({
         borderBottom: "1px solid var(--t-border)",
       }}
     >
-      <div className="flex min-w-max items-center gap-4 px-4">
+      <div className="flex min-w-max items-center gap-3.5 px-4">
         {NAV_ITEMS.map(({ key, label, icon: Icon }) => {
           const active = tab === key;
           return (
@@ -93,7 +115,7 @@ export function StoreNavBar({
               key={key}
               type="button"
               onClick={() => onChangeTab(key)}
-              className="relative flex min-h-[46px] shrink-0 items-center gap-1.5 whitespace-nowrap py-3 text-[13px] font-semibold transition-colors"
+              className="relative flex min-h-[44px] shrink-0 items-center gap-1.5 whitespace-nowrap py-2.5 text-xs sm:text-[13px] font-semibold transition-colors"
               style={{ color: active ? "var(--t-accent)" : "var(--t-muted)" }}
             >
               <Icon className="h-4 w-4 shrink-0" />

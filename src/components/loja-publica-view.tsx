@@ -10,6 +10,7 @@ import {
   MapPin,
   MessageCircle,
   Scissors,
+  Search,
   Share2,
   ShieldCheck,
   X,
@@ -19,7 +20,6 @@ import { ReservaDrawer } from "@/components/reserva-drawer";
 import { ServiceCard } from "@/components/storefront/service-card";
 import { StoreNavBar } from "@/components/storefront/store-nav-bar";
 import { StoreMapEmbed, buildExternalMapUrl } from "@/components/ui";
-import { StoreBannerMedia } from "@/components/ui/store-banner-media";
 import {
   getAccentInk,
   type LojaPublica,
@@ -70,6 +70,8 @@ export function LojaPublicaView({
   const [selectedProfId, setSelectedProfId] = useState<string>(profissionais[0]?.id ?? "");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
+  const [buscaServico, setBuscaServico] = useState("");
+  const [filtroDuracao, setFiltroDuracao] = useState<"todos" | "rapidos" | "completos">("todos");
 
   const accentInk = getAccentInk(loja.cor_primaria);
   const isBrutal = loja.tema === "brutal";
@@ -82,6 +84,21 @@ export function LojaPublicaView({
     () => servicos.filter((s) => selectedIds.includes(s.id)),
     [servicos, selectedIds]
   );
+
+  const servicosFiltrados = useMemo(() => {
+    const q = buscaServico.trim().toLowerCase();
+    return servicos.filter((s) => {
+      const matchText =
+        !q ||
+        s.nome.toLowerCase().includes(q) ||
+        s.descricao.toLowerCase().includes(q);
+      const matchDur =
+        filtroDuracao === "todos" ||
+        (filtroDuracao === "rapidos" && s.duracao_min <= 35) ||
+        (filtroDuracao === "completos" && s.duracao_min > 35);
+      return matchText && matchDur;
+    });
+  }, [servicos, buscaServico, filtroDuracao]);
 
   const totalDuracao = useMemo(
     () => selecionados.reduce((acc, s) => acc + s.duracao_min, 0),
@@ -150,138 +167,106 @@ export function LojaPublicaView({
         } as React.CSSProperties
       }
     >
-      {/* Stitch Sticky Header */}
-      <header
-        className="sticky top-0 z-40 w-full backdrop-blur-xl"
-        style={{
-          backgroundColor: "color-mix(in srgb, var(--t-bg) 90%, transparent)",
-          borderBottom: "1px solid color-mix(in srgb, var(--t-border) 60%, transparent)",
-        }}
-      >
-        <div className="mx-auto flex h-14 max-w-[480px] items-center justify-between px-4">
-          <div className="flex min-w-0 items-center gap-2">
-            <Link
-              href="/explorar"
-              aria-label="Voltar para explorar"
-              className="-ml-1.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-transform active:scale-95"
-              style={{ color: "var(--t-ink)" }}
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </Link>
-            <span className="truncate text-[15px] font-semibold tracking-tight">
-              {loja.nome}
-            </span>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleShare}
-            aria-label="Compartilhar página"
-            className="flex h-11 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium transition-transform active:scale-95"
-            style={{ color: "var(--t-muted)" }}
-          >
-            {copiedShare ? (
-              <span>Link copiado</span>
-            ) : (
-              <Share2 className="h-[18px] w-[18px]" />
-            )}
-          </button>
-        </div>
-      </header>
-
       <main className="mx-auto flex w-full max-w-[480px] flex-1 flex-col pb-32">
-        {/* Store Profile Hero with Banner Behind (foto ou degradê automático da logo / cor do perfil) */}
-        <section className="relative overflow-hidden px-4 pt-20 sm:pt-24 pb-5">
-          {/* Banner de fundo atrás da foto e nome da loja */}
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-44 sm:h-48 overflow-hidden">
-            <StoreBannerMedia
-              capaUrl={loja.capa_url}
-              logoUrl={loja.logo_url}
-              corPrimaria={loja.cor_primaria}
-              alt={`Banner de ${loja.nome}`}
-              overlayMode="store"
-              priority
-            />
-          </div>
-
-          <div className="relative z-10 flex flex-col gap-3.5">
-            {loja.pausada && (
-              <div
-                className="rounded-xl px-3 py-2 text-xs font-semibold backdrop-blur-sm"
-                style={{ backgroundColor: "rgba(245, 158, 11, 0.18)", color: "#F59E0B" }}
+        {/* Top App Profile Header (estilo aplicativo próprio) */}
+        <header className="px-4 pt-4 pb-3">
+          <div className="flex items-center justify-between gap-2.5">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <Link
+                href="/explorar"
+                aria-label="Voltar para explorar"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-transform active:scale-95"
+                style={{
+                  backgroundColor: "var(--t-surface)",
+                  color: "var(--t-ink)",
+                  border: isBrutal ? "2px solid #000000" : "1px solid var(--t-border)",
+                }}
               >
-                Loja pausada temporariamente — novos agendamentos online indisponíveis no momento.
-              </div>
-            )}
+                <ChevronLeft className="h-5 w-5" />
+              </Link>
 
-            <div className="flex items-end gap-3.5">
               {loja.logo_url ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
                   src={loja.logo_url}
                   alt={loja.nome}
-                  className="h-16 w-16 shrink-0 object-cover shadow-lg ring-2 ring-[var(--t-bg)]"
+                  className="h-11 w-11 shrink-0 rounded-full object-cover shadow-sm"
                   style={{
-                    borderRadius: "calc(var(--t-radius) * 0.85)",
                     backgroundColor: "var(--t-inner)",
+                    border: isBrutal ? "2px solid #000000" : "1px solid var(--t-border)",
                   }}
                 />
               ) : (
                 <div
-                  className="relative flex h-16 w-16 shrink-0 flex-col items-center justify-center overflow-hidden shadow-lg ring-2 ring-[var(--t-bg)]"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xs font-bold shadow-sm"
                   style={{
-                    borderRadius: "calc(var(--t-radius) * 0.85)",
                     backgroundColor: "var(--t-surface)",
-                    border: "1px solid var(--t-border)",
+                    color: "var(--t-ink)",
+                    border: isBrutal ? "2px solid #000000" : "1px solid var(--t-border)",
                   }}
                 >
-                  <span className="text-[17px] font-bold leading-none tracking-tight">
-                    {initials}
-                  </span>
-                  <Scissors className="mt-1 h-3.5 w-3.5" style={{ color: "var(--t-accent)" }} />
+                  {initials}
                 </div>
               )}
 
-              <div className="flex min-w-0 flex-1 flex-col justify-center pb-0.5">
-                <div
-                  className={`inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold backdrop-blur-md ${
-                    loja.pausada
-                      ? "bg-black/75 text-[#FBBF24]"
-                      : "bg-black/75 text-[#34D399]"
-                  }`}
-                >
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
                   <span
-                    className={`h-1.5 w-1.5 rounded-full ${
-                      loja.pausada ? "bg-[#FBBF24]" : "animate-pulse bg-[#34D399]"
+                    className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+                      loja.pausada ? "bg-[#F59E0B]" : "animate-pulse bg-[#10B981]"
                     }`}
                   />
-                  <span>{loja.pausada ? "Loja pausada" : "Atendimento hoje"}</span>
+                  <span className="truncate text-[11px] font-medium" style={{ color: "var(--t-muted)" }}>
+                    {loja.pausada
+                      ? "Loja pausada"
+                      : [loja.bairro, loja.cidade].filter(Boolean).join(", ") || "Atendimento hoje"}
+                  </span>
                 </div>
-                <h1 className="mt-1 truncate text-2xl font-bold tracking-tight">{loja.nome}</h1>
-                {(loja.bairro || loja.cidade) && (
-                  <p className="mt-0.5 truncate text-xs" style={{ color: "var(--t-muted)" }}>
-                    {[loja.bairro, loja.cidade].filter(Boolean).join(", ")}
-                  </p>
-                )}
+                <h1 className="truncate text-[17px] font-bold leading-tight tracking-tight">
+                  {loja.nome}
+                </h1>
               </div>
             </div>
 
-            {loja.sinal_centavos > 0 && (
-              <div className="flex items-center gap-2 pt-0.5">
-                <div
-                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium text-[#10B981]"
-                  style={{
-                    backgroundColor: "var(--t-surface)",
-                    border: "1px solid rgba(16, 185, 129, 0.25)",
-                  }}
-                >
-                  <Zap className="h-3.5 w-3.5" />
-                  <span>PIX para sinal ativo</span>
-                </div>
-              </div>
-            )}
+            <button
+              type="button"
+              onClick={handleShare}
+              aria-label="Compartilhar página"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-transform active:scale-95"
+              style={{
+                backgroundColor: "var(--t-surface)",
+                color: copiedShare ? "var(--t-accent)" : "var(--t-ink)",
+                border: isBrutal ? "2px solid #000000" : "1px solid var(--t-border)",
+              }}
+            >
+              <Share2 className="h-4 w-4" />
+            </button>
           </div>
-        </section>
+
+          {loja.pausada && (
+            <div
+              className="mt-3 rounded-2xl px-3.5 py-2.5 text-xs font-semibold"
+              style={{ backgroundColor: "rgba(245, 158, 11, 0.16)", color: "#D97706" }}
+            >
+              Loja pausada temporariamente — novos agendamentos online indisponíveis no momento.
+            </div>
+          )}
+
+          {loja.sinal_centavos > 0 && (
+            <div className="mt-2.5 flex items-center gap-2">
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-medium text-[#10B981]"
+                style={{
+                  backgroundColor: "var(--t-surface)",
+                  border: "1px solid rgba(16, 185, 129, 0.28)",
+                }}
+              >
+                <Zap className="h-3 w-3" />
+                <span>PIX para sinal ativo</span>
+              </span>
+            </div>
+          )}
+        </header>
 
         {/* Navegação: Abas clássicas no topo OU Dock Flutuante no rodapé */}
         {estiloBarra === "abas" && (
@@ -295,21 +280,160 @@ export function LojaPublicaView({
         )}
 
         {/* Content Area */}
-        <div key={tab} className="zelo-panel-enter px-4 pt-5">
+        <div key={tab} className="zelo-panel-enter px-4 pt-3">
           {/* TAB 1: SERVIÇOS */}
           {tab === "servicos" && (
-            <section className="flex flex-col gap-3">
-              {servicos.length === 0 ? (
+            <section className="flex flex-col gap-4">
+              {/* Barra de busca interna da loja */}
+              <div
+                className={`flex h-11 items-center gap-2.5 rounded-full px-4 ${
+                  isLiquidGlass ? "store-glass-surface" : ""
+                }`}
+                style={{
+                  backgroundColor: "var(--t-surface)",
+                  border: isBrutal ? "2px solid #000000" : "1px solid var(--t-border)",
+                  boxShadow: "var(--t-shadow)",
+                }}
+              >
+                <Search className="h-4 w-4 shrink-0" style={{ color: "var(--t-muted)" }} />
+                <input
+                  type="search"
+                  value={buscaServico}
+                  onChange={(e) => setBuscaServico(e.target.value)}
+                  placeholder="Buscar serviço..."
+                  aria-label="Buscar serviço"
+                  className="w-full bg-transparent text-sm outline-none placeholder:text-[var(--t-muted)]"
+                  style={{ color: "var(--t-ink)" }}
+                />
+                {buscaServico && (
+                  <button
+                    type="button"
+                    onClick={() => setBuscaServico("")}
+                    aria-label="Limpar busca"
+                    className="flex h-7 w-7 items-center justify-center rounded-full"
+                    style={{ color: "var(--t-muted)" }}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Card de Banner/Destaque: exibido SOMENTE se a loja tiver capa_url */}
+              {loja.capa_url && (
+                <div
+                  className="relative h-40 w-full overflow-hidden shadow-md"
+                  style={{
+                    borderRadius: "calc(var(--t-radius) * 1.4)",
+                    border: isBrutal ? "2px solid #000000" : "1px solid var(--t-border)",
+                  }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={loja.capa_url}
+                    alt={`Destaque ${loja.nome}`}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/45 to-transparent" />
+                  <div className="relative z-10 flex h-full max-w-[75%] flex-col justify-between p-4 text-white">
+                    <div>
+                      <span className="inline-block rounded-full bg-white/15 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider backdrop-blur-sm">
+                        Atendimento hoje
+                      </span>
+                      <p className="mt-1.5 text-base font-bold leading-snug">
+                        Reserve seu horário na {loja.nome}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={loja.pausada || servicos.length === 0}
+                      onClick={() => {
+                        if (servicos[0] && !selectedIds.includes(servicos[0].id)) {
+                          toggleServico(servicos[0].id);
+                        }
+                        setDrawerOpen(true);
+                      }}
+                      className="inline-flex h-9 w-fit items-center gap-1.5 rounded-full px-4 text-xs font-semibold shadow transition-transform active:scale-95 disabled:opacity-50"
+                      style={{
+                        backgroundColor: "var(--t-accent)",
+                        color: "var(--t-accent-ink)",
+                      }}
+                    >
+                      <span>Agendar agora</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Pílulas de filtro rápidas */}
+              {servicos.length > 0 && (
+                <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-0.5">
+                  {(
+                    [
+                      { key: "todos", label: "Todos" },
+                      { key: "rapidos", label: "Rápidos (até 35m)" },
+                      { key: "completos", label: "Completos" },
+                    ] as const
+                  ).map((f) => {
+                    const active = filtroDuracao === f.key;
+                    return (
+                      <button
+                        key={f.key}
+                        type="button"
+                        onClick={() => setFiltroDuracao(f.key)}
+                        className="min-h-[36px] shrink-0 rounded-full px-4 text-xs font-semibold transition-all active:scale-95"
+                        style={
+                          active
+                            ? {
+                                backgroundColor: "var(--t-accent)",
+                                color: "var(--t-accent-ink)",
+                                ...(isBrutal ? { border: "1.5px solid #000000" } : {}),
+                              }
+                            : {
+                                backgroundColor: "var(--t-surface)",
+                                color: "var(--t-muted)",
+                                border: isBrutal
+                                  ? "1.5px solid #000000"
+                                  : "1px solid var(--t-border)",
+                              }
+                        }
+                      >
+                        {f.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Cabeçalho da Seção */}
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-bold tracking-tight">Serviços</h2>
+                <button
+                  type="button"
+                  onClick={() => setTab("equipe")}
+                  className="text-xs font-medium transition-opacity hover:opacity-80"
+                  style={{ color: "var(--t-muted)" }}
+                >
+                  Ver equipe
+                </button>
+              </div>
+
+              {servicosFiltrados.length === 0 ? (
                 <div className="p-6 text-center space-y-1.5" style={cardSurfaceStyle}>
                   <Scissors className="mx-auto h-6 w-6" style={{ color: "var(--t-muted)" }} />
-                  <p className="text-sm font-bold">Nenhum serviço publicado</p>
+                  <p className="text-sm font-bold">
+                    {servicos.length === 0
+                      ? "Nenhum serviço publicado"
+                      : "Nenhum serviço encontrado"}
+                  </p>
                   <p className="text-xs" style={{ color: "var(--t-muted)" }}>
-                    Este espaço ainda está finalizando o catálogo de serviços.
+                    {servicos.length === 0
+                      ? "Este espaço ainda está finalizando o catálogo de serviços."
+                      : "Tente limpar a busca ou trocar o filtro acima."}
                   </p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
-                  {servicos.map((s) => (
+                  {servicosFiltrados.map((s) => (
                     <ServiceCard
                       key={s.id}
                       servico={s}
