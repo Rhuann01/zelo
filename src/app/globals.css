@@ -198,13 +198,42 @@ body {
   animation: zeloPopIn 150ms ease-out both;
 }
 
+.mobile-drawer {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  margin-top: 0;
+  transition:
+    grid-template-rows 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.22s ease,
+    margin-top 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.mobile-drawer.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  margin-top: 0.75rem;
+}
+.mobile-drawer-inner {
+  overflow: hidden;
+}
+
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(22px);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .zelo-fade-in,
   .zelo-sheet-up,
   .zelo-panel-enter,
   .zelo-pop-in,
-  .odo-digit-roll {
+  .odo-digit-roll,
+  .mobile-drawer {
     animation: none !important;
     transition: none !important;
+  }
+  .scroll-reveal {
+    opacity: 1;
+    transform: none;
   }
 }

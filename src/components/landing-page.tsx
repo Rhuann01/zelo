@@ -560,6 +560,55 @@ export function LandingPage() {
     };
   }, []);
 
+  // 3. Scroll Reveal Seguro (Skill: gsap-live-demo)
+  useEffect(() => {
+    const prefersReduced =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReduced || typeof IntersectionObserver === "undefined") return;
+
+    const targets = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        "#recursos .rounded-2xl, #vitrine .vitrine-card, #precos .rounded-2xl, #faq details.faq-item, section:not(#topo):not(#estilos) h2"
+      )
+    );
+    if (!targets.length) return;
+
+    targets.forEach((el) => el.classList.add("scroll-reveal"));
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((e) => e.isIntersecting);
+        if (!visible.length) return;
+
+        visible.forEach((entry, idx) => {
+          const targetEl = entry.target as HTMLElement;
+          observer.unobserve(targetEl);
+          gsap.fromTo(
+            targetEl,
+            { opacity: 0, y: 22 },
+            {
+              opacity: 1,
+              y: 0,
+              duration: 0.55,
+              delay: Math.min(idx * 0.06, 0.24),
+              ease: "power3.out",
+              onComplete: () => {
+                targetEl.classList.remove("scroll-reveal");
+                targetEl.style.opacity = "";
+                targetEl.style.transform = "";
+              },
+            }
+          );
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -30px 0px" }
+    );
+
+    targets.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
   function toggleDarkMode() {
     const next = !isDark;
     setIsDark(next);
@@ -645,45 +694,47 @@ export function LandingPage() {
             </div>
           </div>
 
-          {mobileMenuOpen && (
-            <div className="md:hidden mt-3 pt-3 border-t border-[var(--zelo-border)] space-y-1 text-sm font-medium">
-              <a
-                href="#estilos"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block rounded-lg px-3 py-2.5 hover:bg-[var(--zelo-soft)]"
-              >
-                Telas & Estilos
-              </a>
-              <a
-                href="#recursos"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block rounded-lg px-3 py-2.5 hover:bg-[var(--zelo-soft)]"
-              >
-                Funcionalidades
-              </a>
-              <a
-                href="#vitrine"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block rounded-lg px-3 py-2.5 hover:bg-[var(--zelo-soft)]"
-              >
-                Vitrine Regional
-              </a>
-              <a
-                href="#precos"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block rounded-lg px-3 py-2.5 hover:bg-[var(--zelo-soft)]"
-              >
-                Preços
-              </a>
-              <Link
-                href="/entrar"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block rounded-lg px-3 py-2.5 text-[var(--zelo-muted)] hover:bg-[var(--zelo-soft)]"
-              >
-                Entrar na minha conta
-              </Link>
+          <div className={`mobile-drawer md:hidden ${mobileMenuOpen ? "is-open" : ""}`}>
+            <div className="mobile-drawer-inner">
+              <div className="pt-3 border-t border-[var(--zelo-border)] space-y-1 text-sm font-medium">
+                <a
+                  href="#estilos"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block rounded-lg px-3 py-2.5 hover:bg-[var(--zelo-soft)]"
+                >
+                  Telas & Estilos
+                </a>
+                <a
+                  href="#recursos"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block rounded-lg px-3 py-2.5 hover:bg-[var(--zelo-soft)]"
+                >
+                  Funcionalidades
+                </a>
+                <a
+                  href="#vitrine"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block rounded-lg px-3 py-2.5 hover:bg-[var(--zelo-soft)]"
+                >
+                  Vitrine Regional
+                </a>
+                <a
+                  href="#precos"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block rounded-lg px-3 py-2.5 hover:bg-[var(--zelo-soft)]"
+                >
+                  Preços
+                </a>
+                <Link
+                  href="/entrar"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block rounded-lg px-3 py-2.5 text-[var(--zelo-muted)] hover:bg-[var(--zelo-soft)]"
+                >
+                  Entrar na minha conta
+                </Link>
+              </div>
             </div>
-          )}
+          </div>
         </header>
       </div>
 
@@ -909,9 +960,9 @@ export function LandingPage() {
           </div>
 
           {/* Barra de Personalização Ao Vivo */}
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-[var(--zelo-soft)] px-3 sm:px-5 py-3 border-t border-[var(--zelo-border)]">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="mr-1 text-xs font-semibold text-[var(--zelo-muted)]">Estilo:</span>
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-[var(--zelo-soft)] px-2.5 sm:px-5 py-3 border-t border-[var(--zelo-border)]">
+            <div className="flex flex-nowrap sm:flex-wrap items-center justify-between sm:justify-start gap-1 sm:gap-1.5">
+              <span className="inline shrink-0 sm:mr-1 text-[10px] sm:text-xs font-semibold text-[var(--zelo-muted)]">Estilo:</span>
               {(Object.keys(THEMES) as ThemeKey[]).map((key) => {
                 const active = themeKey === key;
                 return (
@@ -923,7 +974,7 @@ export function LandingPage() {
                       pauseDemoWithInactivity();
                       setThemeKey(key);
                     }}
-                    className={`rounded-lg px-2 sm:px-2.5 py-1.5 text-[11px] sm:text-xs font-semibold transition whitespace-nowrap ${
+                    className={`rounded-lg px-1.5 py-1 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-semibold transition whitespace-nowrap ${
                       active
                         ? "bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)]"
                         : "bg-[var(--zelo-card)] text-[var(--zelo-ink)] hover:opacity-80"
@@ -935,10 +986,10 @@ export function LandingPage() {
               })}
             </div>
 
-            <div className="flex flex-wrap items-center justify-between sm:justify-start gap-4">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-nowrap items-center justify-between sm:justify-start gap-2 sm:gap-4">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 <span className="text-xs font-semibold text-[var(--zelo-muted)]">Cor:</span>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   {SWATCHES.map((swatch) => {
                     const active = accentHex === swatch.hex;
                     return (
@@ -954,7 +1005,7 @@ export function LandingPage() {
                         title={swatch.label}
                         aria-label={`Cor ${swatch.label}`}
                         style={{ backgroundColor: swatch.hex }}
-                        className={`h-5 w-5 rounded-full transition ${
+                        className={`h-4 w-4 sm:h-5 sm:w-5 rounded-full transition ${
                           active ? "ring-2 ring-[var(--zelo-ink)] ring-offset-2 ring-offset-[var(--zelo-soft)]" : "opacity-85 hover:opacity-100"
                         }`}
                       />
@@ -963,7 +1014,7 @@ export function LandingPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 <span className="text-xs font-semibold text-[var(--zelo-muted)]">Bordas:</span>
                 <input
                   id="radius-slider"
@@ -977,9 +1028,9 @@ export function LandingPage() {
                     setRadiusPx(Number(e.target.value));
                   }}
                   aria-label="Raio das bordas"
-                  className="h-1.5 w-20 sm:w-24 cursor-pointer accent-amber-500"
+                  className="h-1.5 w-14 sm:w-24 cursor-pointer accent-amber-500"
                 />
-                <span className="w-9 font-mono text-xs font-semibold">{radiusPx}px</span>
+                <span className="w-8 sm:w-9 font-mono text-xs font-semibold">{radiusPx}px</span>
               </div>
             </div>
           </div>
