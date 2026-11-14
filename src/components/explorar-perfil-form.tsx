@@ -19,6 +19,7 @@ import { showToast } from "@/components/zelo-toast";
 import {
   saveConfiguracoesAction,
   signOutConfigAction,
+  checkIsSuperAdminAction,
 } from "@/app/painel/configuracoes/actions";
 import type { ViewerPerfil } from "@/lib/supabase/use-viewer-perfil";
 
@@ -34,7 +35,22 @@ export function ExplorarPerfilForm({
   const [pushAtivo, setPushAtivo] = useState(viewer.notificacoes_push);
   const [emailAtivo, setEmailAtivo] = useState(viewer.notificacoes_email);
   const [dark, setDark] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    let active = true;
+    checkIsSuperAdminAction()
+      .then((ok) => {
+        if (active) setIsSuperAdmin(ok);
+      })
+      .catch(() => {
+        if (active) setIsSuperAdmin(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [viewer.id]);
 
   useEffect(() => {
     setNome(viewer.nome);
@@ -262,6 +278,21 @@ export function ExplorarPerfilForm({
           </span>
           <span className="font-mono-num text-xs text-[var(--zelo-muted)]">/painel</span>
         </Link>
+
+        {isSuperAdmin && (
+          <Link
+            href="/super-admin"
+            className="flex h-12 items-center justify-between rounded-lg px-2.5 text-sm font-medium text-[var(--zelo-ink)] transition-colors hover:bg-[var(--zelo-soft)]"
+          >
+            <span className="flex items-center gap-2.5">
+              <ShieldCheck className="h-5 w-5 text-[var(--zelo-muted)]" />
+              <span>Torre de Controle (Super Admin)</span>
+            </span>
+            <span className="font-mono-num text-xs text-[var(--zelo-muted)]">
+              /super-admin
+            </span>
+          </Link>
+        )}
 
         <form action={signOutConfigAction}>
           <button

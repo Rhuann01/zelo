@@ -11,6 +11,10 @@ import {
   verifySecurityPassword,
 } from "@/lib/security/pin-hash";
 import { checkRateLimit } from "@/lib/security/rate-limit";
+import {
+  parseSuperAdminAllowlist,
+  parseSuperAdminEmailAllowlist,
+} from "@/lib/super-admin/guard";
 
 export async function saveConfiguracoesAction(raw: unknown) {
   const parsed = perfilConfigSchema.safeParse(raw);
@@ -235,4 +239,18 @@ export async function excluirLojaAction(raw: unknown) {
   revalidatePath("/painel/configuracoes");
 
   return { ok: true, message: "Loja apagada permanentemente." };
+}
+
+export async function checkIsSuperAdminAction(): Promise<boolean> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return false;
+  const allowUids = parseSuperAdminAllowlist();
+  const allowEmails = parseSuperAdminEmailAllowlist();
+  return (
+    allowUids.has(user.id) ||
+    (!!user.email && allowEmails.has(user.email.toLowerCase()))
+  );
 }
