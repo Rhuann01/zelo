@@ -320,6 +320,12 @@ export function OnboardingWizard() {
               <p className="text-sm text-[var(--zelo-muted)]">
                 Personalize a vitrine digital que seus clientes verão ao agendar.
               </p>
+              <Link
+                href="/explorar"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--zelo-ink)] underline underline-offset-4 pt-1 hover:opacity-80"
+              >
+                Só quero agendar como cliente — Ir para a Vitrine →
+              </Link>
             </div>
 
             {/* Nome do Estabelecimento + Link preview */}

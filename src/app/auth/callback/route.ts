@@ -11,6 +11,31 @@ export async function GET(request: Request) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      if (safeNext === "/painel") {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user) {
+          const [{ data: ownerLojas }, { data: profLinks }] = await Promise.all([
+            supabase
+              .from("lojas")
+              .select("id")
+              .eq("owner_id", user.id)
+              .limit(1),
+            supabase
+              .from("profissionais")
+              .select("id")
+              .eq("user_id", user.id)
+              .eq("ativo", true)
+              .limit(1),
+          ]);
+          const hasBusiness =
+            (ownerLojas?.length ?? 0) > 0 || (profLinks?.length ?? 0) > 0;
+          if (!hasBusiness) {
+            return NextResponse.redirect(`${origin}/explorar`);
+          }
+        }
+      }
       return NextResponse.redirect(`${origin}${safeNext}`);
     }
   }

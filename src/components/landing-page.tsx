@@ -12,6 +12,8 @@ import {
   MapPin,
   Menu,
   Moon,
+  Pause,
+  Play,
   QrCode,
   SlidersHorizontal,
   Sun,
@@ -190,6 +192,7 @@ export function LandingPage() {
   const [selectedTime, setSelectedTime] = useState("14:45");
   const [extraAdded, setExtraAdded] = useState(false);
   const [previewConfirmed, setPreviewConfirmed] = useState(false);
+  const [demoPlaying, setDemoPlaying] = useState(true);
 
   // Vitrine preview filter
   const [vitrineFilter, setVitrineFilter] = useState<VitrineFilter>("all");
@@ -201,6 +204,60 @@ export function LandingPage() {
     }, 2800);
     return () => window.clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    if (!demoPlaying) return;
+
+    const steps: Array<() => void> = [
+      () => {
+        setAppMode("client");
+        setThemeKey("glam");
+        setAccentHex("#BE185D");
+        setAccentInk("#FFFFFF");
+        setRadiusPx(18);
+        setExtraAdded(false);
+        setPreviewConfirmed(false);
+      },
+      () => {
+        setExtraAdded(true);
+        setSelectedBarber("Lucas");
+        setSelectedTime("15:30");
+      },
+      () => {
+        setThemeKey("brutal");
+        setAccentHex("#A3E635");
+        setAccentInk("#111111");
+        setRadiusPx(4);
+      },
+      () => {
+        setThemeKey("slate");
+        setAccentHex("#2563EB");
+        setAccentInk("#FFFFFF");
+        setRadiusPx(12);
+        setSelectedBarber("Matheus");
+        setSelectedTime("14:45");
+      },
+      () => {
+        setAppMode("admin");
+      },
+      () => {
+        setAppMode("client");
+        setThemeKey("urban");
+        setAccentHex("#F59E0B");
+        setAccentInk("#111111");
+        setRadiusPx(12);
+        setExtraAdded(false);
+      },
+    ];
+
+    let stepIdx = 0;
+    const id = window.setInterval(() => {
+      steps[stepIdx]();
+      stepIdx = (stepIdx + 1) % steps.length;
+    }, 1900);
+
+    return () => window.clearInterval(id);
+  }, [demoPlaying]);
 
   function toggleDarkMode() {
     const next = !isDark;
@@ -348,7 +405,19 @@ export function LandingPage() {
           Sua agenda online{" "}
           <span className="mx-1 inline-flex items-center rounded-xl sm:rounded-2xl bg-[var(--zelo-card)] px-3 sm:px-3.5 py-1 sm:py-1.5 text-2xl sm:text-4xl font-bold align-middle shadow-sm font-mono-num">
             <span className="mr-2 h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>{odoStr}</span>
+            <span className="inline-flex items-center overflow-hidden">
+              {odoStr.split("").map((ch, idx) =>
+                ch === ":" ? (
+                  <span key={`sep-${idx}`} className="mx-0.5 opacity-60">
+                    :
+                  </span>
+                ) : (
+                  <span key={`${idx}-${ch}`} className="odo-digit-roll">
+                    {ch}
+                  </span>
+                )
+              )}
+            </span>
           </span>{" "}
           com a{" "}
           <span className="font-editorial italic font-normal text-[2.6rem] sm:text-[4.25rem] text-amber-500">
@@ -418,13 +487,45 @@ export function LandingPage() {
             </button>
           </div>
 
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--zelo-card)] px-3 py-1.5 text-xs font-medium text-[var(--zelo-muted)] shadow-sm">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
-            <span>Prévia interativa ao vivo — clique para testar</span>
-          </span>
+          <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--zelo-card)] px-3 py-1.5 text-xs font-medium text-[var(--zelo-muted)] shadow-sm">
+              <span
+                className={`h-2 w-2 rounded-full shrink-0 ${
+                  demoPlaying ? "bg-emerald-500 animate-pulse" : "bg-amber-500"
+                }`}
+              />
+              <span>
+                {demoPlaying
+                  ? "Demo animada rodando (clique para testar)"
+                  : "Demo pausada — testando manualmente"}
+              </span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setDemoPlaying((v) => !v)}
+              className="inline-flex min-h-[34px] items-center gap-1.5 rounded-full bg-[var(--zelo-btn-bg)] px-3 py-1 text-xs font-semibold text-[var(--zelo-btn-ink)] whitespace-nowrap transition hover:bg-[var(--zelo-btn-hover)]"
+            >
+              {demoPlaying ? (
+                <>
+                  <Pause className="h-3 w-3" />
+                  <span>Pausar</span>
+                </>
+              ) : (
+                <>
+                  <Play className="h-3 w-3" />
+                  <span>Retomar</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
-        <div className="overflow-hidden rounded-[20px] bg-[var(--zelo-card)] shadow-[0_24px_60px_-15px_rgba(0,0,0,0.16)]">
+        <div
+          onPointerDown={() => {
+            if (demoPlaying) setDemoPlaying(false);
+          }}
+          className="overflow-hidden rounded-[20px] bg-[var(--zelo-card)] shadow-[0_24px_60px_-15px_rgba(0,0,0,0.16)]"
+        >
           {/* Barra Navegador */}
           <div className="flex items-center justify-between gap-3 bg-[var(--zelo-soft)] px-3 sm:px-4 py-2.5">
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">

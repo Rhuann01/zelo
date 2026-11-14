@@ -45,11 +45,17 @@ export default async function EntrarPage({
             Acesso único tanto para clientes quanto para profissionais e donos de estabelecimentos.
           </p>
 
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--zelo-soft)] px-3 py-1 text-[11px] font-medium text-[var(--zelo-muted)]">
               <ShieldCheck className="h-3.5 w-3.5 text-[#10B981]" />
               Acesso criptografado e seguro
             </span>
+            <Link
+              href="/explorar"
+              className="text-xs font-semibold text-[var(--zelo-ink)] underline underline-offset-4 hover:opacity-80"
+            >
+              Só quer ver lojas? Explorar Vitrine →
+            </Link>
           </div>
         </section>
 
