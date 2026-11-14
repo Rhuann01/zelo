@@ -27,6 +27,7 @@ import {
 } from "@/lib/schemas/loja";
 import { createLojaAction } from "@/app/onboarding/actions";
 import { StatusBadge, SurfaceCard } from "@/components/ui";
+import { StoreLocationFields } from "@/components/ui/store-location-fields";
 
 const NICHO_META: Record<
   (typeof NICHO_OPTIONS)[number],
@@ -134,6 +135,8 @@ export function OnboardingWizard() {
   const [cidade, setCidade] = useState("");
   const [bairro, setBairro] = useState("");
   const [endereco, setEndereco] = useState("");
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
   const [whatsapp, setWhatsapp] = useState("");
   const [tema, setTema] = useState<(typeof TEMA_OPTIONS)[number]>("urban");
   const [error, setError] = useState<string | null>(null);
@@ -227,6 +230,8 @@ export function OnboardingWizard() {
         cidade: cidade.trim(),
         bairro: bairro.trim(),
         endereco_texto: endereco.trim(),
+        latitude,
+        longitude,
         whatsapp_loja: whatsapp.trim(),
         tema,
         servicos: servicosAtivos,
@@ -571,48 +576,22 @@ export function OnboardingWizard() {
               </p>
             </div>
 
-            <div className="space-y-3">
-              <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--zelo-muted)] mb-1.5">
-                  Cidade
-                </label>
-                <div className="flex items-center gap-2.5 rounded-xl bg-[var(--zelo-card)] px-3.5 h-12 shadow-xs">
-                  <MapPin className="h-4 w-4 text-[var(--zelo-subtle)] shrink-0" />
-                  <input
-                    type="text"
-                    value={cidade}
-                    onChange={(e) => setCidade(e.target.value)}
-                    placeholder="Ex: Belo Horizonte"
-                    className="w-full bg-transparent text-sm outline-none"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--zelo-muted)] mb-1.5">
-                  Bairro
-                </label>
-                <input
-                  type="text"
-                  value={bairro}
-                  onChange={(e) => setBairro(e.target.value)}
-                  placeholder="Ex: Savassi"
-                  className="h-12 w-full rounded-xl bg-[var(--zelo-card)] px-3.5 text-sm shadow-xs outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--zelo-muted)] mb-1.5">
-                  Endereço (opcional)
-                </label>
-                <input
-                  type="text"
-                  value={endereco}
-                  onChange={(e) => setEndereco(e.target.value)}
-                  placeholder="Rua, número e complemento"
-                  className="h-12 w-full rounded-xl bg-[var(--zelo-card)] px-3.5 text-sm shadow-xs outline-none"
-                />
-              </div>
+            <div className="space-y-4">
+              <StoreLocationFields
+                cidade={cidade}
+                bairro={bairro}
+                endereco={endereco}
+                latitude={latitude}
+                longitude={longitude}
+                onChangeCidade={setCidade}
+                onChangeBairro={setBairro}
+                onChangeEndereco={setEndereco}
+                onChangeCoords={(lat, lng) => {
+                  setLatitude(lat);
+                  setLongitude(lng);
+                }}
+                variant="card"
+              />
 
               <div>
                 <label className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--zelo-muted)] mb-1.5">

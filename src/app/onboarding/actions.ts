@@ -49,6 +49,8 @@ export async function createLojaAction(rawInput: CreateLojaInput): Promise<Onboa
       cidade: input.cidade,
       bairro: input.bairro,
       endereco_texto: input.endereco_texto,
+      latitude: input.latitude ?? null,
+      longitude: input.longitude ?? null,
       whatsapp_loja: input.whatsapp_loja,
       tema: input.tema,
       cor_primaria: COR_PADRAO_POR_TEMA[input.tema],

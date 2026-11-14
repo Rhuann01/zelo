@@ -23,7 +23,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { compressImageToWebP, STORE_MEDIA_COMPRESS_CONFIG } from "@/lib/image/compress-webp";
 import { showToast } from "@/components/zelo-toast";
-import { StoreMapPicker } from "@/components/ui";
+import { StoreLocationFields } from "@/components/ui/store-location-fields";
 import type { LojaResumo } from "@/lib/painel/get-painel-context";
 
 const TEMAS = [
@@ -682,47 +682,22 @@ export function CustomizadorLoja({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <input
-            type="text"
-            disabled={!isOwner}
-            value={cidade}
-            onChange={(e) => setCidade(e.target.value)}
-            placeholder="Cidade"
-            className="h-11 rounded-lg bg-[var(--zelo-soft)] px-3 text-sm text-[var(--zelo-ink)] outline-none"
-          />
-          <input
-            type="text"
-            disabled={!isOwner}
-            value={bairro}
-            onChange={(e) => setBairro(e.target.value)}
-            placeholder="Bairro"
-            className="h-11 rounded-lg bg-[var(--zelo-soft)] px-3 text-sm text-[var(--zelo-ink)] outline-none"
-          />
-        </div>
-
-        <input
-          type="text"
+        <StoreLocationFields
+          cidade={cidade}
+          bairro={bairro}
+          endereco={enderecoTexto}
+          latitude={latitude}
+          longitude={longitude}
+          onChangeCidade={setCidade}
+          onChangeBairro={setBairro}
+          onChangeEndereco={setEnderecoTexto}
+          onChangeCoords={(lat, lng) => {
+            setLatitude(lat);
+            setLongitude(lng);
+          }}
           disabled={!isOwner}
-          value={enderecoTexto}
-          onChange={(e) => setEnderecoTexto(e.target.value)}
-          placeholder="Rua, número e complemento"
-          className="h-11 w-full rounded-lg bg-[var(--zelo-soft)] px-3 text-sm text-[var(--zelo-ink)] outline-none"
+          variant="soft"
         />
-
-        {isOwner && (
-          <StoreMapPicker
-            enderecoTexto={enderecoTexto}
-            bairro={bairro}
-            cidade={cidade}
-            latitude={latitude}
-            longitude={longitude}
-            onChangeCoords={(lat, lng) => {
-              setLatitude(lat);
-              setLongitude(lng);
-            }}
-          />
-        )}
       </section>
 
       {isOwner && (
