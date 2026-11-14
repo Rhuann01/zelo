@@ -368,7 +368,7 @@ export function CustomizadorLoja({
 
         <div className="w-full rounded-xl bg-[var(--zelo-soft)] p-3 shadow-sm">
           <div
-            className={`store-view-base theme-${tema} flex w-full flex-col overflow-hidden transition-all duration-200 ${
+            className={`store-view-base theme-${tema} relative flex w-full flex-col overflow-hidden transition-all duration-200 ${
               refreshing ? "opacity-50" : "opacity-100"
             }`}
             style={{
@@ -378,7 +378,11 @@ export function CustomizadorLoja({
               boxShadow: isBrutal ? "3px 3px 0px #000000" : "var(--t-shadow)",
             }}
           >
-            <div className="relative h-20 w-full overflow-hidden">
+            {/* Banner de fundo atrás do cabeçalho do preview */}
+            <div
+              className="pointer-events-none absolute inset-x-0 top-0 z-0 h-28 overflow-hidden"
+              style={{ "--t-bg": "var(--t-surface)" } as React.CSSProperties}
+            >
               <StoreBannerMedia
                 capaUrl={capaUrl}
                 logoUrl={logoUrl}
@@ -388,14 +392,14 @@ export function CustomizadorLoja({
               />
             </div>
 
-            <div className="flex flex-col gap-2.5 p-3">
+            <div className="relative z-10 flex flex-col gap-2.5 px-3 pt-12 pb-3">
               {/* Brand Header inside Preview */}
               <div className="flex items-center gap-2.5">
               {logoUrl ? (
                 <img
                   src={logoUrl}
                   alt={loja.nome}
-                  className="h-10 w-10 shrink-0 object-cover"
+                  className="h-10 w-10 shrink-0 object-cover shadow-md ring-2 ring-[var(--t-surface)]"
                   style={{ borderRadius: `${Math.max(4, raio - 2)}px` }}
                 />
               ) : (
