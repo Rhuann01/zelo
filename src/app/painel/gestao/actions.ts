@@ -59,6 +59,8 @@ export async function saveServicoAction(raw: unknown): Promise<ActionResult> {
         duracao_min: input.duracao_min,
         preco_centavos: input.preco_centavos,
         ativo: input.ativo,
+        ...(input.imagem_url !== undefined ? { imagem_url: input.imagem_url } : {}),
+        exibir_imagem: input.exibir_imagem,
       })
       .eq("id", input.id)
       .eq("loja_id", input.loja_id)
@@ -76,6 +78,8 @@ export async function saveServicoAction(raw: unknown): Promise<ActionResult> {
       duracao_min: input.duracao_min,
       preco_centavos: input.preco_centavos,
       ativo: input.ativo,
+      imagem_url: input.imagem_url ?? null,
+      exibir_imagem: input.exibir_imagem,
     });
     if (error) {
       return { error: "Não foi possível criar o serviço (verifique suas permissões)." };
@@ -84,6 +88,96 @@ export async function saveServicoAction(raw: unknown): Promise<ActionResult> {
 
   await revalidateLojaCache(supabase, parsed.data.loja_id);
   return { ok: true };
+}
+
+export async function updateServicoImagemAction(
+  servicoId: string,
+  lojaId: string,
+  imagemUrl: string | null,
+  exibirImagem?: boolean
+): Promise<ActionResult> {
+  const parsed = z
+    .object({
+      servicoId: z.string().uuid(),
+      lojaId: z.string().uuid(),
+      imagemUrl: z.string().url().nullable(),
+      exibirImagem: z.boolean().optional(),
+    })
+    .safeParse({ servicoId, lojaId, imagemUrl, exibirImagem });
+  if (!parsed.success) {
+    return { error: "Dados de imagem inválidos." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sessão expirada." };
+
+  const updatePayload: { imagem_url: string | null; exibir_imagem?: boolean } = {
+    imagem_url: parsed.data.imagemUrl,
+  };
+  if (parsed.data.exibirImagem !== undefined) {
+    updatePayload.exibir_imagem = parsed.data.exibirImagem;
+  }
+
+  const { data, error } = await supabase
+    .from("servicos")
+    .update(updatePayload)
+    .eq("id", parsed.data.servicoId)
+    .eq("loja_id", parsed.data.lojaId)
+    .select("id")
+    .maybeSingle();
+
+  if (error || !data) {
+    return { error: "Não foi possível atualizar a foto do serviço." };
+  }
+
+  await revalidateLojaCache(supabase, parsed.data.lojaId);
+  return { ok: true };
+}
+
+export async function toggleServicoImagemAction(
+  servicoId: string,
+  lojaId: string,
+  exibirImagem: boolean
+): Promise<ActionResult> {
+  const parsed = z
+    .object({
+      servicoId: z.string().uuid(),
+      lojaId: z.string().uuid(),
+      exibirImagem: z.boolean(),
+    })
+    .safeParse({ servicoId, lojaId, exibirImagem });
+  if (!parsed.success) {
+    return { error: "Identificador inválido." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sessão expirada." };
+
+  const { data, error } = await supabase
+    .from("servicos")
+    .update({ exibir_imagem: parsed.data.exibirImagem })
+    .eq("id", parsed.data.servicoId)
+    .eq("loja_id", parsed.data.lojaId)
+    .select("id")
+    .maybeSingle();
+
+  if (error || !data) {
+    return { error: "Não foi possível alterar a exibição da foto." };
+  }
+
+  await revalidateLojaCache(supabase, parsed.data.lojaId);
+  return {
+    ok: true,
+    message: parsed.data.exibirImagem
+      ? "Foto ativada na página da loja."
+      : "Foto ocultada na página da loja.",
+  };
 }
 
 export async function deleteServicoAction(servicoId: string, lojaId: string): Promise<ActionResult> {

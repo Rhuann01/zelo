@@ -10,7 +10,7 @@ export default async function GestaoPage() {
   const [{ data: servicos }, { data: profissionais }, { data: bloqueios }] = await Promise.all([
     supabase
       .from("servicos")
-      .select("id, nome, descricao, duracao_min, preco_centavos, ativo")
+      .select("id, nome, descricao, duracao_min, preco_centavos, ativo, imagem_url, exibir_imagem")
       .eq("loja_id", ctx.lojaAtual.id)
       .order("ordem", { ascending: true }),
     supabase

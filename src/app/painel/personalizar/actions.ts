@@ -77,3 +77,42 @@ export async function revalidateLojaMediaAction(lojaId: string) {
   revalidatePath("/explorar");
   return { ok: true };
 }
+
+export async function savePresetBannerAction(
+  lojaId: string,
+  capaUrl: string | null,
+): Promise<{ ok: boolean; error?: string }> {
+  if (capaUrl !== null && !capaUrl.startsWith("/banners/")) {
+    return { ok: false, error: "Banner inválido." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Sessão expirada." };
+
+  const { data: loja } = await supabase
+    .from("lojas")
+    .select("id, slug")
+    .eq("id", lojaId)
+    .eq("owner_id", user.id)
+    .maybeSingle();
+
+  if (!loja) return { ok: false, error: "Loja não encontrada ou sem permissão." };
+
+  const { error } = await supabase
+    .from("lojas")
+    .update({ capa_url: capaUrl })
+    .eq("id", lojaId)
+    .eq("owner_id", user.id);
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidateTag(`loja-${loja.slug}`);
+  revalidateTag("vitrine-explorar");
+  revalidatePath("/painel/personalizar");
+  revalidatePath(`/${loja.slug}`);
+  revalidatePath("/explorar");
+  return { ok: true };
+}

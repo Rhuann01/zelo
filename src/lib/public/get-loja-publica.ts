@@ -29,6 +29,8 @@ export interface ServicoPublico {
   descricao: string;
   duracao_min: number;
   preco_centavos: number;
+  imagem_url: string | null;
+  exibir_imagem: boolean;
 }
 
 export interface ProfissionalPublico {
@@ -93,7 +95,7 @@ export async function getLojaPublicaBySlug(slug: string): Promise<LojaPublicaCom
       const [{ data: servicos }, { data: profissionais }] = await Promise.all([
         supabase
           .from("servicos")
-          .select("id, nome, descricao, duracao_min, preco_centavos")
+          .select("id, nome, descricao, duracao_min, preco_centavos, imagem_url, exibir_imagem")
           .eq("loja_id", loja.id)
           .eq("ativo", true)
           .order("ordem", { ascending: true })

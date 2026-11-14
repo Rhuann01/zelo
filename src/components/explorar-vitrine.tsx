@@ -28,6 +28,7 @@ import { ZeloLogo } from "@/components/zelo-logo";
 import { ZeloToastViewport } from "@/components/zelo-toast";
 import { ExplorarHeaderAvatar } from "@/components/explorar-header-avatar";
 import { ExplorarMeusHorarios } from "@/components/explorar-meus-horarios";
+import { StoreBannerMedia } from "@/components/ui/store-banner-media";
 import { ExplorarPerfilForm } from "@/components/explorar-perfil-form";
 import { EmptyState } from "@/components/ui";
 
@@ -383,32 +384,15 @@ export function ExplorarVitrine({ lojas }: { lojas: VitrineLojaCard[] }) {
                     className="group relative block overflow-hidden rounded-3xl bg-[#111111] text-white shadow-md transition-transform active:scale-[0.99]"
                   >
                     <div className="relative h-52 w-full">
-                      {heroLoja.capa_url ? (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img
-                          src={heroLoja.capa_url}
-                          alt={heroLoja.nome}
-                          className="h-full w-full object-cover opacity-80 transition-transform duration-500 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div
-                          className="relative h-full w-full overflow-hidden"
-                          style={{
-                            background: `radial-gradient(circle at 80% 20%, ${heroLoja.cor_primaria}66, #111111 72%)`,
-                          }}
-                        >
-                          {heroLoja.logo_url && (
-                            /* eslint-disable-next-line @next/next/no-img-element */
-                            <img
-                              src={heroLoja.logo_url}
-                              alt=""
-                              aria-hidden="true"
-                              className="h-full w-full scale-125 object-cover opacity-45 blur-xl"
-                            />
-                          )}
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-black/20" />
+                      <StoreBannerMedia
+                        capaUrl={heroLoja.capa_url}
+                        logoUrl={heroLoja.logo_url}
+                        corPrimaria={heroLoja.cor_primaria}
+                        alt={heroLoja.nome}
+                        overlayMode="dark"
+                        priority
+                      />
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/45 to-black/20" />
 
                       {/* Top Badges */}
                       <div className="absolute top-3.5 left-3.5 right-3.5 flex items-center justify-between gap-2">
@@ -619,35 +603,14 @@ function PremiumLojaCard({
     <article className="overflow-hidden rounded-3xl bg-[var(--zelo-card)] shadow-sm transition-shadow hover:shadow-md">
       {/* Banner / Capa */}
       <div className="relative h-40 w-full overflow-hidden bg-[var(--zelo-soft)]">
-        <Link href={`/${loja.slug}`} className="block h-full w-full">
-          {loja.capa_url ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={loja.capa_url}
-              alt={loja.nome}
-              loading="lazy"
-              decoding="async"
-              className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
-            />
-          ) : (
-            <div
-              className="relative h-full w-full overflow-hidden"
-              style={{
-                background: `radial-gradient(circle at 80% 25%, ${loja.cor_primaria}55, #141514 76%)`,
-              }}
-            >
-              {loja.logo_url && (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={loja.logo_url}
-                  alt=""
-                  aria-hidden="true"
-                  className="h-full w-full scale-125 object-cover opacity-55 blur-xl"
-                />
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/15 to-transparent" />
-            </div>
-          )}
+        <Link href={`/${loja.slug}`} className="relative block h-full w-full">
+          <StoreBannerMedia
+            capaUrl={loja.capa_url}
+            logoUrl={loja.logo_url}
+            corPrimaria={loja.cor_primaria}
+            alt={loja.nome}
+            overlayMode="dark"
+          />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
         </Link>
 

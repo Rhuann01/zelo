@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { ReservaDrawer } from "@/components/reserva-drawer";
 import { StoreMapEmbed, buildExternalMapUrl } from "@/components/ui";
+import { StoreBannerMedia } from "@/components/ui/store-banner-media";
 import {
   getAccentInk,
   type LojaPublica,
@@ -187,8 +188,20 @@ export function LojaPublicaView({
       </header>
 
       <main className="mx-auto flex w-full max-w-[480px] flex-1 flex-col pb-32">
+        {/* Banner da Loja (foto ou degradê automático da logo / cor do perfil) */}
+        <div className="h-32 sm:h-36 w-full overflow-hidden">
+          <StoreBannerMedia
+            capaUrl={loja.capa_url}
+            logoUrl={loja.logo_url}
+            corPrimaria={loja.cor_primaria}
+            alt={`Banner de ${loja.nome}`}
+            overlayMode="store"
+            priority
+          />
+        </div>
+
         {/* Store Profile Info Header (Stitch) */}
-        <section className="relative overflow-hidden px-4 pt-5 pb-5">
+        <section className="relative overflow-hidden px-4 pt-3 pb-5 -mt-6">
           <div
             className="pointer-events-none absolute top-0 right-0 h-44 w-44 opacity-15 blur-2xl"
             style={{ background: "radial-gradient(circle, var(--t-accent), transparent 70%)" }}
@@ -351,22 +364,38 @@ export function LojaPublicaView({
                         />
                       )}
 
-                      <div className={`flex flex-col gap-1.5 ${selected ? "pl-1.5" : ""}`}>
-                        <div className="flex items-start justify-between gap-2">
-                          <h2 className="text-base font-semibold leading-snug">{s.nome}</h2>
-                          <span
-                            className="inline-flex shrink-0 items-center gap-1 rounded px-2 py-0.5 font-mono-num text-xs"
-                            style={{ backgroundColor: "var(--t-inner)", color: "var(--t-muted)" }}
-                          >
-                            <Clock className="h-3 w-3" />
-                            {s.duracao_min} min
-                          </span>
-                        </div>
-                        {s.descricao && (
-                          <p className="text-xs leading-relaxed" style={{ color: "var(--t-muted)" }}>
-                            {s.descricao}
-                          </p>
+                      <div className={`flex items-start gap-3 ${selected ? "pl-1.5" : ""}`}>
+                        {s.exibir_imagem && s.imagem_url && (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img
+                            src={s.imagem_url}
+                            alt={s.nome}
+                            loading="lazy"
+                            decoding="async"
+                            className="h-16 w-16 sm:h-20 sm:w-20 shrink-0 object-cover"
+                            style={{
+                              borderRadius: "calc(var(--t-radius) * 0.72)",
+                              backgroundColor: "var(--t-inner)",
+                            }}
+                          />
                         )}
+                        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                          <div className="flex items-start justify-between gap-2">
+                            <h2 className="text-base font-semibold leading-snug break-words">{s.nome}</h2>
+                            <span
+                              className="inline-flex shrink-0 items-center gap-1 rounded px-2 py-0.5 font-mono-num text-xs"
+                              style={{ backgroundColor: "var(--t-inner)", color: "var(--t-muted)" }}
+                            >
+                              <Clock className="h-3 w-3" />
+                              {s.duracao_min} min
+                            </span>
+                          </div>
+                          {s.descricao && (
+                            <p className="text-xs leading-relaxed line-clamp-2" style={{ color: "var(--t-muted)" }}>
+                              {s.descricao}
+                            </p>
+                          )}
+                        </div>
                       </div>
 
                       <div

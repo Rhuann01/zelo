@@ -13,18 +13,23 @@ import {
   Loader2,
   MapPin,
   RefreshCw,
+  Sparkles,
   Trash2,
   Wallet,
+  X,
 } from "lucide-react";
 import {
   revalidateLojaMediaAction,
   saveCustomizacaoAction,
+  savePresetBannerAction,
 } from "@/app/painel/personalizar/actions";
 import { createClient } from "@/lib/supabase/client";
 import { compressImageToWebP, STORE_MEDIA_COMPRESS_CONFIG } from "@/lib/image/compress-webp";
 import { showToast } from "@/components/zelo-toast";
+import { StoreBannerMedia } from "@/components/ui/store-banner-media";
 import { StoreLocationFields } from "@/components/ui/store-location-fields";
 import { UnsavedChangesGuard } from "@/components/ui/unsaved-changes-guard";
+import { getBannersForNicho } from "@/lib/banners/catalog";
 import type { LojaResumo } from "@/lib/painel/get-painel-context";
 
 const TEMAS = [
@@ -119,6 +124,8 @@ export function CustomizadorLoja({
   const [refreshing, setRefreshing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadingCapa, setUploadingCapa] = useState(false);
+  const [bannerModalOpen, setBannerModalOpen] = useState(false);
+  const [savingPresetBanner, setSavingPresetBanner] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [savedSnapshot, setSavedSnapshot] = useState({
     tema: loja.tema,
@@ -233,6 +240,7 @@ export function CustomizadorLoja({
       if (dbErr) throw dbErr;
 
       setCapaUrl(url);
+      setBannerModalOpen(false);
       await revalidateLojaMediaAction(loja.id);
       showToast("Banner da vitrine atualizado com sucesso.", "success");
     } catch (err) {
@@ -260,6 +268,27 @@ export function CustomizadorLoja({
       showToast(err instanceof Error ? err.message : "Erro ao remover banner.", "error");
     } finally {
       setUploadingCapa(false);
+    }
+  }
+
+  async function handleSelectPresetBanner(nextCapaUrl: string | null) {
+    setSavingPresetBanner(true);
+    try {
+      const res = await savePresetBannerAction(loja.id, nextCapaUrl);
+      if (!res.ok) {
+        showToast(res.error ?? "Erro ao atualizar banner.", "error");
+        return;
+      }
+      setCapaUrl(nextCapaUrl);
+      setBannerModalOpen(false);
+      showToast(
+        nextCapaUrl ? "Banner aplicado à vitrine." : "Degradê automático ativado.",
+        "success"
+      );
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Erro ao atualizar banner.", "error");
+    } finally {
+      setSavingPresetBanner(false);
     }
   }
 
@@ -339,7 +368,7 @@ export function CustomizadorLoja({
 
         <div className="w-full rounded-xl bg-[var(--zelo-soft)] p-3 shadow-sm">
           <div
-            className={`store-view-base theme-${tema} flex w-full flex-col gap-2.5 p-3 transition-all duration-200 ${
+            className={`store-view-base theme-${tema} flex w-full flex-col overflow-hidden transition-all duration-200 ${
               refreshing ? "opacity-50" : "opacity-100"
             }`}
             style={{
@@ -349,8 +378,19 @@ export function CustomizadorLoja({
               boxShadow: isBrutal ? "3px 3px 0px #000000" : "var(--t-shadow)",
             }}
           >
-            {/* Brand Header inside Preview */}
-            <div className="flex items-center gap-2.5">
+            <div className="relative h-20 w-full overflow-hidden">
+              <StoreBannerMedia
+                capaUrl={capaUrl}
+                logoUrl={logoUrl}
+                corPrimaria={cor}
+                alt={`Banner ${loja.nome}`}
+                overlayMode="store"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2.5 p-3">
+              {/* Brand Header inside Preview */}
+              <div className="flex items-center gap-2.5">
               {logoUrl ? (
                 <img
                   src={logoUrl}
@@ -432,6 +472,7 @@ export function CustomizadorLoja({
             >
               <span>Agendar Horário</span>
               <ArrowRight className="h-3.5 w-3.5" />
+            </div>
             </div>
           </div>
 
@@ -619,25 +660,37 @@ export function CustomizadorLoja({
                   Banner / Capa da Vitrine
                 </p>
                 <p className="text-[11px] text-[var(--zelo-muted)]">
-                  Foto horizontal exibida no card do Explorar e no topo da loja (WebP até 100 KB).
+                  Escolha um banner pronto do seu nicho, envie uma foto ou use o degradê automático da logo.
                 </p>
               </div>
             </div>
 
-            {capaUrl && (
-              <div className="relative h-28 w-full overflow-hidden rounded-xl bg-[var(--zelo-soft)]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={capaUrl}
-                  alt={`Banner ${loja.nome}`}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-            )}
+            <div className="relative h-28 w-full overflow-hidden rounded-xl bg-[var(--zelo-soft)]">
+              <StoreBannerMedia
+                capaUrl={capaUrl}
+                logoUrl={logoUrl}
+                corPrimaria={cor}
+                alt={`Banner ${loja.nome}`}
+                overlayMode="dark"
+              />
+              {!capaUrl && (
+                <div className="absolute inset-0 flex items-end p-2.5">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-medium text-white backdrop-blur-sm">
+                    <Sparkles className="h-3 w-3 text-[#F59E0B]" />
+                    {logoUrl ? "Degradê automático da logo" : "Degradê automático da cor do perfil"}
+                  </span>
+                </div>
+              )}
+            </div>
 
             <div className="flex items-center gap-2">
-              <label className="flex h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[var(--zelo-soft)] text-xs font-semibold text-[var(--zelo-ink)] transition-colors hover:bg-[var(--zelo-border)]">
-                {uploadingCapa ? (
+              <button
+                type="button"
+                disabled={uploadingCapa || savingPresetBanner}
+                onClick={() => setBannerModalOpen(true)}
+                className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--zelo-soft)] px-3 text-xs font-semibold text-[var(--zelo-ink)] transition-colors hover:bg-[var(--zelo-border)] disabled:opacity-60"
+              >
+                {uploadingCapa || savingPresetBanner ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <ImagePlus className="h-4 w-4 text-[#10B981]" />
@@ -647,10 +700,9 @@ export function CustomizadorLoja({
                     ? "Processando banner..."
                     : capaUrl
                       ? "Alterar Banner"
-                      : "Enviar Banner / Capa"}
+                      : "Escolher ou Enviar Banner"}
                 </span>
-                <input type="file" accept="image/*" onChange={handleCapaUpload} className="hidden" />
-              </label>
+              </button>
               {capaUrl && (
                 <button
                   type="button"
@@ -768,6 +820,119 @@ export function CustomizadorLoja({
           {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
           Salvar Personalização e Mapa
         </button>
+      )}
+
+      {bannerModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="banner-modal-title"
+          onClick={() => !uploadingCapa && !savingPresetBanner && setBannerModalOpen(false)}
+        >
+          <div
+            className="flex max-h-[88vh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-[var(--zelo-card)] shadow-2xl sm:rounded-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-[var(--zelo-border)]/60 px-4 py-3.5">
+              <div>
+                <h3 id="banner-modal-title" className="text-sm font-semibold text-[var(--zelo-ink)]">
+                  Escolher Banner da Loja
+                </h3>
+                <p className="text-[11px] text-[var(--zelo-muted)]">
+                  Banners prontos do seu nicho + estilos universais, ou envie sua própria foto.
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={uploadingCapa || savingPresetBanner}
+                onClick={() => setBannerModalOpen(false)}
+                aria-label="Fechar galeria de banners"
+                className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--zelo-soft)] text-[var(--zelo-ink)] transition-colors hover:bg-[var(--zelo-border)]"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 space-y-4 overflow-y-auto p-4">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <label className="flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[var(--zelo-btn-bg)] px-3 text-xs font-semibold text-[var(--zelo-btn-ink)] transition-transform active:scale-[0.99]">
+                  {uploadingCapa ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ImagePlus className="h-4 w-4" />
+                  )}
+                  <span>{uploadingCapa ? "Enviando foto..." : "Enviar minha própria foto"}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={uploadingCapa || savingPresetBanner}
+                    onChange={handleCapaUpload}
+                    className="hidden"
+                  />
+                </label>
+
+                <button
+                  type="button"
+                  disabled={uploadingCapa || savingPresetBanner}
+                  onClick={() => handleSelectPresetBanner(null)}
+                  className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[var(--zelo-soft)] px-3 text-xs font-semibold text-[var(--zelo-ink)] transition-colors hover:bg-[var(--zelo-border)] disabled:opacity-60"
+                >
+                  <Sparkles className="h-4 w-4 text-[#F59E0B]" />
+                  <span>Usar degradê automático</span>
+                </button>
+              </div>
+
+              <div>
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--zelo-muted)]">
+                  Banners disponíveis para sua loja
+                </p>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {getBannersForNicho(loja.nicho).map((banner) => {
+                    const selected = capaUrl === banner.src;
+                    return (
+                      <button
+                        key={banner.id}
+                        type="button"
+                        disabled={uploadingCapa || savingPresetBanner}
+                        onClick={() => handleSelectPresetBanner(banner.src)}
+                        className={`group relative overflow-hidden rounded-xl bg-[var(--zelo-soft)] text-left transition-all ${
+                          selected
+                            ? "ring-2 ring-[#10B981]"
+                            : "hover:opacity-90"
+                        }`}
+                      >
+                        <div className="relative h-24 w-full overflow-hidden">
+                          {/* eslint-disable-next-line @next/next/next-img-element */}
+                          <img
+                            src={banner.src}
+                            alt={banner.label}
+                            loading="lazy"
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
+                          {selected && (
+                            <span className="absolute right-2 top-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#10B981] text-white shadow">
+                              <Check className="h-3.5 w-3.5" />
+                            </span>
+                          )}
+                          <div className="absolute inset-x-2 bottom-1.5">
+                            <p className="truncate text-[11px] font-semibold text-white">
+                              {banner.label}
+                            </p>
+                            <p className="text-[10px] text-white/75">
+                              {banner.nicho === "outro" ? "Universal" : "Do seu nicho"}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

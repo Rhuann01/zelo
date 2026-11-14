@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import {
   CalendarPlus,
   Clock,
+  ImagePlus,
   Loader2,
   Plus,
   Scissors,
@@ -14,6 +15,7 @@ import {
   UserPlus,
   Users,
   Utensils,
+  X,
 } from "lucide-react";
 import {
   convidarProfissionalAction,
@@ -23,7 +25,11 @@ import {
   saveHorariosAction,
   saveServicoAction,
   toggleDonoAtendeAction,
+  toggleServicoImagemAction,
+  updateServicoImagemAction,
 } from "@/app/painel/gestao/actions";
+import { createClient } from "@/lib/supabase/client";
+import { compressImageToWebP, STORE_MEDIA_COMPRESS_CONFIG } from "@/lib/image/compress-webp";
 import { showToast } from "@/components/zelo-toast";
 
 export interface ServicoRow {
@@ -33,6 +39,8 @@ export interface ServicoRow {
   duracao_min: number;
   preco_centavos: number;
   ativo: boolean;
+  imagem_url: string | null;
+  exibir_imagem: boolean;
 }
 
 export interface ProfissionalRow {
@@ -122,6 +130,9 @@ export function GestaoTabs({
   const [srvNome, setSrvNome] = useState("");
   const [srvDuracao, setSrvDuracao] = useState("35");
   const [srvPreco, setSrvPreco] = useState("45,00");
+  const [srvImagemUrl, setSrvImagemUrl] = useState<string | null>(null);
+  const [srvExibirImagem, setSrvExibirImagem] = useState(false);
+  const [uploadingSrvId, setUploadingSrvId] = useState<string | null>(null);
 
   const [convNome, setConvNome] = useState("");
   const [convEmail, setConvEmail] = useState("");
@@ -138,6 +149,61 @@ export function GestaoTabs({
       if (res.error) showToast(res.error, "error");
       else if (res.message) showToast(res.message, "success");
     });
+  }
+
+  async function uploadServicoWebP(file: File, targetId: string): Promise<string> {
+    const blob = await compressImageToWebP(file, STORE_MEDIA_COMPRESS_CONFIG);
+    const supabase = createClient();
+    const path = `${lojaId}/servicos/${targetId}.webp`;
+    const { error: uploadErr } = await supabase.storage
+      .from("lojas-media")
+      .upload(path, blob, { contentType: "image/webp", upsert: true });
+    if (uploadErr) throw uploadErr;
+
+    const { data: pub } = supabase.storage.from("lojas-media").getPublicUrl(path);
+    return `${pub.publicUrl}?t=${Date.now()}`;
+  }
+
+  async function handleNewServicoImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    setUploadingSrvId("new");
+    try {
+      const url = await uploadServicoWebP(file, crypto.randomUUID());
+      setSrvImagemUrl(url);
+      setSrvExibirImagem(true);
+      showToast("Foto do serviço carregada.", "success");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Erro ao enviar foto.", "error");
+    } finally {
+      setUploadingSrvId(null);
+    }
+  }
+
+  async function handleExistingServicoImage(
+    servicoId: string,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    setUploadingSrvId(servicoId);
+    try {
+      const url = await uploadServicoWebP(file, servicoId);
+      const res = await updateServicoImagemAction(servicoId, lojaId, url, true);
+      if (res.error) {
+        showToast(res.error, "error");
+      } else {
+        showToast("Foto do serviço atualizada e ativada na loja.", "success");
+      }
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Erro ao enviar foto.", "error");
+    } finally {
+      setUploadingSrvId(null);
+    }
   }
 
   return (
@@ -680,9 +746,73 @@ export function GestaoTabs({
                   className="h-11 rounded-xl bg-[var(--zelo-soft)] px-3 text-sm font-mono-num outline-none"
                 />
               </div>
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[var(--zelo-soft)] p-2.5">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  {srvImagemUrl ? (
+                    <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-[var(--zelo-card)]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={srvImagemUrl}
+                        alt="Prévia do serviço"
+                        className="h-full w-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSrvImagemUrl(null);
+                          setSrvExibirImagem(false);
+                        }}
+                        aria-label="Remover foto do novo serviço"
+                        className="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ) : null}
+                  <label className="inline-flex min-h-[40px] cursor-pointer items-center gap-1.5 rounded-lg bg-[var(--zelo-card)] px-3 text-xs font-semibold text-[var(--zelo-ink)] shadow-sm transition-opacity hover:opacity-90">
+                    {uploadingSrvId === "new" ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <ImagePlus className="h-3.5 w-3.5 text-[#10B981]" />
+                    )}
+                    <span>{srvImagemUrl ? "Trocar Foto" : "Adicionar Foto (opcional)"}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={uploadingSrvId === "new"}
+                      onChange={handleNewServicoImage}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+
+                {srvImagemUrl && (
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={srvExibirImagem}
+                    onClick={() => setSrvExibirImagem((v) => !v)}
+                    className="inline-flex min-h-[36px] items-center gap-2 text-xs font-medium text-[var(--zelo-ink)]"
+                  >
+                    <span>Exibir na loja</span>
+                    <span
+                      className={`relative h-5 w-9 rounded-full p-0.5 transition-colors ${
+                        srvExibirImagem ? "bg-[#10B981]" : "bg-[#D4D4D8] dark:bg-[#3F3F46]"
+                      }`}
+                    >
+                      <span
+                        className={`block h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                          srvExibirImagem ? "translate-x-4" : "translate-x-0"
+                        }`}
+                      />
+                    </span>
+                  </button>
+                )}
+              </div>
+
               <button
                 type="button"
-                disabled={isPending}
+                disabled={isPending || uploadingSrvId === "new"}
                 onClick={() =>
                   runAction(async () => {
                     const centavos = Math.round(
@@ -695,9 +825,13 @@ export function GestaoTabs({
                       duracao_min: Number(srvDuracao) || 30,
                       preco_centavos: Number.isFinite(centavos) ? centavos : 0,
                       ativo: true,
+                      imagem_url: srvImagemUrl,
+                      exibir_imagem: srvImagemUrl ? srvExibirImagem : false,
                     });
                     if (res.ok) {
                       setSrvNome("");
+                      setSrvImagemUrl(null);
+                      setSrvExibirImagem(false);
                       return { message: "Serviço adicionado." };
                     }
                     return res;
@@ -721,24 +855,110 @@ export function GestaoTabs({
             {servicos.map((s) => (
               <div
                 key={s.id}
-                className="flex items-center justify-between gap-2 rounded-2xl bg-[var(--zelo-card)] p-4 shadow-sm"
+                className="space-y-2.5 rounded-2xl bg-[var(--zelo-card)] p-4 shadow-sm"
               >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-bold">{s.nome}</p>
-                  <p className="font-mono-num text-xs text-[var(--zelo-muted)]">
-                    {s.duracao_min} min • R$ {(s.preco_centavos / 100).toFixed(2).replace(".", ",")}
-                  </p>
+                <div className="flex items-center justify-between gap-2.5">
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    {s.imagem_url && (
+                      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-[var(--zelo-soft)]">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={s.imagem_url}
+                          alt={s.nome}
+                          className={`h-full w-full object-cover transition-opacity ${
+                            s.exibir_imagem ? "opacity-100" : "opacity-45"
+                          }`}
+                        />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold">{s.nome}</p>
+                      <p className="font-mono-num text-xs text-[var(--zelo-muted)]">
+                        {s.duracao_min} min • R$ {(s.preco_centavos / 100).toFixed(2).replace(".", ",")}
+                      </p>
+                    </div>
+                  </div>
+                  {isOwner && (
+                    <button
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => runAction(() => deleteServicoAction(s.id, lojaId))}
+                      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--zelo-soft)] text-red-500 transition hover:bg-red-500/10"
+                      aria-label={`Excluir ${s.nome}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
+
                 {isOwner && (
-                  <button
-                    type="button"
-                    disabled={isPending}
-                    onClick={() => runAction(() => deleteServicoAction(s.id, lojaId))}
-                    className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--zelo-soft)] text-red-500 transition hover:bg-red-500/10"
-                    aria-label={`Excluir ${s.nome}`}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--zelo-border)]/40 pt-2.5">
+                    <div className="flex items-center gap-2">
+                      <label className="inline-flex min-h-[38px] cursor-pointer items-center gap-1.5 rounded-lg bg-[var(--zelo-soft)] px-2.5 text-[11px] font-semibold text-[var(--zelo-ink)] transition-colors hover:bg-[var(--zelo-border)]">
+                        {uploadingSrvId === s.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <ImagePlus className="h-3.5 w-3.5 text-[#10B981]" />
+                        )}
+                        <span>{s.imagem_url ? "Trocar foto" : "Adicionar foto"}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={uploadingSrvId === s.id || isPending}
+                          onChange={(e) => handleExistingServicoImage(s.id, e)}
+                          className="hidden"
+                        />
+                      </label>
+                      {s.imagem_url && (
+                        <button
+                          type="button"
+                          disabled={isPending || uploadingSrvId === s.id}
+                          onClick={() =>
+                            runAction(async () => {
+                              const res = await updateServicoImagemAction(s.id, lojaId, null, false);
+                              if (res.ok) return { message: "Foto removida do serviço." };
+                              return res;
+                            })
+                          }
+                          className="inline-flex min-h-[38px] items-center gap-1 rounded-lg bg-red-500/10 px-2.5 text-[11px] font-semibold text-red-500 transition-colors hover:bg-red-500/15"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                          <span>Remover</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {s.imagem_url && (
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={s.exibir_imagem}
+                        aria-label={`Exibir foto do serviço ${s.nome} na loja`}
+                        disabled={isPending}
+                        onClick={() =>
+                          runAction(() =>
+                            toggleServicoImagemAction(s.id, lojaId, !s.exibir_imagem)
+                          )
+                        }
+                        className="inline-flex min-h-[38px] items-center gap-2 text-[11px] font-semibold text-[var(--zelo-ink)] disabled:opacity-60"
+                      >
+                        <span className="text-[var(--zelo-muted)]">
+                          {s.exibir_imagem ? "Foto visível" : "Foto oculta"}
+                        </span>
+                        <span
+                          className={`relative h-5 w-9 shrink-0 rounded-full p-0.5 transition-colors ${
+                            s.exibir_imagem ? "bg-[#10B981]" : "bg-[#D4D4D8] dark:bg-[#3F3F46]"
+                          }`}
+                        >
+                          <span
+                            className={`block h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                              s.exibir_imagem ? "translate-x-4" : "translate-x-0"
+                            }`}
+                          />
+                        </span>
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             ))}
