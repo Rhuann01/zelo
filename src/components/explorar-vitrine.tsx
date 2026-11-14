@@ -27,6 +27,7 @@ import type { VitrineLojaCard } from "@/lib/public/get-loja-publica";
 import { useViewerPerfil } from "@/lib/supabase/use-viewer-perfil";
 import { ZeloLogo } from "@/components/zelo-logo";
 import { ZeloToastViewport, showToast } from "@/components/zelo-toast";
+import { PwaInstallBanner } from "@/components/pwa-install-banner";
 import { ExplorarHeaderAvatar } from "@/components/explorar-header-avatar";
 import { ExplorarMeusHorarios } from "@/components/explorar-meus-horarios";
 import { StoreBannerMedia } from "@/components/ui/store-banner-media";
@@ -391,6 +392,7 @@ export function ExplorarVitrine({
               </div>
 
               {/* Category Horizontal Scroller */}
+              <PwaInstallBanner />
               <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 py-0.5 no-scrollbar">
                 {NICHOS.map((item) => {
                   const Icon = item.icon;

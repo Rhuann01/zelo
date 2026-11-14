@@ -52,6 +52,7 @@ export const criarAgendamentoSchema = z
     beneficiario_nome: z.string().trim().max(80).optional(),
     beneficiario_whatsapp: z.string().trim().max(20).optional(),
     observacoes: z.string().trim().max(240).optional(),
+    turnstile_token: z.string().max(2048).optional(),
   })
   .strict();
 

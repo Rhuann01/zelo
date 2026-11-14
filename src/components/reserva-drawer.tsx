@@ -20,6 +20,7 @@ import {
   X,
   Zap,
 } from "lucide-react";
+import { TurnstileWidget } from "@/components/ui/turnstile-widget";
 import {
   criarAgendamentoAction,
   getSlotsDisponiveisAction,
@@ -150,6 +151,7 @@ export function ReservaDrawer({
   const [beneficiarioNome, setBeneficiarioNome] = useState("");
   const [beneficiarioWhatsapp, setBeneficiarioWhatsapp] = useState("");
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string>("");
   const [confirmed, setConfirmed] = useState<{
     agendamento_id: string;
     inicio: string;
@@ -243,6 +245,7 @@ export function ReservaDrawer({
         inicio_iso: selectedSlot.inicioIso,
         whatsapp_cliente: telefoneFinal,
         beneficiario_nome: paraOutro ? beneficiarioNome.trim() || undefined : undefined,
+        turnstile_token: turnstileToken || undefined,
       });
 
       if (res.error) {
@@ -1011,6 +1014,10 @@ export function ReservaDrawer({
                       </span>
                     </div>
                   </div>
+                  <TurnstileWidget
+                    onToken={setTurnstileToken}
+                    onExpire={() => setTurnstileToken("")}
+                  />
                   {submitError && (
                     <p className="text-xs font-medium text-red-500">{submitError}</p>
                   )}

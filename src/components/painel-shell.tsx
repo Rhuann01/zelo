@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { ZeloLogo } from "@/components/zelo-logo";
 import { ZeloToastViewport } from "@/components/zelo-toast";
+import { PwaInstallBanner } from "@/components/pwa-install-banner";
 import type { LojaResumo } from "@/lib/painel/get-painel-context";
 
 interface PainelShellProps {
@@ -120,6 +121,7 @@ export function PainelShell({
       </header>
 
       <main key={lojaAtual.id} className="mx-auto flex w-full max-w-[480px] flex-1 flex-col px-4 pt-4 pb-28">
+        <PwaInstallBanner />
         {children}
       </main>
 

@@ -1,7 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { checkRateLimit, getClientIpFromHeaders } from "@/lib/security/rate-limit";
+import { verifyTurnstileToken } from "@/lib/security/turnstile";
 import {
   calcularSlotsDisponiveis,
   type HorariosLojaConfig,
@@ -91,6 +94,18 @@ export async function criarAgendamentoAction(raw: unknown): Promise<{
   }
 
   const input = parsed.data;
+  const reqHeaders = await headers();
+  const clientIp = getClientIpFromHeaders(reqHeaders);
+  const rl = checkRateLimit(`booking:create:${user.id}:${clientIp}`, 15, 5 * 60_000);
+  if (!rl.allowed) {
+    return { error: "Muitas tentativas de agendamento. Aguarde alguns minutos." };
+  }
+
+  const turnstile = await verifyTurnstileToken(input.turnstile_token, clientIp);
+  if (!turnstile.ok) {
+    return { error: turnstile.error ?? "Verificação anti-robô falhou." };
+  }
+
   const inicioMs = Date.parse(input.inicio_iso);
   if (Number.isNaN(inicioMs) || inicioMs <= Date.now()) {
     return { error: "Escolha um horário futuro para agendar." };
