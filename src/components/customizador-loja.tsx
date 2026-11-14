@@ -88,6 +88,7 @@ export function CustomizadorLoja({
   loja: LojaResumo;
   isOwner: boolean;
   initialLocalizacao?: {
+    cep?: string;
     endereco_texto: string;
     latitude: number | null;
     longitude: number | null;
@@ -100,6 +101,7 @@ export function CustomizadorLoja({
   const [sinalReais, setSinalReais] = useState(
     (loja.sinal_centavos / 100).toFixed(2).replace(".", ",")
   );
+  const [cep, setCep] = useState(initialLocalizacao?.cep ?? "");
   const [cidade, setCidade] = useState(loja.cidade);
   const [bairro, setBairro] = useState(loja.bairro);
   const [enderecoTexto, setEnderecoTexto] = useState(
@@ -256,6 +258,7 @@ export function CustomizadorLoja({
         cidade: cidade.trim(),
         bairro: bairro.trim(),
         endereco_texto: enderecoTexto.trim(),
+        cep: cep.trim(),
         latitude,
         longitude,
       });
@@ -683,11 +686,13 @@ export function CustomizadorLoja({
         </div>
 
         <StoreLocationFields
+          cep={cep}
           cidade={cidade}
           bairro={bairro}
           endereco={enderecoTexto}
           latitude={latitude}
           longitude={longitude}
+          onChangeCep={setCep}
           onChangeCidade={setCidade}
           onChangeBairro={setBairro}
           onChangeEndereco={setEnderecoTexto}

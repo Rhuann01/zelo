@@ -49,6 +49,7 @@ export async function createLojaAction(rawInput: CreateLojaInput): Promise<Onboa
       cidade: input.cidade,
       bairro: input.bairro,
       endereco_texto: input.endereco_texto,
+      cep: input.cep,
       latitude: input.latitude ?? null,
       longitude: input.longitude ?? null,
       whatsapp_loja: input.whatsapp_loja,

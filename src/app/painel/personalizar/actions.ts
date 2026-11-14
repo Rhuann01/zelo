@@ -31,6 +31,7 @@ export async function saveCustomizacaoAction(raw: unknown) {
   if (input.cidade !== undefined) updatePayload.cidade = input.cidade;
   if (input.bairro !== undefined) updatePayload.bairro = input.bairro;
   if (input.endereco_texto !== undefined) updatePayload.endereco_texto = input.endereco_texto;
+  if (input.cep !== undefined) updatePayload.cep = input.cep;
   if (input.latitude !== undefined) updatePayload.latitude = input.latitude;
   if (input.longitude !== undefined) updatePayload.longitude = input.longitude;
 

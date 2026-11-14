@@ -11,11 +11,13 @@ import {
 } from "@/lib/geo/geocode-br";
 
 interface StoreLocationFieldsProps {
+  cep?: string;
   cidade: string;
   bairro: string;
   endereco: string;
   latitude: number | null;
   longitude: number | null;
+  onChangeCep?: (val: string) => void;
   onChangeCidade: (val: string) => void;
   onChangeBairro: (val: string) => void;
   onChangeEndereco: (val: string) => void;
@@ -64,11 +66,13 @@ function joinEndereco(rua: string, numero: string, complemento: string): string 
 }
 
 export function StoreLocationFields({
+  cep: controlledCep,
   cidade,
   bairro,
   endereco,
   latitude,
   longitude,
+  onChangeCep,
   onChangeCidade,
   onChangeBairro,
   onChangeEndereco,
@@ -76,10 +80,19 @@ export function StoreLocationFields({
   disabled = false,
   variant = "card",
 }: StoreLocationFieldsProps) {
-  const [cep, setCep] = useState("");
+  const [internalCep, setInternalCep] = useState(controlledCep ?? "");
+  const cep = controlledCep !== undefined ? controlledCep : internalCep;
+  const setCep = (val: string) => {
+    setInternalCep(val);
+    onChangeCep?.(val);
+  };
   const [cepLoading, setCepLoading] = useState(false);
   const [cepStatus, setCepStatus] = useState<string | null>(null);
-  const lastFetchedCepRef = useRef<string>("");
+  const lastFetchedCepRef = useRef<string>(
+    (controlledCep ?? "").replace(/\D/g, "").length === 8
+      ? (controlledCep ?? "").replace(/\D/g, "")
+      : ""
+  );
 
   const initialParts = splitEndereco(endereco);
   const [rua, setRua] = useState(initialParts.rua);

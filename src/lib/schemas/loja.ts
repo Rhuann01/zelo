@@ -23,6 +23,7 @@ export const createLojaSchema = z
     cidade: z.string().trim().min(2, "Informe a cidade").max(80),
     bairro: z.string().trim().min(2, "Informe o bairro").max(80),
     endereco_texto: z.string().trim().max(160).default(""),
+    cep: z.string().trim().max(9).default(""),
     latitude: z.number().min(-90).max(90).nullable().optional(),
     longitude: z.number().min(-180).max(180).nullable().optional(),
     whatsapp_loja: z.string().trim().min(10, "Informe o WhatsApp com DDD").max(20),

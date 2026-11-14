@@ -132,6 +132,7 @@ export function OnboardingWizard() {
   const [novoSrvPreco, setNovoSrvPreco] = useState("50");
   const [showAddSrv, setShowAddSrv] = useState(false);
 
+  const [cep, setCep] = useState("");
   const [cidade, setCidade] = useState("");
   const [bairro, setBairro] = useState("");
   const [endereco, setEndereco] = useState("");
@@ -230,6 +231,7 @@ export function OnboardingWizard() {
         cidade: cidade.trim(),
         bairro: bairro.trim(),
         endereco_texto: endereco.trim(),
+        cep: cep.trim(),
         latitude,
         longitude,
         whatsapp_loja: whatsapp.trim(),
@@ -578,11 +580,13 @@ export function OnboardingWizard() {
 
             <div className="space-y-4">
               <StoreLocationFields
+                cep={cep}
                 cidade={cidade}
                 bairro={bairro}
                 endereco={endereco}
                 latitude={latitude}
                 longitude={longitude}
+                onChangeCep={setCep}
                 onChangeCidade={setCidade}
                 onChangeBairro={setBairro}
                 onChangeEndereco={setEndereco}

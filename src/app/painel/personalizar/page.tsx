@@ -9,7 +9,7 @@ export default async function PersonalizarPage() {
 
   const { data: loc } = await supabase
     .from("lojas")
-    .select("endereco_texto, latitude, longitude")
+    .select("cep, endereco_texto, latitude, longitude")
     .eq("id", ctx.lojaAtual.id)
     .maybeSingle();
 
@@ -25,6 +25,7 @@ export default async function PersonalizarPage() {
         loja={ctx.lojaAtual}
         isOwner={ctx.isOwner}
         initialLocalizacao={{
+          cep: loc?.cep ?? "",
           endereco_texto: loc?.endereco_texto ?? "",
           latitude: loc?.latitude ?? null,
           longitude: loc?.longitude ?? null,

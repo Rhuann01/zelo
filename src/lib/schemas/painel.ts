@@ -69,6 +69,7 @@ export const customizacaoLojaSchema = z
     cidade: z.string().trim().min(2).max(80).optional(),
     bairro: z.string().trim().min(2).max(80).optional(),
     endereco_texto: z.string().trim().max(160).optional(),
+    cep: z.string().trim().max(9).optional(),
     latitude: z.number().min(-90).max(90).nullable().optional(),
     longitude: z.number().min(-180).max(180).nullable().optional(),
   })
