@@ -30,6 +30,18 @@ html.dark {
   --zelo-btn-hover: #E4E4E7;
 }
 
+html,
+body {
+  overscroll-behavior-y: none;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
+
 body {
   background-color: var(--zelo-bg);
   color: var(--zelo-ink);

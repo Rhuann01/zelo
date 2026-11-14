@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -82,6 +82,22 @@ export function LojaPublicaView({
   const estiloBarra = loja.estilo_barra ?? "abas";
   const estiloCard = loja.estilo_card ?? "preenchido";
   const initials = getInitials(loja.nome);
+  const storeRootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = storeRootRef.current;
+    if (!el) return;
+    const bg = getComputedStyle(el).backgroundColor;
+    if (!bg) return;
+    const prevHtmlBg = document.documentElement.style.backgroundColor;
+    const prevBodyBg = document.body.style.backgroundColor;
+    document.documentElement.style.backgroundColor = bg;
+    document.body.style.backgroundColor = bg;
+    return () => {
+      document.documentElement.style.backgroundColor = prevHtmlBg;
+      document.body.style.backgroundColor = prevBodyBg;
+    };
+  }, [loja.tema, isDarkStore]);
 
   const selecionados = useMemo(
     () => servicos.filter((s) => selectedIds.includes(s.id)),
@@ -161,6 +177,7 @@ export function LojaPublicaView({
 
   return (
     <div
+      ref={storeRootRef}
       className={`store-view-base theme-${loja.tema} ${
         isDarkStore ? "theme-dark-override" : ""
       } flex min-h-screen flex-col`}
