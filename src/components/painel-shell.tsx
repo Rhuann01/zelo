@@ -92,12 +92,11 @@ export function PainelShell({
           <div className="flex shrink-0 items-center gap-1">
             <Link
               href={`/${lojaAtual.slug}`}
-              className="flex min-h-[44px] items-center gap-1 px-1.5 text-[var(--zelo-muted)] transition-colors hover:text-[var(--zelo-ink)]"
-              title="Ver página pública / Modo Cliente"
-              aria-label="Ver página pública"
+              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-[var(--zelo-muted)] transition-colors hover:text-[var(--zelo-ink)]"
+              title="Ver página pública da loja"
+              aria-label="Ver página pública da loja"
             >
               <Store className="h-[18px] w-[18px]" />
-              <span className="hidden text-xs sm:inline">Modo Cliente</span>
             </Link>
             <Link
               href="/painel/configuracoes"
