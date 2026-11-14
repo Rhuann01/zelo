@@ -31,6 +31,38 @@ function formatCep(raw: string): string {
   return `${digits.slice(0, 5)}-${digits.slice(5)}`;
 }
 
+function splitEndereco(raw: string): { rua: string; numero: string; complemento: string } {
+  const trimmed = raw.trim();
+  if (!trimmed) return { rua: "", numero: "", complemento: "" };
+
+  const dashIdx = trimmed.indexOf(" - ");
+  const mainPart = dashIdx >= 0 ? trimmed.slice(0, dashIdx).trim() : trimmed;
+  const complemento = dashIdx >= 0 ? trimmed.slice(dashIdx + 3).trim() : "";
+
+  const commaIdx = mainPart.lastIndexOf(",");
+  if (commaIdx >= 0) {
+    const afterComma = mainPart.slice(commaIdx + 1).trim();
+    if (/^(\d+[a-zA-Z]?|s\/n|sn)$/i.test(afterComma)) {
+      return {
+        rua: mainPart.slice(0, commaIdx).trim(),
+        numero: afterComma,
+        complemento,
+      };
+    }
+  }
+
+  return { rua: mainPart, numero: "", complemento };
+}
+
+function joinEndereco(rua: string, numero: string, complemento: string): string {
+  const r = rua.trim();
+  const n = numero.trim();
+  const c = complemento.trim();
+  const base = r && n ? `${r}, ${n}` : r || n;
+  if (!base) return c;
+  return c ? `${base} - ${c}` : base;
+}
+
 export function StoreLocationFields({
   cidade,
   bairro,
@@ -48,6 +80,11 @@ export function StoreLocationFields({
   const [cepLoading, setCepLoading] = useState(false);
   const [cepStatus, setCepStatus] = useState<string | null>(null);
   const lastFetchedCepRef = useRef<string>("");
+
+  const initialParts = splitEndereco(endereco);
+  const [rua, setRua] = useState(initialParts.rua);
+  const [numero, setNumero] = useState(initialParts.numero);
+  const [complemento, setComplemento] = useState(initialParts.complemento);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
@@ -136,7 +173,10 @@ export function StoreLocationFields({
 
         if (nextCidade) onChangeCidade(nextCidade);
         if (nextBairro) onChangeBairro(nextBairro);
-        if (nextLogradouro) onChangeEndereco(nextLogradouro);
+        if (nextLogradouro) {
+          setRua(nextLogradouro);
+          onChangeEndereco(joinEndereco(nextLogradouro, numero, complemento));
+        }
 
         // Posiciona o pino no mapa: primeiro Photon/cascata (rua -> bairro -> cidade), ou BrasilAPI
         const geoHit = await geocodeBrazilCascade({
@@ -221,7 +261,14 @@ export function StoreLocationFields({
   function handleSelectSuggestion(item: GeoSuggestion) {
     if (item.cidade) onChangeCidade(item.cidade);
     if (item.bairro) onChangeBairro(item.bairro);
-    if (item.endereco) onChangeEndereco(item.endereco);
+    if (item.endereco) {
+      const parts = splitEndereco(item.endereco);
+      const nextRua = parts.rua || item.endereco;
+      const nextNum = parts.numero || numero;
+      setRua(nextRua);
+      if (parts.numero) setNumero(parts.numero);
+      onChangeEndereco(joinEndereco(nextRua, nextNum, complemento));
+    }
     onChangeCoords(item.lat, item.lng);
 
     if (item.cep) {
@@ -347,17 +394,59 @@ export function StoreLocationFields({
         </div>
       </div>
 
-      {/* Endereço completo */}
+      {/* Rua, Número e Complemento */}
+      <div className="grid grid-cols-12 gap-2.5">
+        <div className="col-span-8">
+          <label className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--zelo-muted)] mb-1.5">
+            Rua / Travessa / Av.
+          </label>
+          <input
+            type="text"
+            disabled={disabled}
+            value={rua}
+            onChange={(e) => {
+              const nextRua = e.target.value;
+              setRua(nextRua);
+              onChangeEndereco(joinEndereco(nextRua, numero, complemento));
+            }}
+            placeholder="Ex: Travessa Aniceto Cruz"
+            className={`h-11 w-full rounded-xl px-3.5 text-sm outline-none ${inputSurfaceClass}`}
+          />
+        </div>
+
+        <div className="col-span-4">
+          <label className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--zelo-muted)] mb-1.5">
+            Número
+          </label>
+          <input
+            type="text"
+            disabled={disabled}
+            value={numero}
+            onChange={(e) => {
+              const nextNum = e.target.value;
+              setNumero(nextNum);
+              onChangeEndereco(joinEndereco(rua, nextNum, complemento));
+            }}
+            placeholder="Ex: 120"
+            className={`h-11 w-full rounded-xl px-3 text-sm font-mono-num outline-none ${inputSurfaceClass}`}
+          />
+        </div>
+      </div>
+
       <div>
         <label className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--zelo-muted)] mb-1.5">
-          Endereço (rua, número e complemento)
+          Complemento / Ponto de referência (opcional)
         </label>
         <input
           type="text"
           disabled={disabled}
-          value={endereco}
-          onChange={(e) => onChangeEndereco(e.target.value)}
-          placeholder="Ex: Travessa Aniceto Cruz, 120"
+          value={complemento}
+          onChange={(e) => {
+            const nextComp = e.target.value;
+            setComplemento(nextComp);
+            onChangeEndereco(joinEndereco(rua, numero, nextComp));
+          }}
+          placeholder="Ex: Sala 2, em frente à praça"
           className={`h-11 w-full rounded-xl px-3.5 text-sm outline-none ${inputSurfaceClass}`}
         />
       </div>
