@@ -123,51 +123,44 @@ export async function getLojaPublicaBySlug(slug: string): Promise<LojaPublicaCom
   return cached();
 }
 
-export const getVitrineLojas = unstable_cache(
-  async (): Promise<VitrineLojaCard[]> => {
-    const supabase = createPublicClient();
-    const { data: lojas } = await supabase
-      .from("lojas")
-      .select(
-        "id, slug, nome, nicho, cidade, bairro, tema, cor_primaria, raio_borda_px, logo_url, capa_url, sinal_centavos, servicos(preco_centavos, ativo)"
-      )
-      .eq("pausada", false)
-      .order("created_at", { ascending: false })
-      .limit(60);
+export async function getVitrineLojas(): Promise<VitrineLojaCard[]> {
+  const supabase = createPublicClient();
+  const { data: lojas } = await supabase
+    .from("lojas")
+    .select(
+      "id, slug, nome, nicho, cidade, bairro, tema, cor_primaria, raio_borda_px, logo_url, capa_url, sinal_centavos, servicos(preco_centavos, ativo)"
+    )
+    .eq("pausada", false)
+    .order("created_at", { ascending: false })
+    .limit(60);
 
-    if (!lojas) return [];
+  if (!lojas) return [];
 
-    return lojas.map((row) => {
-      const servicosAtivos = (
-        (row.servicos as { preco_centavos: number; ativo: boolean }[] | null) ?? []
-      ).filter((s) => s.ativo);
+  return lojas.map((row) => {
+    const servicosAtivos = (
+      (row.servicos as { preco_centavos: number; ativo: boolean }[] | null) ?? []
+    ).filter((s) => s.ativo);
 
-      const minPreco =
-        servicosAtivos.length > 0
-          ? Math.min(...servicosAtivos.map((s) => s.preco_centavos))
-          : null;
+    const minPreco =
+      servicosAtivos.length > 0
+        ? Math.min(...servicosAtivos.map((s) => s.preco_centavos))
+        : null;
 
-      return {
-        id: row.id,
-        slug: row.slug,
-        nome: row.nome,
-        nicho: row.nicho as LojaPublica["nicho"],
-        cidade: row.cidade,
-        bairro: row.bairro,
-        tema: row.tema as LojaPublica["tema"],
-        cor_primaria: row.cor_primaria,
-        raio_borda_px: row.raio_borda_px,
-        logo_url: row.logo_url,
-        capa_url: row.capa_url,
-        sinal_centavos: row.sinal_centavos,
-        preco_inicial_centavos: minPreco,
-        total_servicos: servicosAtivos.length,
-      };
-    });
-  },
-  ["vitrine-explorar-lojas"],
-  {
-    tags: ["vitrine-explorar"],
-    revalidate: 300,
-  }
-);
+    return {
+      id: row.id,
+      slug: row.slug,
+      nome: row.nome,
+      nicho: row.nicho as LojaPublica["nicho"],
+      cidade: row.cidade,
+      bairro: row.bairro,
+      tema: row.tema as LojaPublica["tema"],
+      cor_primaria: row.cor_primaria,
+      raio_borda_px: row.raio_borda_px,
+      logo_url: row.logo_url,
+      capa_url: row.capa_url,
+      sinal_centavos: row.sinal_centavos,
+      preco_inicial_centavos: minPreco,
+      total_servicos: servicosAtivos.length,
+    };
+  });
+}
