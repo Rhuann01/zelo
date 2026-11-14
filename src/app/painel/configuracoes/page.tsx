@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CreditCard, ChevronRight } from "lucide-react";
+import { CreditCard, ChevronRight, Plus, Sparkles } from "lucide-react";
 import { getPainelContext } from "@/lib/painel/get-painel-context";
 import { PainelShell } from "@/components/painel-shell";
 import { ConfiguracoesForm } from "@/components/configuracoes-form";
@@ -16,23 +16,45 @@ export default async function ConfiguracoesPage() {
       perfilNome={ctx.perfil.nome}
     >
       {ctx.isOwner && (
-        <Link
-          href="/painel/assinatura"
-          className="mb-4 flex min-h-[56px] items-center justify-between gap-3 rounded-2xl bg-[var(--zelo-card)] px-4 py-3 transition-opacity hover:opacity-90"
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--zelo-soft)]">
-              <CreditCard className="h-4 w-4" />
+        <div className="mb-4 space-y-2.5">
+          <Link
+            href="/painel/assinatura"
+            className="flex min-h-[56px] items-center justify-between gap-3 rounded-2xl bg-[var(--zelo-card)] px-4 py-3 transition-opacity hover:opacity-90"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--zelo-soft)]">
+                <CreditCard className="h-4 w-4" />
+              </div>
+              <div className="min-w-0">
+                <span className="block text-sm font-semibold">Assinatura & Indicação</span>
+                <span className="block text-xs text-[var(--zelo-muted)] truncate">
+                  Plano Zelo via Asaas e código de 1 mês grátis
+                </span>
+              </div>
             </div>
-            <div className="min-w-0">
-              <span className="block text-sm font-semibold">Assinatura & Indicação</span>
-              <span className="block text-xs text-[var(--zelo-muted)] truncate">
-                Plano Zelo via Asaas e código de 1 mês grátis
-              </span>
+            <ChevronRight className="h-4 w-4 text-[var(--zelo-muted)] shrink-0" />
+          </Link>
+
+          <Link
+            href="/onboarding"
+            className="flex min-h-[56px] items-center justify-between gap-3 rounded-2xl bg-[var(--zelo-card)] px-4 py-3 transition-opacity hover:opacity-90"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-500">
+                <Sparkles className="h-4 w-4" />
+              </div>
+              <div className="min-w-0">
+                <span className="block text-sm font-semibold">Criar nova unidade / loja</span>
+                <span className="block text-xs text-[var(--zelo-muted)] truncate">
+                  Gerencie múltiplas unidades no mesmo login Google
+                </span>
+              </div>
             </div>
-          </div>
-          <ChevronRight className="h-4 w-4 text-[var(--zelo-muted)] shrink-0" />
-        </Link>
+            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)]">
+              <Plus className="h-4 w-4" />
+            </span>
+          </Link>
+        </div>
       )}
       <ConfiguracoesForm ctx={ctx} />
     </PainelShell>
