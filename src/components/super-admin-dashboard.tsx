@@ -118,6 +118,13 @@ export function SuperAdminDashboard({
     [data.lojas]
   );
 
+  const selectTab = (nextTab: TabId) => {
+    setTab(nextTab);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   const lojasFiltradas = useMemo(() => {
     const q = busca.trim().toLowerCase();
     return data.lojas.filter((l) => {
@@ -803,6 +810,7 @@ export function SuperAdminDashboard({
         <div className="flex flex-col items-center gap-2.5 w-full px-2">
           <a
             href="/super-admin/export"
+            download
             title="Exportar CSV"
             aria-label="Exportar CSV"
             className={`w-10 h-10 rounded-2xl ${textMuted} ${darkMode ? "hover:bg-white/8" : "hover:bg-black/5"} flex items-center justify-center transition-all`}
@@ -1028,6 +1036,7 @@ export function SuperAdminDashboard({
 
                 <a
                   href="/super-admin/export"
+                  download
                   className={`inline-flex h-10 items-center gap-1.5 rounded-full ${bgCard} px-4 text-xs font-semibold hover:opacity-90`}
                 >
                   <Download className="h-3.5 w-3.5" />
@@ -1185,7 +1194,7 @@ export function SuperAdminDashboard({
               {/* Row 1: 4 KPI Cards (Idêntico ao Stitch Finexy) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
                 {/* 1. MRR Bruto Mensal */}
-                <div className={`rounded-3xl ${bgCard} p-5 flex flex-col justify-between gap-3`}>
+                <div className={`min-h-[188px] rounded-3xl ${bgCard} p-6 flex flex-col justify-between gap-4`}>
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between gap-2">
                       <span className={`text-xs font-semibold ${textMuted}`}>
@@ -1231,7 +1240,7 @@ export function SuperAdminDashboard({
                 </div>
 
                 {/* 2. Lucro Líquido Real (Hero Laranja) */}
-                <div className="rounded-3xl bg-gradient-to-br from-[#FF5A1F] to-[#FF6D2F] p-5 text-white shadow-[0_10px_28px_rgba(255,90,31,0.22)] flex flex-col justify-between gap-3">
+                <div className="min-h-[188px] rounded-3xl bg-gradient-to-br from-[#FF5A1F] to-[#FF6D2F] p-6 text-white shadow-[0_10px_28px_rgba(255,90,31,0.22)] flex flex-col justify-between gap-4">
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-xs font-semibold text-white/95">
@@ -1261,7 +1270,7 @@ export function SuperAdminDashboard({
                 </div>
 
                 {/* 3. Base de Lojas */}
-                <div className={`rounded-3xl ${bgCard} p-5 flex flex-col justify-between gap-3`}>
+                <div className={`min-h-[188px] rounded-3xl ${bgCard} p-6 flex flex-col justify-between gap-4`}>
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between gap-2">
                       <span className={`text-xs font-semibold ${textMuted}`}>
@@ -1313,7 +1322,7 @@ export function SuperAdminDashboard({
                 </div>
 
                 {/* 4. Churn Mensal */}
-                <div className={`rounded-3xl ${bgCard} p-5 flex flex-col justify-between gap-3`}>
+                <div className={`min-h-[188px] rounded-3xl ${bgCard} p-6 flex flex-col justify-between gap-4`}>
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between gap-2">
                       <span className={`text-xs font-semibold ${textMuted}`}>
@@ -1547,7 +1556,7 @@ export function SuperAdminDashboard({
                 </div>
                 <button
                   type="button"
-                  onClick={() => setTab("infra")}
+                  onClick={() => selectTab("infra")}
                   className="font-semibold text-[#FF5A1F] hover:underline"
                 >
                   Ver Logs Técnicos
