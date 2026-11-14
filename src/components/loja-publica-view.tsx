@@ -390,7 +390,7 @@ export function LojaPublicaView({
 
               {/* Pílulas de filtro rápidas */}
               {servicos.length > 0 && (
-                <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-0.5">
+                <div className="no-scrollbar -mx-4 -my-3 flex items-center gap-2 overflow-x-auto px-4 py-3">
                   {(
                     [
                       { key: "todos", label: "Todos" },
@@ -415,13 +415,17 @@ export function LojaPublicaView({
                                 ...(isLiquidGlass
                                   ? {
                                       boxShadow:
-                                        "0 6px 18px color-mix(in srgb, var(--t-accent) 30%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.45)",
+                                        "0 3px 10px color-mix(in srgb, var(--t-accent) 24%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.45)",
                                     }
                                   : {}),
                                 ...(isBrutal ? { border: "1.5px solid #000000" } : {}),
                               }
                             : isLiquidGlass
-                              ? { color: "var(--t-ink)" }
+                              ? {
+                                  color: "var(--t-ink)",
+                                  boxShadow:
+                                    "0 2px 8px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.95)",
+                                }
                               : {
                                   backgroundColor: "var(--t-surface)",
                                   color: "var(--t-muted)",
