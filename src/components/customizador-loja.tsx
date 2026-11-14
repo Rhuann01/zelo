@@ -11,6 +11,7 @@ import {
   Eye,
   ImagePlus,
   Loader2,
+  MapPin,
   RefreshCw,
   Trash2,
   Wallet,
@@ -19,6 +20,7 @@ import { saveCustomizacaoAction } from "@/app/painel/personalizar/actions";
 import { createClient } from "@/lib/supabase/client";
 import { compressImageToWebP, STORE_MEDIA_COMPRESS_CONFIG } from "@/lib/image/compress-webp";
 import { showToast } from "@/components/zelo-toast";
+import { StoreMapPicker } from "@/components/ui";
 import type { LojaResumo } from "@/lib/painel/get-painel-context";
 
 const TEMAS = [
@@ -78,9 +80,15 @@ const SWATCHES = [
 export function CustomizadorLoja({
   loja,
   isOwner,
+  initialLocalizacao,
 }: {
   loja: LojaResumo;
   isOwner: boolean;
+  initialLocalizacao?: {
+    endereco_texto: string;
+    latitude: number | null;
+    longitude: number | null;
+  };
 }) {
   const [tema, setTema] = useState<LojaResumo["tema"]>(loja.tema);
   const [cor, setCor] = useState(loja.cor_primaria);
@@ -88,6 +96,17 @@ export function CustomizadorLoja({
   const [chavePix, setChavePix] = useState(loja.chave_pix ?? "");
   const [sinalReais, setSinalReais] = useState(
     (loja.sinal_centavos / 100).toFixed(2).replace(".", ",")
+  );
+  const [cidade, setCidade] = useState(loja.cidade);
+  const [bairro, setBairro] = useState(loja.bairro);
+  const [enderecoTexto, setEnderecoTexto] = useState(
+    initialLocalizacao?.endereco_texto ?? ""
+  );
+  const [latitude, setLatitude] = useState<number | null>(
+    initialLocalizacao?.latitude ?? null
+  );
+  const [longitude, setLongitude] = useState<number | null>(
+    initialLocalizacao?.longitude ?? null
   );
   const [logoUrl, setLogoUrl] = useState(loja.logo_url);
   const [refreshing, setRefreshing] = useState(false);
@@ -172,6 +191,11 @@ export function CustomizadorLoja({
         raio_borda_px: raio,
         chave_pix: chavePix.trim() || null,
         sinal_centavos: sinalCentavos,
+        cidade: cidade.trim(),
+        bairro: bairro.trim(),
+        endereco_texto: enderecoTexto.trim(),
+        latitude,
+        longitude,
       });
       if (res.error) showToast(res.error, "error");
       else if (res.message) showToast(res.message, "success");
@@ -526,6 +550,63 @@ export function CustomizadorLoja({
         </div>
       </section>
 
+      {/* Localização & Mapa Real */}
+      <section className="flex flex-col gap-3 rounded-xl bg-[var(--zelo-card)] p-4 shadow-sm">
+        <div className="flex items-center gap-2">
+          <MapPin className="h-[18px] w-[18px] text-[var(--zelo-muted)]" />
+          <div className="flex flex-col">
+            <span className="text-sm font-semibold text-[var(--zelo-ink)]">
+              Localização & Mapa
+            </span>
+            <span className="text-xs text-[var(--zelo-muted)]">
+              Exibido na aba Detalhes & Mapa da sua página pública
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <input
+            type="text"
+            disabled={!isOwner}
+            value={cidade}
+            onChange={(e) => setCidade(e.target.value)}
+            placeholder="Cidade"
+            className="h-11 rounded-lg bg-[var(--zelo-soft)] px-3 text-sm text-[var(--zelo-ink)] outline-none"
+          />
+          <input
+            type="text"
+            disabled={!isOwner}
+            value={bairro}
+            onChange={(e) => setBairro(e.target.value)}
+            placeholder="Bairro"
+            className="h-11 rounded-lg bg-[var(--zelo-soft)] px-3 text-sm text-[var(--zelo-ink)] outline-none"
+          />
+        </div>
+
+        <input
+          type="text"
+          disabled={!isOwner}
+          value={enderecoTexto}
+          onChange={(e) => setEnderecoTexto(e.target.value)}
+          placeholder="Rua, número e complemento"
+          className="h-11 w-full rounded-lg bg-[var(--zelo-soft)] px-3 text-sm text-[var(--zelo-ink)] outline-none"
+        />
+
+        {isOwner && (
+          <StoreMapPicker
+            enderecoTexto={enderecoTexto}
+            bairro={bairro}
+            cidade={cidade}
+            latitude={latitude}
+            longitude={longitude}
+            onChangeCoords={(lat, lng) => {
+              setLatitude(lat);
+              setLongitude(lng);
+            }}
+          />
+        )}
+      </section>
+
       {isOwner && (
         <button
           type="button"
@@ -534,7 +615,7 @@ export function CustomizadorLoja({
           className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--zelo-btn-bg)] text-sm font-semibold text-[var(--zelo-btn-ink)] shadow-sm transition-transform active:scale-[0.99] disabled:opacity-60"
         >
           {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-          Salvar Personalização e PIX
+          Salvar Personalização e Mapa
         </button>
       )}
     </div>

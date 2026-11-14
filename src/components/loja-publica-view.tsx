@@ -19,6 +19,7 @@ import {
   Zap,
 } from "lucide-react";
 import { ReservaDrawer } from "@/components/reserva-drawer";
+import { StoreMapEmbed, buildExternalMapUrl } from "@/components/ui";
 import {
   getAccentInk,
   type LojaPublica,
@@ -108,13 +109,16 @@ export function LojaPublicaView({
     }
   }
 
-  const mapsHref =
-    loja.maps_url ||
-    (loja.endereco_texto || loja.cidade
-      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-          [loja.nome, loja.endereco_texto, loja.bairro, loja.cidade].filter(Boolean).join(", ")
-        )}`
-      : null);
+  const addressQuery = [loja.nome, loja.endereco_texto, loja.bairro, loja.cidade]
+    .filter(Boolean)
+    .join(", ");
+
+  const mapsHref = buildExternalMapUrl({
+    latitude: loja.latitude,
+    longitude: loja.longitude,
+    mapsUrl: loja.maps_url,
+    addressQuery: loja.endereco_texto || loja.cidade ? addressQuery : undefined,
+  });
 
   const whatsappHref = formatWhatsappHref(
     loja.whatsapp_loja,
@@ -497,12 +501,19 @@ export function LojaPublicaView({
           {/* TAB 3: DETALHES & MAPA */}
           {tab === "detalhes" && (
             <section className="p-4 space-y-4" style={cardSurfaceStyle}>
-              <div className="space-y-1">
+              <div className="space-y-2.5">
                 <h2 className="text-sm font-bold">Localização</h2>
                 <p className="text-xs leading-relaxed" style={{ color: "var(--t-muted)" }}>
                   {[loja.endereco_texto, loja.bairro, loja.cidade].filter(Boolean).join(" • ") ||
                     "Endereço não informado."}
                 </p>
+                <StoreMapEmbed
+                  latitude={loja.latitude}
+                  longitude={loja.longitude}
+                  addressQuery={loja.endereco_texto || loja.cidade ? addressQuery : undefined}
+                  mapsUrl={loja.maps_url}
+                  title={`Mapa de ${loja.nome}`}
+                />
                 <div className="flex flex-wrap items-center gap-3 pt-1">
                   {mapsHref && (
                     <a

@@ -66,6 +66,11 @@ export const customizacaoLojaSchema = z
     raio_borda_px: z.number().int().min(2).max(24),
     chave_pix: z.string().trim().max(120).nullable().default(null),
     sinal_centavos: z.number().int().min(0).max(5_000_000).default(0),
+    cidade: z.string().trim().min(2).max(80).optional(),
+    bairro: z.string().trim().min(2).max(80).optional(),
+    endereco_texto: z.string().trim().max(160).optional(),
+    latitude: z.number().min(-90).max(90).nullable().optional(),
+    longitude: z.number().min(-180).max(180).nullable().optional(),
   })
   .strict();
 

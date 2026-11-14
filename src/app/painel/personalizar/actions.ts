@@ -19,16 +19,24 @@ export async function saveCustomizacaoAction(raw: unknown) {
   }
   const input = parsed.data;
 
+  const updatePayload: Record<string, unknown> = {
+    tema: input.tema,
+    cor_primaria: input.cor_primaria,
+    raio_borda_px: input.raio_borda_px,
+    chave_pix: input.chave_pix,
+    sinal_centavos: input.sinal_centavos,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (input.cidade !== undefined) updatePayload.cidade = input.cidade;
+  if (input.bairro !== undefined) updatePayload.bairro = input.bairro;
+  if (input.endereco_texto !== undefined) updatePayload.endereco_texto = input.endereco_texto;
+  if (input.latitude !== undefined) updatePayload.latitude = input.latitude;
+  if (input.longitude !== undefined) updatePayload.longitude = input.longitude;
+
   const { data, error } = await supabase
     .from("lojas")
-    .update({
-      tema: input.tema,
-      cor_primaria: input.cor_primaria,
-      raio_borda_px: input.raio_borda_px,
-      chave_pix: input.chave_pix,
-      sinal_centavos: input.sinal_centavos,
-      updated_at: new Date().toISOString(),
-    })
+    .update(updatePayload)
     .eq("id", input.loja_id)
     .select("slug")
     .maybeSingle();

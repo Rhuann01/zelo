@@ -3,3 +3,9 @@ export { KpiCard, type KpiTone } from "./kpi-card";
 export { StatusBadge, type BadgeTone } from "./status-badge";
 export { BottomSheet } from "./bottom-sheet";
 export { EmptyState } from "./empty-state";
+export {
+  StoreMapEmbed,
+  StoreMapPicker,
+  buildEmbedMapUrl,
+  buildExternalMapUrl,
+} from "./store-map";
