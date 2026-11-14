@@ -17,6 +17,7 @@ import {
   Lock,
   MessageCircle,
   MoreVertical,
+  Phone,
   Plus,
   PlusCircle,
   QrCode,
@@ -28,6 +29,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { BottomSheet } from "@/components/ui";
+import { formatBrazilPhone } from "@/lib/schemas/agendamento";
 import {
   atualizarStatusAgendamentoAction,
   criarEncaixeManualAction,
@@ -484,11 +486,19 @@ export function PainelAgendaStitch({
                   ? "bg-red-500"
                   : "bg-[var(--zelo-btn-bg)]";
 
-            const whatsappUrl = ag.cliente_whatsapp
-              ? `https://wa.me/55${ag.cliente_whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(
-                  `Olá ${ag.cliente_nome}! Confirmando seu horário às ${item.horaInicio}.`
-                )}`
-              : null;
+            const phoneDigits = ag.cliente_whatsapp
+              ? ag.cliente_whatsapp.replace(/\D/g, "")
+              : "";
+            const whatsappUrl =
+              phoneDigits.length >= 10
+                ? `https://wa.me/${phoneDigits.startsWith("55") ? phoneDigits : `55${phoneDigits}`}?text=${encodeURIComponent(
+                    `Olá ${ag.cliente_nome}! Confirmando seu horário às ${item.horaInicio}.`
+                  )}`
+                : null;
+            const telUrl =
+              phoneDigits.length >= 10
+                ? `tel:${phoneDigits.startsWith("55") ? `+${phoneDigits}` : `+55${phoneDigits}`}`
+                : null;
 
             return (
               <div key={ag.id} className="flex gap-2.5">
@@ -605,6 +615,16 @@ export function PainelAgendaStitch({
                                     <span>WhatsApp</span>
                                   </a>
                                 )}
+                                {telUrl && (
+                                  <a
+                                    href={telUrl}
+                                    onClick={() => setOpenMenuId(null)}
+                                    className="flex min-h-[40px] w-full items-center gap-2 rounded-xl px-2.5 text-xs font-semibold text-[var(--zelo-ink)] hover:bg-[var(--zelo-soft)]"
+                                  >
+                                    <Phone className="h-4 w-4 shrink-0" />
+                                    <span>Ligar ({formatBrazilPhone(phoneDigits)})</span>
+                                  </a>
+                                )}
                                 <button
                                   type="button"
                                   disabled={isPending}
@@ -649,6 +669,16 @@ export function PainelAgendaStitch({
                           )}
                         </div>
                         <div className="relative flex items-center gap-1.5">
+                          {telUrl && (
+                            <a
+                              href={telUrl}
+                              title={`Ligar para ${formatBrazilPhone(phoneDigits)}`}
+                              aria-label={`Ligar para ${ag.cliente_nome}`}
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--zelo-soft)] text-[var(--zelo-ink)] hover:opacity-80"
+                            >
+                              <Phone className="h-3.5 w-3.5" />
+                            </a>
+                          )}
                           {whatsappUrl && (
                             <a
                               href={whatsappUrl}
