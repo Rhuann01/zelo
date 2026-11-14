@@ -112,7 +112,7 @@ export function PainelAgendaStitch({
   const [selectedDate, setSelectedDate] = useState(() => getTodayYmdSaoPaulo());
   const [filtroProf, setFiltroProf] = useState<string>("todos");
 
-  const [selectedEvent, setSelectedEvent] = useState<AgendaAgendamentoItem | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [encaixeOpen, setEncaixeOpen] = useState(false);
 
   const [encNome, setEncNome] = useState("");
@@ -194,7 +194,7 @@ export function PainelAgendaStitch({
             : "Agendamento cancelado.",
         "success"
       );
-      setSelectedEvent(null);
+      setOpenMenuId(null);
       router.refresh();
     });
   }
@@ -573,14 +573,69 @@ export function PainelAgendaStitch({
                           <span>Dar Baixa</span>
                           <CheckCircle2 className="h-3.5 w-3.5" />
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedEvent(ag)}
-                          className="flex min-h-[36px] items-center gap-1 rounded-lg bg-[var(--zelo-soft)] px-3 text-xs font-medium text-[var(--zelo-ink)]"
-                        >
-                          <span>Gerenciar</span>
-                          <MoreVertical className="h-3.5 w-3.5 text-[var(--zelo-muted)]" />
-                        </button>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setOpenMenuId((prev) => (prev === ag.id ? null : ag.id))
+                            }
+                            aria-expanded={openMenuId === ag.id}
+                            className="flex min-h-[36px] items-center gap-1 rounded-lg bg-[var(--zelo-soft)] px-3 text-xs font-medium text-[var(--zelo-ink)]"
+                          >
+                            <span>Gerenciar</span>
+                            <MoreVertical className="h-3.5 w-3.5 text-[var(--zelo-muted)]" />
+                          </button>
+
+                          {openMenuId === ag.id && (
+                            <>
+                              <div
+                                className="fixed inset-0 z-30"
+                                onClick={() => setOpenMenuId(null)}
+                              />
+                              <div className="absolute right-0 bottom-full mb-1.5 z-40 w-48 rounded-2xl bg-[var(--zelo-card)] p-1.5 shadow-xl ring-1 ring-black/10 dark:ring-white/10 space-y-0.5">
+                                {whatsappUrl && (
+                                  <a
+                                    href={whatsappUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={() => setOpenMenuId(null)}
+                                    className="flex min-h-[40px] w-full items-center gap-2 rounded-xl px-2.5 text-xs font-semibold text-[#10B981] hover:bg-[var(--zelo-soft)]"
+                                  >
+                                    <MessageCircle className="h-4 w-4 shrink-0" />
+                                    <span>WhatsApp</span>
+                                  </a>
+                                )}
+                                <button
+                                  type="button"
+                                  disabled={isPending}
+                                  onClick={() => handleQuickStatus(ag.id, "concluido")}
+                                  className="flex min-h-[40px] w-full items-center gap-2 rounded-xl px-2.5 text-xs font-semibold text-[#10B981] hover:bg-[var(--zelo-soft)]"
+                                >
+                                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                                  <span>Concluir</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={isPending}
+                                  onClick={() => handleQuickStatus(ag.id, "no_show")}
+                                  className="flex min-h-[40px] w-full items-center gap-2 rounded-xl px-2.5 text-xs font-semibold text-[var(--zelo-ink)] hover:bg-[var(--zelo-soft)]"
+                                >
+                                  <UserX className="h-4 w-4 shrink-0" />
+                                  <span>Faltou</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={isPending}
+                                  onClick={() => handleQuickStatus(ag.id, "cancelado")}
+                                  className="flex min-h-[40px] w-full items-center gap-2 rounded-xl px-2.5 text-xs font-semibold text-red-500 hover:bg-red-500/10"
+                                >
+                                  <XCircle className="h-4 w-4 shrink-0" />
+                                  <span>Cancelar</span>
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
                       </>
                     ) : (
                       <>
@@ -593,7 +648,7 @@ export function PainelAgendaStitch({
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-1.5">
+                        <div className="relative flex items-center gap-1.5">
                           {whatsappUrl && (
                             <a
                               href={whatsappUrl}
@@ -607,12 +662,53 @@ export function PainelAgendaStitch({
                           )}
                           <button
                             type="button"
-                            onClick={() => setSelectedEvent(ag)}
+                            onClick={() =>
+                              setOpenMenuId((prev) => (prev === ag.id ? null : ag.id))
+                            }
+                            aria-expanded={openMenuId === ag.id}
                             aria-label="Mais opções"
                             className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--zelo-soft)] text-[var(--zelo-muted)] hover:text-[var(--zelo-ink)]"
                           >
                             <MoreVertical className="h-4 w-4" />
                           </button>
+
+                          {openMenuId === ag.id && (
+                            <>
+                              <div
+                                className="fixed inset-0 z-30"
+                                onClick={() => setOpenMenuId(null)}
+                              />
+                              <div className="absolute right-0 bottom-full mb-1.5 z-40 w-44 rounded-2xl bg-[var(--zelo-card)] p-1.5 shadow-xl ring-1 ring-black/10 dark:ring-white/10 space-y-0.5">
+                                <button
+                                  type="button"
+                                  disabled={isPending}
+                                  onClick={() => handleQuickStatus(ag.id, "concluido")}
+                                  className="flex min-h-[40px] w-full items-center gap-2 rounded-xl px-2.5 text-xs font-semibold text-[#10B981] hover:bg-[var(--zelo-soft)]"
+                                >
+                                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                                  <span>Concluir</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={isPending}
+                                  onClick={() => handleQuickStatus(ag.id, "no_show")}
+                                  className="flex min-h-[40px] w-full items-center gap-2 rounded-xl px-2.5 text-xs font-semibold text-[var(--zelo-ink)] hover:bg-[var(--zelo-soft)]"
+                                >
+                                  <UserX className="h-4 w-4 shrink-0" />
+                                  <span>Faltou</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={isPending}
+                                  onClick={() => handleQuickStatus(ag.id, "cancelado")}
+                                  className="flex min-h-[40px] w-full items-center gap-2 rounded-xl px-2.5 text-xs font-semibold text-red-500 hover:bg-red-500/10"
+                                >
+                                  <XCircle className="h-4 w-4 shrink-0" />
+                                  <span>Cancelar</span>
+                                </button>
+                              </div>
+                            </>
+                          )}
                         </div>
                       </>
                     )}
@@ -651,69 +747,6 @@ export function PainelAgendaStitch({
         <Plus className="h-4 w-4" />
         <span>Encaixe</span>
       </button>
-
-      {/* Modal de Ações do Agendamento */}
-      <BottomSheet
-        open={Boolean(selectedEvent)}
-        onClose={() => setSelectedEvent(null)}
-        title={selectedEvent?.cliente_nome ?? ""}
-        subtitle={
-          selectedEvent
-            ? `${selectedEvent.servicos_resumo} • ${selectedEvent.profissional_nome} • ${formatBRL(
-                selectedEvent.total_centavos
-              )}`
-            : undefined
-        }
-        maxWidth="md"
-      >
-        {selectedEvent && (
-          <div className="space-y-4">
-            {selectedEvent.cliente_whatsapp && (
-              <a
-                href={`https://wa.me/55${selectedEvent.cliente_whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(
-                  `Olá ${selectedEvent.cliente_nome}! Confirmando seu horário.`
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#10B981]/15 text-xs font-semibold text-[#10B981]"
-              >
-                <MessageCircle className="h-4 w-4" />
-                <span>Chamar no WhatsApp</span>
-              </a>
-            )}
-
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                disabled={isPending}
-                onClick={() => handleQuickStatus(selectedEvent.id, "concluido")}
-                className="flex h-11 items-center justify-center gap-1 rounded-xl bg-[#10B981] text-xs font-semibold text-white"
-              >
-                <CheckCircle2 className="h-4 w-4" />
-                <span>Concluir</span>
-              </button>
-              <button
-                type="button"
-                disabled={isPending}
-                onClick={() => handleQuickStatus(selectedEvent.id, "no_show")}
-                className="flex h-11 items-center justify-center gap-1 rounded-xl bg-[var(--zelo-soft)] text-xs font-semibold text-[var(--zelo-ink)]"
-              >
-                <UserX className="h-4 w-4" />
-                <span>Faltou</span>
-              </button>
-              <button
-                type="button"
-                disabled={isPending}
-                onClick={() => handleQuickStatus(selectedEvent.id, "cancelado")}
-                className="flex h-11 items-center justify-center gap-1 rounded-xl bg-red-500/15 text-xs font-semibold text-red-500"
-              >
-                <XCircle className="h-4 w-4" />
-                <span>Cancelar</span>
-              </button>
-            </div>
-          </div>
-        )}
-      </BottomSheet>
 
       {/* Modal de Encaixe Manual (Balcão) */}
       <BottomSheet
