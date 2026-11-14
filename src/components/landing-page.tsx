@@ -676,7 +676,7 @@ export function LandingPage() {
                 Entrar
               </Link>
               <Link
-                href="/entrar?next=/onboarding"
+                href="/entrar"
                 className="inline-flex min-h-[40px] items-center justify-center rounded-xl bg-[var(--zelo-btn-bg)] px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-[var(--zelo-btn-ink)] transition hover:bg-[var(--zelo-btn-hover)] whitespace-nowrap shrink-0"
               >
                 Começar grátis

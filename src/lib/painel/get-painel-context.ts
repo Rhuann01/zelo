@@ -90,7 +90,7 @@ export async function getPainelContext(nextPath = "/painel"): Promise<PainelCont
   const lojas = [...((lojasProprias ?? []) as LojaResumo[]), ...lojasMembro];
 
   if (lojas.length === 0) {
-    redirect("/onboarding");
+    redirect("/explorar");
   }
 
   const cookieStore = await cookies();
