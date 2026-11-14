@@ -14,6 +14,7 @@ import {
   MapPin,
   Moon,
   RefreshCw,
+  Save,
   Sparkles,
   Trash2,
   Wallet,
@@ -1115,16 +1116,22 @@ export function CustomizadorLoja({
         <button
           type="button"
           onClick={handleSave}
-          disabled={isPending}
-          aria-label="Salvar Personalização"
-          className="fixed right-4 bottom-20 z-40 flex min-h-[46px] items-center gap-1.5 rounded-full bg-[var(--zelo-btn-bg)] px-5 text-sm font-semibold text-[var(--zelo-btn-ink)] shadow-[0_4px_16px_rgba(0,0,0,0.2)] transition-transform active:scale-95 disabled:opacity-50"
+          disabled={isPending || !isDirty}
+          aria-label={isDirty ? "Salvar alterações pendentes" : "Alterações salvas"}
+          className={`fixed right-4 bottom-20 z-40 flex min-h-[46px] items-center gap-2 rounded-full px-5 text-sm font-semibold shadow-[0_4px_16px_rgba(0,0,0,0.18)] transition-all active:scale-95 ${
+            isDirty || isPending
+              ? "bg-[var(--zelo-btn-bg)] text-[var(--zelo-btn-ink)]"
+              : "bg-[var(--zelo-card)] text-[var(--zelo-muted)] ring-1 ring-[var(--zelo-border)]"
+          } disabled:opacity-90`}
         >
           {isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
+          ) : isDirty ? (
+            <Save className="h-4 w-4 text-[#F59E0B]" />
           ) : (
-            <Check className="h-4 w-4" />
+            <CheckCircle2 className="h-4 w-4 text-[#10B981]" />
           )}
-          <span>{isPending ? "Salvando..." : "Salvar"}</span>
+          <span>{isPending ? "Salvando..." : isDirty ? "Salvar" : "Salvo"}</span>
         </button>
       )}
 
