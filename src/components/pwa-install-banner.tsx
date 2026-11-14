@@ -187,13 +187,12 @@ export function PwaInstallBanner() {
                     1
                   </span>
                   <div className="flex items-center gap-1.5 text-xs font-semibold">
-                    <Share className="h-4 w-4 shrink-0" />
-                    <span>Toque no ícone Compartilhar na barra do Safari</span>
+                    <span>Toque no botão de menu na barra do Safari</span>
                   </div>
                 </div>
                 <StepImage
-                  src="/ios-install-1.png"
-                  alt="Passo 1: botão Compartilhar no Safari do iPhone"
+                  src="/ios-install-1.webp"
+                  alt="Passo 1: botão de menu na barra do Safari"
                 />
               </div>
 
@@ -203,13 +202,29 @@ export function PwaInstallBanner() {
                     2
                   </span>
                   <div className="flex items-center gap-1.5 text-xs font-semibold">
+                    <Share className="h-4 w-4 shrink-0" />
+                    <span>Toque em &quot;Compartilhar&quot;</span>
+                  </div>
+                </div>
+                <StepImage
+                  src="/ios-install-2.webp"
+                  alt="Passo 2: tocar em Compartilhar no Safari"
+                />
+              </div>
+
+              <div className="rounded-2xl bg-[var(--zelo-soft)] p-3.5">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--zelo-btn-bg)] text-xs font-bold text-[var(--zelo-btn-ink)]">
+                    3
+                  </span>
+                  <div className="flex items-center gap-1.5 text-xs font-semibold">
                     <PlusSquare className="h-4 w-4 shrink-0" />
                     <span>Role e toque em &quot;Adicionar à Tela de Início&quot;</span>
                   </div>
                 </div>
                 <StepImage
-                  src="/ios-install-2.png"
-                  alt="Passo 2: Adicionar à Tela de Início no iPhone"
+                  src="/ios-install-3.webp"
+                  alt="Passo 3: Adicionar à Tela de Início no iPhone"
                 />
               </div>
             </div>
