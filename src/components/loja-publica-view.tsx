@@ -188,42 +188,37 @@ export function LojaPublicaView({
       </header>
 
       <main className="mx-auto flex w-full max-w-[480px] flex-1 flex-col pb-32">
-        {/* Banner da Loja (foto ou degradê automático da logo / cor do perfil) */}
-        <div className="h-32 sm:h-36 w-full overflow-hidden">
-          <StoreBannerMedia
-            capaUrl={loja.capa_url}
-            logoUrl={loja.logo_url}
-            corPrimaria={loja.cor_primaria}
-            alt={`Banner de ${loja.nome}`}
-            overlayMode="store"
-            priority
-          />
-        </div>
-
-        {/* Store Profile Info Header (Stitch) */}
-        <section className="relative overflow-hidden px-4 pt-3 pb-5 -mt-6">
-          <div
-            className="pointer-events-none absolute top-0 right-0 h-44 w-44 opacity-15 blur-2xl"
-            style={{ background: "radial-gradient(circle, var(--t-accent), transparent 70%)" }}
-          />
+        {/* Store Profile Hero with Banner Behind (foto ou degradê automático da logo / cor do perfil) */}
+        <section className="relative overflow-hidden px-4 pt-20 sm:pt-24 pb-5">
+          {/* Banner de fundo atrás da foto e nome da loja */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-44 sm:h-48 overflow-hidden">
+            <StoreBannerMedia
+              capaUrl={loja.capa_url}
+              logoUrl={loja.logo_url}
+              corPrimaria={loja.cor_primaria}
+              alt={`Banner de ${loja.nome}`}
+              overlayMode="store"
+              priority
+            />
+          </div>
 
           <div className="relative z-10 flex flex-col gap-3.5">
             {loja.pausada && (
               <div
-                className="rounded-xl px-3 py-2 text-xs font-semibold"
-                style={{ backgroundColor: "rgba(245, 158, 11, 0.14)", color: "#D97706" }}
+                className="rounded-xl px-3 py-2 text-xs font-semibold backdrop-blur-sm"
+                style={{ backgroundColor: "rgba(245, 158, 11, 0.18)", color: "#F59E0B" }}
               >
                 Loja pausada temporariamente — novos agendamentos online indisponíveis no momento.
               </div>
             )}
 
-            <div className="flex items-start gap-3.5">
+            <div className="flex items-end gap-3.5">
               {loja.logo_url ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
                   src={loja.logo_url}
                   alt={loja.nome}
-                  className="h-16 w-16 shrink-0 object-cover shadow-inner"
+                  className="h-16 w-16 shrink-0 object-cover shadow-lg ring-2 ring-[var(--t-bg)]"
                   style={{
                     borderRadius: "calc(var(--t-radius) * 0.85)",
                     backgroundColor: "var(--t-inner)",
@@ -231,7 +226,7 @@ export function LojaPublicaView({
                 />
               ) : (
                 <div
-                  className="relative flex h-16 w-16 shrink-0 flex-col items-center justify-center overflow-hidden shadow-inner"
+                  className="relative flex h-16 w-16 shrink-0 flex-col items-center justify-center overflow-hidden shadow-lg ring-2 ring-[var(--t-bg)]"
                   style={{
                     borderRadius: "calc(var(--t-radius) * 0.85)",
                     backgroundColor: "var(--t-surface)",
@@ -245,7 +240,7 @@ export function LojaPublicaView({
                 </div>
               )}
 
-              <div className="flex min-w-0 flex-1 flex-col justify-center">
+              <div className="flex min-w-0 flex-1 flex-col justify-center pb-0.5">
                 <div className="flex items-center gap-1.5">
                   <span
                     className={`h-2 w-2 rounded-full ${
@@ -296,7 +291,7 @@ export function LojaPublicaView({
             borderBottom: "1px solid var(--t-border)",
           }}
         >
-          <div className="flex min-w-max items-center gap-6 px-4">
+          <div className="flex min-w-max items-center gap-4 px-4">
             {(
               [
                 { key: "servicos", label: "Serviços", icon: List },
@@ -310,7 +305,7 @@ export function LojaPublicaView({
                   key={key}
                   type="button"
                   onClick={() => setTab(key)}
-                  className="relative flex min-h-[46px] shrink-0 items-center gap-1.5 whitespace-nowrap py-3 text-sm font-semibold transition-colors"
+                  className="relative flex min-h-[46px] shrink-0 items-center gap-1.5 whitespace-nowrap py-3 text-[13px] font-semibold transition-colors"
                   style={{ color: active ? "var(--t-accent)" : "var(--t-muted)" }}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
@@ -346,7 +341,7 @@ export function LojaPublicaView({
                   return (
                     <div
                       key={s.id}
-                      className="relative flex flex-col justify-between gap-3 overflow-hidden p-4 transition-all"
+                      className="relative flex items-center justify-between gap-3 overflow-hidden px-3.5 py-3 transition-all"
                       style={{
                         ...cardSurfaceStyle,
                         ...(selected
@@ -364,7 +359,7 @@ export function LojaPublicaView({
                         />
                       )}
 
-                      <div className={`flex items-start gap-3 ${selected ? "pl-1.5" : ""}`}>
+                      <div className={`flex min-w-0 flex-1 items-center gap-3 ${selected ? "pl-1.5" : ""}`}>
                         {s.exibir_imagem && s.imagem_url && (
                           /* eslint-disable-next-line @next/next/no-img-element */
                           <img
@@ -372,74 +367,65 @@ export function LojaPublicaView({
                             alt={s.nome}
                             loading="lazy"
                             decoding="async"
-                            className="h-16 w-16 sm:h-20 sm:w-20 shrink-0 object-cover"
+                            className="h-14 w-14 sm:h-16 sm:w-16 shrink-0 object-cover"
                             style={{
                               borderRadius: "calc(var(--t-radius) * 0.72)",
                               backgroundColor: "var(--t-inner)",
                             }}
                           />
                         )}
-                        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                          <div className="flex items-start justify-between gap-2">
-                            <h2 className="text-base font-semibold leading-snug break-words">{s.nome}</h2>
-                            <span
-                              className="inline-flex shrink-0 items-center gap-1 rounded px-2 py-0.5 font-mono-num text-xs"
-                              style={{ backgroundColor: "var(--t-inner)", color: "var(--t-muted)" }}
-                            >
-                              <Clock className="h-3 w-3" />
-                              {s.duracao_min} min
-                            </span>
-                          </div>
+                        <div className="flex min-w-0 flex-1 flex-col gap-1">
+                          <h2 className="text-[15px] font-semibold leading-snug break-words">
+                            {s.nome}
+                          </h2>
                           {s.descricao && (
-                            <p className="text-xs leading-relaxed line-clamp-2" style={{ color: "var(--t-muted)" }}>
+                            <p className="text-xs leading-snug line-clamp-2" style={{ color: "var(--t-muted)" }}>
                               {s.descricao}
                             </p>
                           )}
+                          <div className="flex items-center gap-2 pt-0.5">
+                            <span className="font-mono-num text-[15px] font-bold">
+                              {formatPrice(s.preco_centavos)}
+                            </span>
+                            <span className="text-[11px]" style={{ color: "var(--t-muted)" }}>
+                              •
+                            </span>
+                            <span
+                              className="inline-flex items-center gap-1 font-mono-num text-xs"
+                              style={{ color: "var(--t-muted)" }}
+                            >
+                              <Clock className="h-3 w-3 shrink-0" />
+                              {s.duracao_min} min
+                            </span>
+                          </div>
                         </div>
                       </div>
 
-                      <div
-                        className={`flex items-center justify-between pt-1 ${
-                          selected ? "pl-1.5" : ""
-                        }`}
+                      <button
+                        type="button"
+                        disabled={loja.pausada}
+                        onClick={() => toggleServico(s.id)}
+                        aria-label={selected ? `Remover ${s.nome}` : `Adicionar ${s.nome}`}
+                        className="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-1 px-3.5 text-xs font-semibold transition-transform active:scale-95 disabled:opacity-50"
+                        style={{
+                          borderRadius: "calc(var(--t-radius) * 0.72)",
+                          backgroundColor: selected ? "var(--t-inner)" : "var(--t-accent)",
+                          color: selected ? "var(--t-accent)" : "var(--t-accent-ink)",
+                          ...(isBrutal ? { border: "2px solid #000000" } : {}),
+                        }}
                       >
-                        <div className="flex flex-col">
-                          <span
-                            className="font-mono-num text-[10px] uppercase tracking-wider"
-                            style={{ color: "var(--t-muted)" }}
-                          >
-                            Valor
-                          </span>
-                          <span className="font-mono-num text-lg font-bold">
-                            {formatPrice(s.preco_centavos)}
-                          </span>
-                        </div>
-
-                        <button
-                          type="button"
-                          disabled={loja.pausada}
-                          onClick={() => toggleServico(s.id)}
-                          className="inline-flex min-h-[44px] items-center gap-1.5 px-4 text-xs font-semibold shadow-sm transition-transform active:scale-95 disabled:opacity-50"
-                          style={{
-                            borderRadius: "calc(var(--t-radius) * 0.72)",
-                            backgroundColor: selected ? "var(--t-inner)" : "var(--t-accent)",
-                            color: selected ? "var(--t-accent)" : "var(--t-accent-ink)",
-                            ...(isBrutal ? { border: "2px solid #000000" } : {}),
-                          }}
-                        >
-                          {selected ? (
-                            <>
-                              <Check className="h-4 w-4" />
-                              <span>Selecionado</span>
-                            </>
-                          ) : (
-                            <>
-                              <Plus className="h-4 w-4" />
-                              <span>Adicionar</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
+                        {selected ? (
+                          <>
+                            <Check className="h-4 w-4" />
+                            <span>Selecionado</span>
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="h-4 w-4" />
+                            <span>Adicionar</span>
+                          </>
+                        )}
+                      </button>
                     </div>
                   );
                 })
