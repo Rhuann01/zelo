@@ -323,13 +323,86 @@ export function StoreMapPicker({
   const [mapsLinkInput, setMapsLinkInput] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
 
-  const handleUseGps = () => {
-    if (!navigator.geolocation) {
-      setFeedback("Seu navegador não suporta geolocalização.");
-      return;
+  const fetchApproximateIpLocation = async (): Promise<{ lat: number; lng: number; city?: string } | null> => {
+    try {
+      const res = await fetch("https://ipwho.is/", { signal: AbortSignal.timeout(5000) });
+      if (res.ok) {
+        const data = (await res.json()) as {
+          success?: boolean;
+          latitude?: number;
+          longitude?: number;
+          city?: string;
+        };
+        if (
+          data.success !== false &&
+          typeof data.latitude === "number" &&
+          typeof data.longitude === "number" &&
+          isValidLatLng(data.latitude, data.longitude)
+        ) {
+          return {
+            lat: round6(data.latitude),
+            lng: round6(data.longitude),
+            city: data.city,
+          };
+        }
+      }
+    } catch {
+      // Tenta fallback secundário
     }
+
+    try {
+      const res = await fetch("https://ipapi.co/json/", { signal: AbortSignal.timeout(5000) });
+      if (res.ok) {
+        const data = (await res.json()) as {
+          latitude?: number;
+          longitude?: number;
+          city?: string;
+        };
+        if (
+          typeof data.latitude === "number" &&
+          typeof data.longitude === "number" &&
+          isValidLatLng(data.latitude, data.longitude)
+        ) {
+          return {
+            lat: round6(data.latitude),
+            lng: round6(data.longitude),
+            city: data.city,
+          };
+        }
+      }
+    } catch {
+      // Sem fallback disponível
+    }
+    return null;
+  };
+
+  const handleUseGps = () => {
     setLoadingGps(true);
     setFeedback(null);
+
+    const applyIpFallback = async (blockedByPermission: boolean) => {
+      const approx = await fetchApproximateIpLocation();
+      setLoadingGps(false);
+      if (approx) {
+        onChangeCoords(approx.lat, approx.lng);
+        setFeedback(
+          approx.city
+            ? `Localização aproximada em ${approx.city}. Arraste o pino ou toque no mapa para marcar o ponto exato.`
+            : "Localização aproximada pela internet. Arraste o pino ou toque no mapa para ajustar."
+        );
+        return;
+      }
+      setFeedback(
+        blockedByPermission
+          ? "Permissão de localização bloqueada no navegador. Libere ou toque direto no mapa."
+          : "GPS indisponível neste dispositivo/navegador. Use 'Buscar endereço no mapa', cole o link do Google Maps ou toque direto no mapa."
+      );
+    };
+
+    if (!navigator.geolocation) {
+      void applyIpFallback(false);
+      return;
+    }
 
     const onSuccess = (pos: GeolocationPosition) => {
       onChangeCoords(round6(pos.coords.latitude), round6(pos.coords.longitude));
@@ -338,14 +411,7 @@ export function StoreMapPicker({
     };
 
     const onFinalError = (err: GeolocationPositionError) => {
-      setLoadingGps(false);
-      if (err.code === 1) {
-        setFeedback("Permissão de localização bloqueada no navegador. Libere ou toque direto no mapa.");
-      } else {
-        setFeedback(
-          "GPS indisponível neste dispositivo/navegador. Use 'Buscar endereço no mapa', cole o link do Google Maps ou toque direto no mapa."
-        );
-      }
+      void applyIpFallback(err.code === 1);
     };
 
     navigator.geolocation.getCurrentPosition(
@@ -362,7 +428,7 @@ export function StoreMapPicker({
           maximumAge: 60_000,
         });
       },
-      { enableHighAccuracy: true, timeout: 6_000 }
+      { enableHighAccuracy: true, timeout: 6_000, maximumAge: 0 }
     );
   };
 
