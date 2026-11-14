@@ -91,6 +91,10 @@ export async function criarAgendamentoAction(raw: unknown): Promise<{
   }
 
   const input = parsed.data;
+  const inicioMs = Date.parse(input.inicio_iso);
+  if (Number.isNaN(inicioMs) || inicioMs <= Date.now()) {
+    return { error: "Escolha um horário futuro para agendar." };
+  }
 
   // Salva WhatsApp no perfil do cliente se informado no 1º agendamento
   if (input.whatsapp_cliente && input.whatsapp_cliente.trim().length >= 10) {
@@ -154,6 +158,12 @@ export async function cancelarOuRemarcarAction(raw: unknown): Promise<{
   if (!user) return { error: "Sessão expirada." };
 
   const { agendamento_id, acao, novo_inicio_iso } = parsed.data;
+  if (acao === "remarcar" && novo_inicio_iso) {
+    const novoMs = Date.parse(novo_inicio_iso);
+    if (Number.isNaN(novoMs) || novoMs <= Date.now()) {
+      return { error: "Escolha um horário futuro para remarcar." };
+    }
+  }
   const { error } = await supabase.rpc("cancelar_ou_remarcar", {
     p_agendamento_id: agendamento_id,
     p_acao: acao,

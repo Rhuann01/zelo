@@ -224,10 +224,10 @@ describe("Etapa 5 — Timeline Stitch Agenda do Dia (Unit)", () => {
     expect(result.metrics.estimadoCentavos).toBe(9000);
     expect(result.metrics.fimExpedienteHm).toBe("18:00");
 
-    // Lacunas livres esperadas:
-    // 09:45-10:30 (45m), 11:00-12:00 (60m), 13:00-15:00 (120m), 16:00-18:00 (120m) => 345m, 4 slots
+    // Lacunas livres esperadas (agora = 10:15, então 09:45-10:15 já passou):
+    // 10:15-10:30 (15m), 11:00-12:00 (60m), 13:00-15:00 (120m), 16:00-18:00 (120m) => 315m, 4 slots
     expect(result.metrics.slotsLivresCount).toBe(4);
-    expect(result.metrics.minutosLivres).toBe(345);
+    expect(result.metrics.minutosLivres).toBe(315);
 
     const kinds = result.items.map((i) => i.kind);
     expect(kinds).toContain("agora");

@@ -44,6 +44,9 @@ export async function criarEncaixeManualAction(raw: unknown) {
   const duracaoTotalMin = servicos.reduce((acc, s) => acc + s.duracao_min, 0);
   const totalCentavos = servicos.reduce((acc, s) => acc + s.preco_centavos, 0);
   const inicioMs = Date.parse(input.inicio_iso);
+  if (Number.isNaN(inicioMs) || inicioMs < Date.now() - 60_000) {
+    return { error: "Não é possível encaixar em um horário que já passou." };
+  }
   const fimIso = new Date(inicioMs + duracaoTotalMin * 60_000).toISOString();
 
   const comissaoPct = Number(prof.comissao_percentual ?? 0);

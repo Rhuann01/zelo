@@ -203,17 +203,22 @@ export function buildAgendaTimeline({
       }))
       .sort((a, b) => a.startMs - b.startMs);
 
+    const isTodayDay = dataYmd === getTodayYmdSaoPaulo(nowMs);
+    const isPastDay = dataYmd < getTodayYmdSaoPaulo(nowMs);
+    const minFutureMs = isTodayDay ? Math.ceil(nowMs / (5 * 60_000)) * (5 * 60_000) : abreMs;
+
     let cursor = abreMs;
     for (const iv of sorted) {
-      if (iv.startMs > cursor) {
-        const gapMin = Math.round((iv.startMs - cursor) / 60_000);
-        if (gapMin >= minGapMin) {
+      if (iv.startMs > cursor && !isPastDay) {
+        const effectiveStart = isTodayDay ? Math.max(cursor, minFutureMs) : cursor;
+        const gapMin = Math.round((iv.startMs - effectiveStart) / 60_000);
+        if (iv.startMs > effectiveStart && gapMin >= minGapMin) {
           minutosLivres += gapMin;
           slotsLivresCount++;
           timeline.push({
             kind: "livre",
-            sortMs: cursor,
-            horaInicio: msToSaoPauloHm(cursor),
+            sortMs: effectiveStart,
+            horaInicio: msToSaoPauloHm(effectiveStart),
             horaFim: msToSaoPauloHm(iv.startMs),
             duracaoMin: gapMin,
           });
@@ -222,15 +227,16 @@ export function buildAgendaTimeline({
       cursor = Math.max(cursor, iv.endMs);
     }
 
-    if (fechaMs > cursor) {
-      const tailGapMin = Math.round((fechaMs - cursor) / 60_000);
-      if (tailGapMin >= minGapMin) {
+    if (fechaMs > cursor && !isPastDay) {
+      const effectiveStart = isTodayDay ? Math.max(cursor, minFutureMs) : cursor;
+      const tailGapMin = Math.round((fechaMs - effectiveStart) / 60_000);
+      if (fechaMs > effectiveStart && tailGapMin >= minGapMin) {
         minutosLivres += tailGapMin;
         slotsLivresCount++;
         timeline.push({
           kind: "livre",
-          sortMs: cursor,
-          horaInicio: msToSaoPauloHm(cursor),
+          sortMs: effectiveStart,
+          horaInicio: msToSaoPauloHm(effectiveStart),
           horaFim: msToSaoPauloHm(fechaMs),
           duracaoMin: tailGapMin,
         });

@@ -171,8 +171,13 @@ export function PainelAgendaStitch({
       : 0;
 
   function openEncaixeAt(hora?: string) {
-    setEncData(selectedDate);
-    if (hora) setEncHora(hora);
+    const dataAlvo = selectedDate < todayYmd ? todayYmd : selectedDate;
+    setEncData(dataAlvo);
+    if (hora) {
+      setEncHora(hora);
+    } else if (dataAlvo === todayYmd) {
+      setEncHora(agoraHm);
+    }
     if (filtroProf !== "todos") setEncProfId(filtroProf);
     setEncaixeOpen(true);
   }
@@ -511,8 +516,12 @@ export function PainelAgendaStitch({
                   </span>
                 </div>
 
-                <div className="relative flex-1 overflow-hidden rounded-xl bg-[var(--zelo-card)] p-3.5 shadow-sm">
-                  <div className={`absolute top-0 bottom-0 left-0 w-1 ${barColor}`} />
+                <div
+                  className={`relative flex-1 rounded-xl bg-[var(--zelo-card)] p-3.5 shadow-sm ${
+                    openMenuId === ag.id ? "z-30" : ""
+                  }`}
+                >
+                  <div className={`absolute top-0 bottom-0 left-0 w-1 rounded-l-xl ${barColor}`} />
 
                   <div className="flex items-start justify-between gap-2 pl-1">
                     <div className="min-w-0 flex-1">
@@ -809,6 +818,7 @@ export function PainelAgendaStitch({
               <input
                 type="date"
                 required
+                min={todayYmd}
                 value={encData}
                 onChange={(e) => setEncData(e.target.value)}
                 className="h-11 rounded-xl bg-[var(--zelo-soft)] px-3 font-mono-num text-xs outline-none"
@@ -816,6 +826,7 @@ export function PainelAgendaStitch({
               <input
                 type="time"
                 required
+                min={encData === todayYmd ? agoraHm : undefined}
                 value={encHora}
                 onChange={(e) => setEncHora(e.target.value)}
                 className="h-11 rounded-xl bg-[var(--zelo-soft)] px-3 font-mono-num text-xs outline-none"
