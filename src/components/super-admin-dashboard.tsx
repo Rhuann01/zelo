@@ -15,16 +15,20 @@ import {
   LayoutGrid,
   Lock,
   Moon,
+  MoreHorizontal,
   PauseCircle,
   PlayCircle,
+  Scissors,
   Search,
   Server,
   ShieldCheck,
+  SlidersHorizontal,
   Sparkles,
   Store,
   Sun,
   Terminal,
   TrendingUp,
+  Zap,
 } from "lucide-react";
 import { EmptyState, StatusBadge } from "@/components/ui";
 import {
@@ -92,18 +96,33 @@ export function SuperAdminDashboard({
 }) {
   const [tab, setTab] = useState<TabId>("visao");
   const [darkMode, setDarkMode] = useState(false);
+  const [periodo, setPeriodo] = useState<"hoje" | "7d" | "30d" | "mes">("30d");
+  const [quickActionsOpen, setQuickActionsOpen] = useState(false);
   const [busca, setBusca] = useState("");
   const [filtroSemaforo, setFiltroSemaforo] = useState<"todos" | SemaforoCor>(
     "todos"
   );
+  const [filtroNicho, setFiltroNicho] = useState<string>("todos");
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [copiedAi, setCopiedAi] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  const nichosDisponiveis = useMemo(
+    () => Array.from(new Set(data.lojas.map((l) => l.nicho))).sort(),
+    [data.lojas]
+  );
 
   const lojasFiltradas = useMemo(() => {
     const q = busca.trim().toLowerCase();
     return data.lojas.filter((l) => {
       if (filtroSemaforo !== "todos" && l.semaforo !== filtroSemaforo) {
+        return false;
+      }
+      if (filtroNicho !== "todos" && l.nicho !== filtroNicho) {
         return false;
       }
       if (!q) return true;
@@ -113,7 +132,7 @@ export function SuperAdminDashboard({
         l.cidade.toLowerCase().includes(q)
       );
     });
-  }, [data.lojas, busca, filtroSemaforo]);
+  }, [data.lojas, busca, filtroSemaforo, filtroNicho]);
 
   const handleTogglePausa = (lojaId: string, nextPausada: boolean) => {
     setFeedback(null);
@@ -198,59 +217,160 @@ export function SuperAdminDashboard({
       </span>
     );
 
-  const renderSemaforoTable = (limit?: number) => {
-    const rows = limit ? lojasFiltradas.slice(0, limit) : lojasFiltradas;
+  const renderSemaforoTable = (limit = 6) => {
+    const pageSize = limit;
+    const totalFiltered = lojasFiltradas.length;
+    const totalPages = Math.max(1, Math.ceil(totalFiltered / pageSize));
+    const currentPage = Math.min(page, totalPages);
+    const startIdx = (currentPage - 1) * pageSize;
+    const rows = lojasFiltradas.slice(startIdx, startIdx + pageSize);
+
+    const toggleSelect = (id: string) => {
+      setSelectedIds((prev) =>
+        prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+      );
+    };
+
+    const toggleSelectAll = () => {
+      const visibleIds = rows.map((r) => r.id);
+      const allSelected =
+        visibleIds.length > 0 &&
+        visibleIds.every((id) => selectedIds.includes(id));
+      if (allSelected) {
+        setSelectedIds((prev) => prev.filter((id) => !visibleIds.includes(id)));
+      } else {
+        setSelectedIds((prev) => Array.from(new Set([...prev, ...visibleIds])));
+      }
+    };
+
+    const NichoIcon = (nicho: string) => {
+      if (nicho === "barbearia") return <Scissors className="h-4 w-4" />;
+      if (nicho === "estetica" || nicho === "salao") {
+        return <Sparkles className="h-4 w-4" />;
+      }
+      return <Store className="h-4 w-4" />;
+    };
+
     return (
       <section className={`rounded-3xl ${bgCard} p-5 space-y-4`}>
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-3">
           <div>
             <h2 className="text-base font-bold tracking-tight">
               Semáforo de Saúde das Lojas
             </h2>
             <p className={`text-xs ${textMuted}`}>
-              Monitoramento proativo contra churn e taxa de engajamento
+              Monitoramento proativo contra churn e taxa de engajamento semanal
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
-              {(
-                [
-                  { id: "todos", label: `Todas (${data.lojas.length})` },
-                  { id: "verde", label: `Saudáveis (${data.semaforoResumo.verde})` },
-                  { id: "amarelo", label: `Atenção (${data.semaforoResumo.amarelo})` },
-                  { id: "vermelho", label: `Críticas (${data.semaforoResumo.vermelho})` },
-                ] as const
-              ).map((f) => (
-                <button
-                  key={f.id}
-                  type="button"
-                  onClick={() => setFiltroSemaforo(f.id)}
-                  className={`min-h-[36px] rounded-full px-3 text-xs font-semibold transition-colors shrink-0 ${
-                    filtroSemaforo === f.id
-                      ? "bg-[#111216] text-white dark:bg-white dark:text-[#111216]"
-                      : `${bgSub} ${textMuted} hover:opacity-85`
-                  }`}
-                >
-                  {f.label}
-                </button>
-              ))}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <div
+                className={`inline-flex items-center gap-1 rounded-full ${bgSub} p-1 overflow-x-auto no-scrollbar`}
+              >
+                {(
+                  [
+                    { id: "todos", label: `Todas (${data.lojas.length})` },
+                    {
+                      id: "verde",
+                      label: `Saudáveis (${data.semaforoResumo.verde})`,
+                    },
+                    {
+                      id: "amarelo",
+                      label: `Atenção (${data.semaforoResumo.amarelo})`,
+                    },
+                    {
+                      id: "vermelho",
+                      label: `Críticas (${data.semaforoResumo.vermelho})`,
+                    },
+                  ] as const
+                ).map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => {
+                      setFiltroSemaforo(f.id);
+                      setPage(1);
+                    }}
+                    className={`min-h-[32px] rounded-full px-3 text-xs font-semibold transition-all shrink-0 ${
+                      filtroSemaforo === f.id
+                        ? darkMode
+                          ? "bg-white text-[#111216] shadow-sm"
+                          : "bg-white text-[#111216] shadow-sm"
+                        : `${textMuted} hover:opacity-85`
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowFilters((v) => !v)}
+                className={`inline-flex h-9 items-center gap-1.5 rounded-full ${bgSub} px-3.5 text-xs font-semibold hover:opacity-85`}
+              >
+                <SlidersHorizontal className="h-3.5 w-3.5" />
+                <span>Filtros</span>
+              </button>
             </div>
 
             <div
-              className={`flex items-center gap-2 rounded-full ${bgSub} px-3.5 h-9 min-w-[200px]`}
+              className={`flex items-center gap-2 rounded-full ${bgSub} px-3.5 h-9 min-w-[220px]`}
             >
               <Search className={`h-3.5 w-3.5 ${textMuted} shrink-0`} />
               <input
                 type="text"
                 value={busca}
-                onChange={(e) => setBusca(e.target.value)}
+                onChange={(e) => {
+                  setBusca(e.target.value);
+                  setPage(1);
+                }}
                 placeholder="Buscar loja ou slug..."
                 className="w-full bg-transparent text-xs outline-none"
               />
             </div>
           </div>
         </div>
+
+        {showFilters && (
+          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+            <span className={`text-[11px] font-semibold ${textMuted} mr-1`}>
+              Nicho:
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setFiltroNicho("todos");
+                setPage(1);
+              }}
+              className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
+                filtroNicho === "todos"
+                  ? "bg-[#111216] text-white dark:bg-white dark:text-[#111216]"
+                  : `${bgSub} ${textMuted}`
+              }`}
+            >
+              Todos
+            </button>
+            {nichosDisponiveis.map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => {
+                  setFiltroNicho(n);
+                  setPage(1);
+                }}
+                className={`rounded-full px-3 py-1 text-[11px] font-semibold capitalize ${
+                  filtroNicho === n
+                    ? "bg-[#111216] text-white dark:bg-white dark:text-[#111216]"
+                    : `${bgSub} ${textMuted}`
+                }`}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+        )}
 
         {rows.length === 0 ? (
           <EmptyState
@@ -260,31 +380,79 @@ export function SuperAdminDashboard({
           />
         ) : (
           <>
-            {/* Desktop Table (Estilo Finexy) */}
+            {/* Desktop Table (Idêntica à Foto 4 do Stitch Finexy) */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className={`text-[10px] font-bold uppercase tracking-wider ${textMuted}`}>
-                    <th className="py-2.5 px-3">Estabelecimento &amp; Nicho</th>
-                    <th className="py-2.5 px-3">Cidade / Bairro</th>
-                    <th className="py-2.5 px-3">Plano &amp; Volume</th>
-                    <th className="py-2.5 px-3">Status Operacional</th>
-                    <th className="py-2.5 px-3">Trial Até</th>
-                    <th className="py-2.5 px-3 text-right">Ações</th>
+                  <tr
+                    className={`text-[10px] font-bold uppercase tracking-wider ${textMuted} border-b border-black/5 dark:border-white/8`}
+                  >
+                    <th className="py-3 px-2.5 w-8">
+                      <input
+                        type="checkbox"
+                        aria-label="Selecionar todas"
+                        checked={
+                          rows.length > 0 &&
+                          rows.every((r) => selectedIds.includes(r.id))
+                        }
+                        onChange={toggleSelectAll}
+                        className="h-4 w-4 rounded accent-[#111216] cursor-pointer"
+                      />
+                    </th>
+                    <th className="py-3 px-2.5">Código/ID</th>
+                    <th className="py-3 px-2.5">Estabelecimento &amp; Nicho</th>
+                    <th className="py-3 px-2.5">Polo / Bairro</th>
+                    <th className="py-3 px-2.5">Plano &amp; Volume</th>
+                    <th className="py-3 px-2.5">Status Operacional</th>
+                    <th className="py-3 px-2.5">Trial / Sync</th>
+                    <th className="py-3 px-2.5 text-right">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-black/5 dark:divide-white/8 text-xs">
-                  {rows.map((loja) => {
+                  {rows.map((loja, i) => {
                     const sem = SEMAFORO_BADGE[loja.semaforo];
+                    const codeId = `LZ_${String(startIdx + i + 1).padStart(5, "0")}`;
+                    const rowTint =
+                      loja.semaforo === "vermelho"
+                        ? darkMode
+                          ? "bg-rose-500/[0.06]"
+                          : "bg-rose-50/75"
+                        : loja.semaforo === "amarelo"
+                          ? darkMode
+                            ? "bg-amber-500/[0.06]"
+                            : "bg-amber-50/65"
+                          : "";
+                    const iconTint =
+                      loja.semaforo === "vermelho"
+                        ? "bg-rose-500/12 text-rose-600 dark:text-rose-300"
+                        : loja.semaforo === "amarelo"
+                          ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                          : "bg-[#FF5A1F]/10 text-[#FF5A1F]";
+                    const isChecked = selectedIds.includes(loja.id);
+
                     return (
                       <tr
                         key={loja.id}
-                        className="hover:bg-black/[0.015] dark:hover:bg-white/[0.02] transition-colors"
+                        className={`${rowTint} hover:bg-black/[0.02] dark:hover:bg-white/[0.03] transition-colors`}
                       >
-                        <td className="py-3.5 px-3">
+                        <td className="py-3.5 px-2.5">
+                          <input
+                            type="checkbox"
+                            aria-label={`Selecionar ${loja.nome}`}
+                            checked={isChecked}
+                            onChange={() => toggleSelect(loja.id)}
+                            className="h-4 w-4 rounded accent-[#111216] cursor-pointer"
+                          />
+                        </td>
+                        <td className={`py-3.5 px-2.5 font-mono-num text-[11px] ${textMuted}`}>
+                          {codeId}
+                        </td>
+                        <td className="py-3.5 px-2.5">
                           <div className="flex items-center gap-2.5">
-                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#FF5A1F]/10 text-[#FF5A1F] font-bold text-xs">
-                              {loja.nome.slice(0, 1).toUpperCase()}
+                            <span
+                              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${iconTint}`}
+                            >
+                              {NichoIcon(loja.nicho)}
                             </span>
                             <div className="min-w-0">
                               <p className="font-bold truncate">{loja.nome}</p>
@@ -294,33 +462,35 @@ export function SuperAdminDashboard({
                             </div>
                           </div>
                         </td>
-                        <td className="py-3.5 px-3 font-medium">
-                          {loja.cidade}
+                        <td className="py-3.5 px-2.5">
+                          <span className="font-semibold">{loja.cidade}</span>
                           {loja.bairro ? (
-                            <span className={`block text-[11px] ${textMuted}`}>
-                              {loja.bairro}
+                            <span className={`font-normal ${textMuted}`}>
+                              {" "}
+                              / {loja.bairro}
                             </span>
                           ) : null}
                         </td>
-                        <td className="py-3.5 px-3 font-mono-num">
-                          <span className="font-semibold">
+                        <td className="py-3.5 px-2.5 font-mono-num">
+                          <span
+                            className={`font-bold ${
+                              loja.semaforo === "vermelho"
+                                ? "text-rose-600 dark:text-rose-400"
+                                : ""
+                            }`}
+                          >
                             {loja.plano.toUpperCase()} • {loja.assinatura_status}
                           </span>
                           <span className={`block text-[11px] ${textMuted}`}>
-                            {loja.servicos_count} serviços • {loja.agendamentos_30d} agend./30d
+                            {loja.servicos_count} serv. • {loja.agendamentos_30d} agend./30d
                           </span>
                         </td>
-                        <td className="py-3.5 px-3">
-                          <div className="flex flex-col items-start gap-1">
-                            <StatusBadge tone={sem.tone} dot>
-                              {sem.label}
-                            </StatusBadge>
-                            <span className={`text-[11px] ${textMuted}`}>
-                              {loja.semaforoMotivo}
-                            </span>
-                          </div>
+                        <td className="py-3.5 px-2.5">
+                          <StatusBadge tone={sem.tone} dot>
+                            {sem.label} ({loja.semaforoMotivo})
+                          </StatusBadge>
                         </td>
-                        <td className="py-3.5 px-3 font-mono-num text-[11px]">
+                        <td className={`py-3.5 px-2.5 font-mono-num text-[11px] ${textMuted}`}>
                           {formatDateBr(loja.trial_ate)}
                           {loja.indicacoes_confirmadas > 0 && (
                             <span className="mt-0.5 flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
@@ -329,31 +499,63 @@ export function SuperAdminDashboard({
                             </span>
                           )}
                         </td>
-                        <td className="py-3.5 px-3 text-right">
-                          <div className="inline-flex items-center gap-1.5">
-                            <button
-                              type="button"
-                              disabled={isPending}
-                              onClick={() => handleExtendTrial(loja.id, 7)}
-                              className={`min-h-[34px] rounded-xl ${bgSub} px-2.5 text-[11px] font-semibold hover:opacity-80 disabled:opacity-50`}
+                        <td className="py-3.5 px-2.5 text-right relative">
+                          <button
+                            type="button"
+                            aria-label={`Ações para ${loja.nome}`}
+                            onClick={() =>
+                              setOpenMenuId((prev) =>
+                                prev === loja.id ? null : loja.id
+                              )
+                            }
+                            className={`inline-flex h-8 w-8 items-center justify-center rounded-full ${bgSub} hover:opacity-80`}
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </button>
+
+                          {openMenuId === loja.id && (
+                            <div
+                              className={`absolute right-2.5 top-12 z-30 w-40 rounded-2xl ${bgCard} p-1.5 shadow-xl border border-black/8 dark:border-white/10 text-left space-y-1`}
                             >
-                              +7d Trial
-                            </button>
-                            <button
-                              type="button"
-                              disabled={isPending}
-                              onClick={() =>
-                                handleTogglePausa(loja.id, !loja.pausada)
-                              }
-                              className={`min-h-[34px] rounded-xl px-2.5 text-[11px] font-semibold disabled:opacity-50 ${
-                                loja.pausada
-                                  ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                                  : "bg-rose-500/12 text-rose-700 dark:text-rose-300"
-                              }`}
-                            >
-                              {loja.pausada ? "Reativar" : "Pausar"}
-                            </button>
-                          </div>
+                              <button
+                                type="button"
+                                disabled={isPending}
+                                onClick={() => {
+                                  handleExtendTrial(loja.id, 7);
+                                  setOpenMenuId(null);
+                                }}
+                                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/8"
+                              >
+                                <Clock className="h-3.5 w-3.5" />
+                                <span>Estender +7d Trial</span>
+                              </button>
+                              <button
+                                type="button"
+                                disabled={isPending}
+                                onClick={() => {
+                                  handleTogglePausa(loja.id, !loja.pausada);
+                                  setOpenMenuId(null);
+                                }}
+                                className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold ${
+                                  loja.pausada
+                                    ? "text-emerald-600 hover:bg-emerald-500/10"
+                                    : "text-rose-600 hover:bg-rose-500/10"
+                                }`}
+                              >
+                                {loja.pausada ? (
+                                  <>
+                                    <PlayCircle className="h-3.5 w-3.5" />
+                                    <span>Reativar loja</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <PauseCircle className="h-3.5 w-3.5" />
+                                    <span>Pausar loja</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     );
@@ -437,17 +639,47 @@ export function SuperAdminDashboard({
           </>
         )}
 
-        {limit && lojasFiltradas.length > limit && (
-          <div className="flex justify-end">
+        {/* Rodapé com Paginação Real (Idêntico à Foto 4 do Stitch) */}
+        <div className="pt-2 border-t border-black/5 dark:border-white/8 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <span className={`font-mono-num ${textMuted}`}>
+            Mostrando {totalFiltered === 0 ? 0 : startIdx + 1} a{" "}
+            {Math.min(startIdx + rows.length, totalFiltered)} de{" "}
+            <strong>{totalFiltered}</strong> lojas cadastradas
+          </span>
+
+          <div className="flex items-center gap-1.5">
             <button
               type="button"
-              onClick={() => setTab("lojas")}
-              className="text-xs font-semibold text-[#FF5A1F] hover:underline"
+              disabled={currentPage <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className={`h-8 rounded-full px-3 text-xs font-semibold ${bgSub} disabled:opacity-40`}
             >
-              Ver todas as {lojasFiltradas.length} lojas
+              Anterior
+            </button>
+            {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPage(p)}
+                className={`h-8 w-8 rounded-full text-xs font-bold font-mono-num transition-colors ${
+                  p === currentPage
+                    ? "bg-[#111216] text-white dark:bg-white dark:text-[#111216]"
+                    : `${bgSub} ${textMuted}`
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+            <button
+              type="button"
+              disabled={currentPage >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              className={`h-8 rounded-full px-3 text-xs font-semibold ${bgSub} disabled:opacity-40`}
+            >
+              Próximo
             </button>
           </div>
-        )}
+        </div>
       </section>
     );
   };
@@ -621,7 +853,7 @@ export function SuperAdminDashboard({
 
       {/* Main Container */}
       <main className="md:pl-24">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 pt-3 md:pt-5 space-y-5">
+        <div className="w-full max-w-[1600px] mx-auto px-4 md:px-7 pt-3 md:pt-5 space-y-5">
           {/* Desktop Top Navigation Bar (Estilo Finexy) */}
           <div className="hidden md:flex items-center justify-between gap-4">
             <div className="flex items-center gap-5">
@@ -706,26 +938,105 @@ export function SuperAdminDashboard({
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
-              <a
-                href="/super-admin/export"
-                className={`inline-flex h-10 items-center gap-1.5 rounded-full ${bgCard} px-4 text-xs font-semibold hover:opacity-90`}
-              >
-                <Download className="h-3.5 w-3.5" />
-                <span>Exportar .CSV</span>
-              </a>
-              <button
-                type="button"
-                onClick={handleCopyForAi}
-                className="inline-flex h-10 items-center gap-2 rounded-full bg-gradient-to-r from-[#FF5A1F] to-[#FF7844] px-4 text-xs font-bold text-white shadow-sm hover:opacity-95"
-              >
-                {copiedAi ? (
-                  <Check className="h-3.5 w-3.5" />
-                ) : (
-                  <Sparkles className="h-3.5 w-3.5" />
+            <div className="flex flex-col items-end gap-2">
+              <div className="flex items-center gap-2">
+                {/* Seletor de Período (Foto 2 do Stitch) */}
+                <div className={`inline-flex items-center rounded-full ${bgCard} p-1`}>
+                  {(
+                    [
+                      { id: "hoje", label: "Hoje" },
+                      { id: "7d", label: "7d" },
+                      { id: "30d", label: "30d" },
+                      { id: "mes", label: "Mês Atual" },
+                    ] as const
+                  ).map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setPeriodo(p.id)}
+                      className={`h-8 rounded-full px-3.5 text-xs font-semibold transition-all ${
+                        periodo === p.id
+                          ? "bg-[#111216] text-white dark:bg-white dark:text-[#111216]"
+                          : `${textMuted} hover:opacity-80`
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+
+                <a
+                  href="/super-admin/export"
+                  className={`inline-flex h-10 items-center gap-1.5 rounded-full ${bgCard} px-4 text-xs font-semibold hover:opacity-90`}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span>Exportar .CSV</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={handleCopyForAi}
+                  className="inline-flex h-10 items-center gap-2 rounded-full bg-gradient-to-r from-[#FF5A1F] to-[#FF7844] px-4 text-xs font-bold text-white shadow-sm hover:opacity-95"
+                >
+                  {copiedAi ? (
+                    <Check className="h-3.5 w-3.5" />
+                  ) : (
+                    <Sparkles className="h-3.5 w-3.5" />
+                  )}
+                  <span>{copiedAi ? "Copiado!" : "Copiar p/ IA (Prompt)"}</span>
+                </button>
+              </div>
+
+              {/* Botão Ações Rápidas (Foto 2 do Stitch) */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setQuickActionsOpen((v) => !v)}
+                  className="inline-flex h-9 items-center gap-2 rounded-full bg-[#111216] text-white dark:bg-white dark:text-[#111216] px-4 text-xs font-bold shadow-sm hover:opacity-95"
+                >
+                  <Zap className="h-3.5 w-3.5 text-[#FF5A1F]" />
+                  <span>Ações Rápidas</span>
+                </button>
+                {quickActionsOpen && (
+                  <div
+                    className={`absolute right-0 top-11 z-40 w-52 rounded-2xl ${bgCard} p-1.5 shadow-xl border border-black/8 dark:border-white/10 space-y-1 text-left`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFiltroSemaforo("vermelho");
+                        setTab("lojas");
+                        setQuickActionsOpen(false);
+                      }}
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/8"
+                    >
+                      <AlertTriangle className="h-3.5 w-3.5 text-rose-500" />
+                      <span>Ver Lojas Críticas</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTab("infra");
+                        setQuickActionsOpen(false);
+                      }}
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/8"
+                    >
+                      <Server className="h-3.5 w-3.5 text-[#FF5A1F]" />
+                      <span>Ver Infra &amp; Webhooks</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleCopyForAi();
+                        setQuickActionsOpen(false);
+                      }}
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/8"
+                    >
+                      <Copy className="h-3.5 w-3.5 text-emerald-500" />
+                      <span>Copiar Prompt p/ IA</span>
+                    </button>
+                  </div>
                 )}
-                <span>{copiedAi ? "Copiado!" : "Copiar p/ IA (Prompt)"}</span>
-              </button>
+              </div>
             </div>
           </div>
 
