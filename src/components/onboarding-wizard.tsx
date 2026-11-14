@@ -39,6 +39,7 @@ import { compressImageToWebP, STORE_MEDIA_COMPRESS_CONFIG } from "@/lib/image/co
 import { StockPhotoSearch } from "@/components/ui/stock-photo-search";
 import { StatusBadge, SurfaceCard } from "@/components/ui";
 import { StoreLocationFields } from "@/components/ui/store-location-fields";
+import { ZeloToastViewport, showToast } from "@/components/zelo-toast";
 
 const NICHO_META: Record<
   (typeof NICHO_OPTIONS)[number],
@@ -182,8 +183,11 @@ export function OnboardingWizard() {
   const [capaBlob, setCapaBlob] = useState<Blob | null>(null);
   const [capaPreview, setCapaPreview] = useState<string | null>(null);
   const [stockTarget, setStockTarget] = useState<"logo" | "capa" | number | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const notifyError = (msg: string) => {
+    showToast(msg, "error");
+  };
 
   const effectiveSlug = slugTouched ? slug : slugifyNome(nome);
   const ativosCount = servicos.filter((s) => s.ativo).length;
@@ -209,7 +213,7 @@ export function OnboardingWizard() {
   const handleAddCustomServico = () => {
     const trimmed = novoSrvNome.trim();
     if (trimmed.length < 2) {
-      setError("Informe o nome do serviço (mínimo 2 letras).");
+      notifyError("Informe o nome do serviço (mínimo 2 letras).");
       return;
     }
     const duracao = Math.max(5, Math.min(480, Number(novoSrvMin) || 30));
@@ -220,22 +224,20 @@ export function OnboardingWizard() {
     ]);
     setNovoSrvNome("");
     setShowAddSrv(false);
-    setError(null);
   };
 
   const handleNextStep = () => {
-    setError(null);
     if (step === 1) {
       if (nome.trim().length < 2) {
-        setError("Informe o nome do seu estabelecimento.");
+        notifyError("Informe o nome do seu estabelecimento.");
         return;
       }
       if (!/^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/.test(effectiveSlug)) {
-        setError("O link precisa ter pelo menos 3 caracteres (letras, números ou hífen).");
+        notifyError("O link precisa ter pelo menos 3 caracteres (letras, números ou hífen).");
         return;
       }
       if (ativosCount === 0) {
-        setError("Deixe pelo menos 1 serviço selecionado para abrir sua vitrine.");
+        notifyError("Deixe pelo menos 1 serviço selecionado para abrir sua vitrine.");
         return;
       }
       setStep(2);
@@ -244,11 +246,11 @@ export function OnboardingWizard() {
 
     if (step === 2) {
       if (cidade.trim().length < 2 || bairro.trim().length < 2) {
-        setError("Informe a cidade e o bairro para aparecer na busca local.");
+        notifyError("Informe a cidade e o bairro para aparecer na busca local.");
         return;
       }
       if (whatsapp.replace(/\D/g, "").length < 10) {
-        setError("Informe um WhatsApp válido com DDD.");
+        notifyError("Informe um WhatsApp válido com DDD.");
         return;
       }
       setStep(3);
@@ -265,7 +267,6 @@ export function OnboardingWizard() {
     file: File | undefined
   ) => {
     if (!file) return;
-    setError(null);
     try {
       const blob = await compressImageToWebP(file, {
         ...STORE_MEDIA_COMPRESS_CONFIG,
@@ -290,12 +291,11 @@ export function OnboardingWizard() {
         );
       }
     } catch {
-      setError("Não foi possível processar a imagem. Tente outro arquivo.");
+      notifyError("Não foi possível processar a imagem. Tente outro arquivo.");
     }
   };
 
   const handleSubmit = () => {
-    setError(null);
     const servicosAtivosLista = servicos.filter((s) => s.ativo);
     const servicosAtivos = servicosAtivosLista.map(
       ({ nome: n, duracao_min, preco_centavos, imagem_url }) => ({
@@ -330,7 +330,7 @@ export function OnboardingWizard() {
         servicos: servicosAtivos,
       });
       if (res?.error || !res?.lojaId) {
-        setError(res?.error ?? "Não foi possível criar a loja.");
+        notifyError(res?.error ?? "Não foi possível criar a loja.");
         return;
       }
 
@@ -405,6 +405,7 @@ export function OnboardingWizard() {
 
   return (
     <div className="relative min-h-dvh bg-[var(--zelo-bg)] text-[var(--zelo-ink)] flex flex-col">
+      <ZeloToastViewport />
       {/* Textura sutil de bolinhas no fundo com degradê (100% no topo -> transparente embaixo) */}
       <div
         aria-hidden="true"
@@ -425,7 +426,6 @@ export function OnboardingWizard() {
             <button
               type="button"
               onClick={() => {
-                setError(null);
                 setStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3 | 4) : 1));
               }}
               className="min-h-[44px] min-w-[44px] -ml-2 inline-flex items-center justify-center rounded-full hover:bg-[var(--zelo-soft)] transition-colors"
@@ -478,12 +478,6 @@ export function OnboardingWizard() {
 
       {/* Conteúdo principal */}
       <main className="relative z-10 flex-1 max-w-[480px] w-full mx-auto px-4 pt-3 pb-28 space-y-6">
-        {error && (
-          <SurfaceCard tone="rose" padding="sm" className="text-xs font-medium">
-            {error}
-          </SurfaceCard>
-        )}
-
         {step === 1 && (
           <>
             <div className="relative overflow-hidden rounded-2xl bg-[var(--zelo-soft)]/80 px-4 pt-5 pb-6">

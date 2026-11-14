@@ -46,6 +46,15 @@ export async function createLojaAction(rawInput: CreateLojaInput): Promise<Onboa
     return { error: "Sessão expirada. Faça login novamente." };
   }
 
+  const { count: lojasCount } = await supabase
+    .from("lojas")
+    .select("id", { count: "exact", head: true })
+    .eq("owner_id", user.id);
+
+  if ((lojasCount ?? 0) >= 3) {
+    return { error: "Limite máximo de 3 lojas por conta atingido." };
+  }
+
   const input = parsed.data;
 
   const { data: loja, error: lojaError } = await supabase

@@ -294,7 +294,7 @@ export function ReservaDrawer({
             <div className="flex min-w-0 items-center gap-2.5">
               <div
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl shadow-xs"
-                style={{ backgroundColor: "var(--t-card)", color: "var(--t-ink)" }}
+                style={{ backgroundColor: "var(--t-surface)", color: "var(--t-ink)" }}
               >
                 <Store className="h-4 w-4" />
               </div>
@@ -511,7 +511,7 @@ export function ReservaDrawer({
                         type="button"
                         onClick={() => setShowProfPicker((v) => !v)}
                         className="flex shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-1.5 shadow-xs transition-opacity hover:opacity-85"
-                        style={{ backgroundColor: "var(--t-card)" }}
+                        style={{ backgroundColor: "var(--t-surface)" }}
                       >
                         {profAtual.avatar_url ? (
                           /* eslint-disable-next-line @next/next/no-img-element */
@@ -563,7 +563,7 @@ export function ReservaDrawer({
                             style={{
                               backgroundColor: active
                                 ? "var(--t-accent)"
-                                : "var(--t-card)",
+                                : "var(--t-surface)",
                               color: active ? "var(--t-accent-ink)" : "var(--t-ink)",
                               ...(isBrutal && active ? { border: "2px solid #000000" } : {}),
                             }}
@@ -703,11 +703,12 @@ export function ReservaDrawer({
                             {d.dayNum}
                           </span>
                           <span
-                            className={`mt-1 rounded-full px-1.5 py-0.5 text-[9.5px] font-semibold ${
+                            className={`mt-1 whitespace-nowrap rounded-full px-1.5 py-0.5 text-[9.5px] font-bold ${
                               active
-                                ? "bg-emerald-500/20 text-emerald-400"
+                                ? "bg-black/20"
                                 : "bg-emerald-500/12 text-emerald-600 dark:text-emerald-400"
                             }`}
+                            style={active ? { color: "var(--t-accent-ink)" } : undefined}
                           >
                             {slotCountLabel}
                           </span>
@@ -746,7 +747,7 @@ export function ReservaDrawer({
                               onClick={() => setTurno(t.id)}
                               className="rounded-lg px-2.5 py-1 text-xs font-semibold transition-all"
                               style={{
-                                backgroundColor: active ? "var(--t-card)" : "transparent",
+                                backgroundColor: active ? "var(--t-surface)" : "transparent",
                                 color: active ? "var(--t-ink)" : "var(--t-muted)",
                               }}
                             >
@@ -838,7 +839,7 @@ export function ReservaDrawer({
 
                   <div
                     className="flex h-11 items-center gap-2.5 rounded-xl px-3.5"
-                    style={{ backgroundColor: "var(--t-card)" }}
+                    style={{ backgroundColor: "var(--t-surface)" }}
                   >
                     <Phone
                       className="h-4 w-4 shrink-0"
@@ -915,7 +916,7 @@ export function ReservaDrawer({
                             onChange={(e) => setBeneficiarioNome(e.target.value)}
                             placeholder="Ex: Rodrigo Silveira"
                             className="h-10 w-full rounded-xl px-3 text-xs font-medium outline-none"
-                            style={{ backgroundColor: "var(--t-card)" }}
+                            style={{ backgroundColor: "var(--t-surface)" }}
                           />
                         </div>
                         <div>
@@ -933,7 +934,7 @@ export function ReservaDrawer({
                             }
                             placeholder="(11) 99999-9999"
                             className="h-10 w-full rounded-xl px-3 font-mono-num text-xs outline-none"
-                            style={{ backgroundColor: "var(--t-card)" }}
+                            style={{ backgroundColor: "var(--t-surface)" }}
                           />
                         </div>
                       </div>
@@ -1022,8 +1023,11 @@ export function ReservaDrawer({
         {/* Sticky Bottom Ergonomic Footer */}
         {!confirmed && profissionais.length > 0 && (
           <footer
-            className="sticky bottom-0 z-20 flex items-center justify-between gap-4 px-5 py-3.5 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]"
-            style={{ backgroundColor: "var(--t-card)" }}
+            className="sticky bottom-0 z-20 flex items-center justify-between gap-4 px-5 py-3.5 backdrop-blur-xl shadow-[0_-4px_16px_rgba(0,0,0,0.08)]"
+            style={{
+              backgroundColor: "color-mix(in srgb, var(--t-surface) 88%, transparent)",
+              borderTop: "1px solid var(--t-border)",
+            }}
           >
             <div className="flex flex-col">
               <span

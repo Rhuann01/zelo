@@ -581,7 +581,7 @@ export function ExplorarMeusHorarios({
                         <Calendar className="h-4 w-4" />
                       </span>
                       <div className="min-w-0">
-                        <p className="truncate font-mono-num text-sm font-bold text-[var(--zelo-ink)]">
+                        <p className="font-mono-num text-[13px] font-bold leading-snug text-[var(--zelo-ink)]">
                           {dateFmt.title}
                         </p>
                         <p className="text-[11px] font-semibold text-[#D97706]">
