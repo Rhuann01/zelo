@@ -9,7 +9,7 @@
 - **Mobile-First Real:** Toda tela deve funcionar perfeitamente a partir de `360px` de largura, com área de toque confortável (`>= 44px` em botões críticos).
 
 ## 2. Arquitetura, Segurança e Testes
-- **Decisões & Plano:** Consulte `CONTEXTO.md` e `PLANO_ENGENHARIA_E_NEGOCIO.md` antes de implementar cada etapa.
+- **Decisões & Plano:** Consulte `docs/CONTEXTO.md` e `docs/PLANO_ENGENHARIA_E_NEGOCIO.md` antes de implementar cada etapa.
 - **Testes 100% Locais:** Rode `Vitest`, `Playwright` e `Grafana k6` apenas contra `localhost` e Supabase local (`supabase start`) para nunca consumir cotas gratuitas da nuvem.
 - **Multi-Tenant Estrito & Fotos Livres:**
   - Toda tabela de domínio usa `loja_id` + RLS ativo; nunca exponha `agendamentos` para `SELECT` ou `UPDATE` público direto (use RPCs `SECURITY DEFINER`).
