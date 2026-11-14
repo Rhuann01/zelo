@@ -48,11 +48,26 @@ export interface AgendaServicoItem {
 }
 
 const PRO_PALETTE = [
-  { main: "#F59E0B", container: "#FEF3C7", onContainer: "#78350F" },
-  { main: "#10B981", container: "#D1FAE5", onContainer: "#064E3B" },
-  { main: "#3B82F6", container: "#DBEAFE", onContainer: "#1E3A8A" },
-  { main: "#EC4899", container: "#FCE7F3", onContainer: "#831843" },
-  { main: "#8B5CF6", container: "#EDE9FE", onContainer: "#4C1D95" },
+  {
+    light: { main: "#F59E0B", container: "#FEF3C7", onContainer: "#78350F" },
+    dark: { main: "#FBBF24", container: "#451A03", onContainer: "#FDE68A" },
+  },
+  {
+    light: { main: "#10B981", container: "#D1FAE5", onContainer: "#064E3B" },
+    dark: { main: "#34D399", container: "#064E3B", onContainer: "#A7F3D0" },
+  },
+  {
+    light: { main: "#3B82F6", container: "#DBEAFE", onContainer: "#1E3A8A" },
+    dark: { main: "#60A5FA", container: "#1E3A8A", onContainer: "#BFDBFE" },
+  },
+  {
+    light: { main: "#EC4899", container: "#FCE7F3", onContainer: "#831843" },
+    dark: { main: "#F472B6", container: "#500724", onContainer: "#FBCFE8" },
+  },
+  {
+    light: { main: "#8B5CF6", container: "#EDE9FE", onContainer: "#4C1D95" },
+    dark: { main: "#A78BFA", container: "#2E1065", onContainer: "#DDD6FE" },
+  },
 ];
 
 function toTemporalZdt(iso: string) {
@@ -112,13 +127,15 @@ export function PainelAgendaSX({
       {
         colorName: string;
         lightColors: { main: string; container: string; onContainer: string };
+        darkColors: { main: string; container: string; onContainer: string };
       }
     > = {};
     profissionais.forEach((p, idx) => {
       const pal = PRO_PALETTE[idx % PRO_PALETTE.length];
       map[p.id] = {
         colorName: `pro_${idx}`,
-        lightColors: pal,
+        lightColors: pal.light,
+        darkColors: pal.dark,
       };
     });
     return map;
@@ -143,6 +160,7 @@ export function PainelAgendaSX({
     defaultView: "day",
     locale: "pt-BR",
     firstDayOfWeek: 1,
+    isDark: typeof document !== "undefined" && document.documentElement.classList.contains("dark"),
     dayBoundaries: { start: "07:00", end: "22:00" },
     calendars: calendarsMap,
     events: sxEvents,
@@ -158,6 +176,18 @@ export function PainelAgendaSX({
   useEffect(() => {
     eventsService.set(sxEvents);
   }, [eventsService, sxEvents]);
+
+  useEffect(() => {
+    if (!calendar) return;
+    const syncTheme = () => {
+      const isDark = document.documentElement.classList.contains("dark");
+      calendar.setTheme(isDark ? "dark" : "light");
+    };
+    syncTheme();
+    const observer = new MutationObserver(syncTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, [calendar]);
 
   function handleStatus(status: "concluido" | "no_show" | "cancelado") {
     if (!selectedEvent) return;
