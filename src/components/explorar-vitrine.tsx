@@ -578,8 +578,8 @@ export function ExplorarVitrine({
       </main>
 
       {/* Fixed Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[var(--zelo-bg)]/95 backdrop-blur-lg shadow-[0_-2px_10px_rgba(0,0,0,0.04)] pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <div className="mx-auto flex h-16 max-w-[480px] items-center justify-evenly px-4">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[var(--zelo-bg)]/95 backdrop-blur-lg shadow-[0_-2px_10px_rgba(0,0,0,0.04)] pb-[env(safe-area-inset-bottom)]">
+        <div className="mx-auto flex h-14 max-w-[480px] items-center justify-evenly px-4">
           <button
             type="button"
             onClick={() => setTab("explorar")}
