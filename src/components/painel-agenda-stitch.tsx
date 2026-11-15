@@ -21,6 +21,7 @@ import {
   Plus,
   PlusCircle,
   QrCode,
+  RotateCcw,
   TrendingUp,
   User,
   Users,
@@ -182,7 +183,10 @@ export function PainelAgendaStitch({
     setEncaixeOpen(true);
   }
 
-  function handleQuickStatus(agId: string, status: "concluido" | "no_show" | "cancelado") {
+  function handleQuickStatus(
+    agId: string,
+    status: "confirmado" | "concluido" | "no_show" | "cancelado"
+  ) {
     startTransition(async () => {
       const res = await atualizarStatusAgendamentoAction({
         agendamento_id: agId,
@@ -634,6 +638,17 @@ export function PainelAgendaStitch({
                                     <span>Ligar ({formatBrazilPhone(phoneDigits)})</span>
                                   </a>
                                 )}
+                                {(isNoShow || isConcluido || ag.status === "cancelado") && (
+                                  <button
+                                    type="button"
+                                    disabled={isPending}
+                                    onClick={() => handleQuickStatus(ag.id, "confirmado")}
+                                    className="flex min-h-[40px] w-full items-center gap-2 rounded-xl px-2.5 text-xs font-semibold text-[#F59E0B] hover:bg-[var(--zelo-soft)]"
+                                  >
+                                    <RotateCcw className="h-4 w-4 shrink-0" />
+                                    <span>Voltar p/ Confirmado</span>
+                                  </button>
+                                )}
                                 <button
                                   type="button"
                                   disabled={isPending}
@@ -718,6 +733,17 @@ export function PainelAgendaStitch({
                                 onClick={() => setOpenMenuId(null)}
                               />
                               <div className="absolute right-0 bottom-full mb-1.5 z-40 w-44 rounded-2xl bg-[var(--zelo-card)] p-1.5 shadow-xl ring-1 ring-black/10 dark:ring-white/10 space-y-0.5">
+                                {(isNoShow || isConcluido || ag.status === "cancelado") && (
+                                  <button
+                                    type="button"
+                                    disabled={isPending}
+                                    onClick={() => handleQuickStatus(ag.id, "confirmado")}
+                                    className="flex min-h-[40px] w-full items-center gap-2 rounded-xl px-2.5 text-xs font-semibold text-[#F59E0B] hover:bg-[var(--zelo-soft)]"
+                                  >
+                                    <RotateCcw className="h-4 w-4 shrink-0" />
+                                    <span>Voltar p/ Confirmado</span>
+                                  </button>
+                                )}
                                 <button
                                   type="button"
                                   disabled={isPending}

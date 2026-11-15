@@ -514,6 +514,22 @@ export function StoreLocationFields({
             latitude={latitude}
             longitude={longitude}
             onChangeCoords={onChangeCoords}
+            onReverseGeocode={(addr) => {
+              if (addr.cidade) onChangeCidade(addr.cidade);
+              if (addr.bairro) onChangeBairro(addr.bairro);
+              if (addr.endereco_texto) {
+                const parts = splitEndereco(addr.endereco_texto);
+                const nextRua = parts.rua || addr.endereco_texto;
+                const nextNum = parts.numero || numero;
+                setRua(nextRua);
+                if (parts.numero) setNumero(parts.numero);
+                onChangeEndereco(joinEndereco(nextRua, nextNum, complemento));
+              }
+              if (addr.cep) {
+                lastFetchedCepRef.current = addr.cep.replace(/\D/g, "");
+                setCep(formatCep(addr.cep));
+              }
+            }}
           />
         </div>
       )}

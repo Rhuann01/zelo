@@ -221,6 +221,12 @@ export function ReservaDrawer({
     if (!selectedSlot || !selectedProfId) return;
     setSubmitError(null);
 
+    if (isPending) return;
+    if (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !turnstileToken) {
+      setSubmitError("Aguarde a verificação de segurança concluir.");
+      return;
+    }
+
     const telefoneFinal = paraOutro
       ? beneficiarioWhatsapp.trim()
       : whatsappCliente.trim();
@@ -1080,7 +1086,10 @@ export function ReservaDrawer({
             ) : (
               <button
                 type="button"
-                disabled={isPending}
+                disabled={
+                  isPending ||
+                  (Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) && !turnstileToken)
+                }
                 onClick={handleConfirmar}
                 className="flex h-12 flex-1 max-w-[220px] items-center justify-center gap-2 rounded-2xl px-4 text-xs font-bold shadow-sm transition-transform active:scale-[0.98] disabled:opacity-60"
                 style={{
@@ -1090,6 +1099,8 @@ export function ReservaDrawer({
               >
                 {isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
+                ) : process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !turnstileToken ? (
+                  <span>Verificando...</span>
                 ) : (
                   <>
                     <span>Confirmar Horário</span>

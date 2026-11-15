@@ -56,61 +56,107 @@ export function ServiceCard({
               : "1px solid var(--t-border)",
         }}
       >
-        {/* Fundo: Foto full-bleed ou gradiente tonal elegante */}
+        {/* Fundo: Foto full-bleed ou gradiente tonal elegante adaptável ao tema claro/escuro */}
         {hasImage ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            src={servico.imagem_url!}
-            alt={servico.nome}
-            loading="lazy"
-            decoding="async"
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={servico.imagem_url!}
+              alt={servico.nome}
+              loading="lazy"
+              decoding="async"
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-[58%] backdrop-blur-md"
+              style={{
+                WebkitMaskImage: "linear-gradient(to top, black 55%, transparent 100%)",
+                maskImage: "linear-gradient(to top, black 55%, transparent 100%)",
+                background:
+                  "linear-gradient(to top, rgba(8, 9, 12, 0.90) 0%, rgba(8, 9, 12, 0.56) 62%, transparent 100%)",
+              }}
+            />
+          </>
         ) : (
-          <div
-            className="absolute inset-0 flex items-start justify-center pt-9"
-            style={{
-              background:
-                "linear-gradient(145deg, color-mix(in srgb, var(--t-accent) 32%, #141519) 0%, #0E1015 100%)",
-            }}
-          >
-            <Scissors className="h-9 w-9 text-white/35" />
-          </div>
+          <>
+            <div
+              className="absolute inset-0 flex items-start justify-center pt-9"
+              style={{
+                background:
+                  "linear-gradient(145deg, color-mix(in srgb, var(--t-accent) 16%, var(--t-surface)) 0%, var(--t-inner) 100%)",
+              }}
+            >
+              <Scissors
+                className="h-9 w-9 opacity-30"
+                style={{ color: "var(--t-ink)" }}
+              />
+            </div>
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-[58%] backdrop-blur-md"
+              style={{
+                WebkitMaskImage: "linear-gradient(to top, black 55%, transparent 100%)",
+                maskImage: "linear-gradient(to top, black 55%, transparent 100%)",
+                background:
+                  "linear-gradient(to top, color-mix(in srgb, var(--t-surface) 92%, transparent) 0%, color-mix(in srgb, var(--t-surface) 60%, transparent) 65%, transparent 100%)",
+              }}
+            />
+          </>
         )}
 
-        {/* Scrim progressivo + área inferior borrada estilo Apple/Glass */}
-        <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-[58%] backdrop-blur-md"
-          style={{
-            WebkitMaskImage: "linear-gradient(to top, black 55%, transparent 100%)",
-            maskImage: "linear-gradient(to top, black 55%, transparent 100%)",
-            background:
-              "linear-gradient(to top, rgba(8, 9, 12, 0.90) 0%, rgba(8, 9, 12, 0.56) 62%, transparent 100%)",
-          }}
-        />
-
         {/* Conteúdo sobreposto legível */}
-        <div className="relative z-10 flex flex-col gap-1.5 p-3 text-white">
-          <div className="flex items-center gap-1 text-[11px] font-medium text-white/80">
+        <div
+          className={`relative z-10 flex flex-col gap-1.5 p-3 ${
+            hasImage ? "text-white" : ""
+          }`}
+          style={hasImage ? undefined : { color: "var(--t-ink)" }}
+        >
+          <div
+            className={`flex items-center gap-1 text-[11px] font-medium ${
+              hasImage ? "text-white/80" : ""
+            }`}
+            style={hasImage ? undefined : { color: "var(--t-muted)" }}
+          >
             <Clock className="h-3 w-3 shrink-0" />
             <span className="font-mono-num">{servico.duracao_min} min</span>
           </div>
 
-          <h2 className="line-clamp-2 text-[13px] font-semibold leading-snug text-white">
+          <h2
+            className={`line-clamp-2 text-[13px] font-semibold leading-snug ${
+              hasImage ? "text-white" : ""
+            }`}
+            style={hasImage ? undefined : { color: "var(--t-ink)" }}
+          >
             {servico.nome}
           </h2>
 
           <div className="flex items-center justify-between gap-2 pt-0.5">
-            <span className="font-mono-num text-sm font-bold text-white">
+            <span
+              className={`font-mono-num text-sm font-bold ${
+                hasImage ? "text-white" : ""
+              }`}
+              style={hasImage ? undefined : { color: "var(--t-ink)" }}
+            >
               {formatPrice(servico.preco_centavos)}
             </span>
 
             <span
               className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full shadow-md transition-transform group-active:scale-90"
               style={{
-                backgroundColor: selected ? "var(--t-accent)" : "rgba(255, 255, 255, 0.22)",
-                color: selected ? "var(--t-accent-ink)" : "#FFFFFF",
-                border: selected ? "none" : "1px solid rgba(255, 255, 255, 0.38)",
+                backgroundColor: selected
+                  ? "var(--t-accent)"
+                  : hasImage
+                    ? "rgba(255, 255, 255, 0.22)"
+                    : "var(--t-surface)",
+                color: selected
+                  ? "var(--t-accent-ink)"
+                  : hasImage
+                    ? "#FFFFFF"
+                    : "var(--t-ink)",
+                border: selected
+                  ? "none"
+                  : hasImage
+                    ? "1px solid rgba(255, 255, 255, 0.38)"
+                    : "1px solid var(--t-border)",
               }}
             >
               {selected ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}

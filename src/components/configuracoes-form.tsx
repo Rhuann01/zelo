@@ -28,6 +28,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { AvatarUploader } from "@/components/avatar-uploader";
+import { WebPushOptIn } from "@/components/web-push-optin";
 import { showToast } from "@/components/zelo-toast";
 import { UnsavedChangesGuard } from "@/components/ui/unsaved-changes-guard";
 import {
@@ -368,6 +369,10 @@ export function ConfiguracoesForm({
               </span>
             </button>
           </label>
+
+          <div className="px-2 pb-2">
+            <WebPushOptIn />
+          </div>
 
           <label className="flex h-14 cursor-pointer items-center justify-between rounded-lg px-2.5 transition-colors hover:bg-[var(--zelo-soft)]">
             <div className="flex items-center gap-2.5">

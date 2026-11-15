@@ -10,6 +10,7 @@ import {
   Copy,
   Eye,
   ImagePlus,
+  List,
   Loader2,
   MapPin,
   Moon,
@@ -17,6 +18,7 @@ import {
   Save,
   Sparkles,
   Trash2,
+  Users,
   Wallet,
   X,
 } from "lucide-react";
@@ -433,12 +435,15 @@ export function CustomizadorLoja({
             } relative flex w-full flex-col overflow-hidden transition-all duration-200 ${
               refreshing ? "opacity-50" : "opacity-100"
             }`}
-            style={{
-              backgroundColor: "var(--t-bg)",
-              borderRadius: `${raio}px`,
-              border: isBrutal ? "2px solid #000000" : undefined,
-              boxShadow: isBrutal ? "3px 3px 0px #000000" : "var(--t-shadow)",
-            }}
+            style={
+              {
+                "--t-accent": cor,
+                backgroundColor: "var(--t-bg)",
+                borderRadius: `${raio}px`,
+                border: isBrutal ? "2px solid #000000" : undefined,
+                boxShadow: isBrutal ? "3px 3px 0px #000000" : "var(--t-shadow)",
+              } as React.CSSProperties
+            }
           >
             <div className="relative z-10 flex flex-col gap-2.5 p-3">
               {/* App-Style Top Header */}
@@ -525,20 +530,20 @@ export function CustomizadorLoja({
                 </div>
               )}
 
-              {/* Dynamic Mock Service Grid (ambos os cards respeitam estiloCard) */}
+              {/* Dynamic Mock Service Grid (ambos os cards respeitam estiloCard e tema claro/escuro) */}
               <div className="grid grid-cols-2 gap-2">
                 {[
                   {
                     nome: "Corte Clássico",
                     preco: "R$ 45,00",
                     duracao: "35 min",
-                    bg: `linear-gradient(140deg, ${cor}cc 0%, #1c1f26 100%)`,
+                    bg: `linear-gradient(145deg, color-mix(in srgb, ${cor} 16%, var(--t-surface)) 0%, var(--t-inner) 100%)`,
                   },
                   {
                     nome: "Barba Completa",
                     preco: "R$ 35,00",
                     duracao: "30 min",
-                    bg: `linear-gradient(140deg, #272c36 0%, ${cor}99 100%)`,
+                    bg: `linear-gradient(145deg, var(--t-inner) 0%, color-mix(in srgb, ${cor} 16%, var(--t-surface)) 100%)`,
                   },
                 ].map((item) =>
                   estiloCard === "vidro_borrado" ? (
@@ -548,17 +553,22 @@ export function CustomizadorLoja({
                       style={{
                         borderRadius: `${Math.max(8, raio)}px`,
                         background: item.bg,
-                        border: isBrutal ? "1.5px solid #000000" : undefined,
+                        border: isBrutal
+                          ? "1.5px solid #000000"
+                          : "1px solid var(--t-border)",
                       }}
                     >
                       <div
-                        className="pointer-events-none absolute inset-0"
+                        className="pointer-events-none absolute inset-x-0 bottom-0 h-[62%] backdrop-blur-md"
                         style={{
                           background:
-                            "linear-gradient(180deg, rgba(0,0,0,0) 20%, rgba(0,0,0,0.45) 60%, rgba(0,0,0,0.88) 100%)",
+                            "linear-gradient(to top, color-mix(in srgb, var(--t-surface) 92%, transparent) 0%, transparent 100%)",
                         }}
                       />
-                      <div className="relative z-10 flex items-end justify-between gap-1 text-white">
+                      <div
+                        className="relative z-10 flex items-end justify-between gap-1"
+                        style={{ color: "var(--t-ink)" }}
+                      >
                         <div className="min-w-0">
                           <p className="truncate text-[10px] font-semibold leading-tight">
                             {item.nome}
@@ -634,16 +644,25 @@ export function CustomizadorLoja({
                     }
                   >
                     <span
-                      className="rounded-full px-2.5 py-0.5"
+                      className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5"
                       style={{ backgroundColor: cor, color: accentInk }}
                     >
+                      <List className="h-2.5 w-2.5" />
                       Serviços
                     </span>
-                    <span className="px-1.5" style={{ color: "var(--t-muted)" }}>
+                    <span
+                      className="inline-flex items-center gap-1 px-1.5"
+                      style={{ color: "var(--t-muted)" }}
+                    >
+                      <Users className="h-2.5 w-2.5" />
                       Equipe
                     </span>
-                    <span className="px-1.5" style={{ color: "var(--t-muted)" }}>
-                      Mapa
+                    <span
+                      className="inline-flex items-center gap-1 px-1.5"
+                      style={{ color: "var(--t-muted)" }}
+                    >
+                      <MapPin className="h-2.5 w-2.5" />
+                      Local
                     </span>
                   </div>
                 </div>

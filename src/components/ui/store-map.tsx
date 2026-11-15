@@ -328,6 +328,12 @@ interface StoreMapPickerProps {
   latitude: number | null;
   longitude: number | null;
   onChangeCoords: (lat: number | null, lng: number | null) => void;
+  onReverseGeocode?: (addr: {
+    cidade?: string;
+    bairro?: string;
+    endereco_texto?: string;
+    cep?: string;
+  }) => void;
 }
 
 /**
@@ -340,6 +346,7 @@ export function StoreMapPicker({
   latitude,
   longitude,
   onChangeCoords,
+  onReverseGeocode,
 }: StoreMapPickerProps) {
   const [loadingGps, setLoadingGps] = useState(false);
   const [loadingGeo, setLoadingGeo] = useState(false);
@@ -433,10 +440,50 @@ export function StoreMapPicker({
       return;
     }
 
-    const onSuccess = (pos: GeolocationPosition) => {
-      onChangeCoords(round6(pos.coords.latitude), round6(pos.coords.longitude));
+    const onSuccess = async (pos: GeolocationPosition) => {
+      const lat = round6(pos.coords.latitude);
+      const lng = round6(pos.coords.longitude);
+      onChangeCoords(lat, lng);
+
+      if (onReverseGeocode) {
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1`,
+            { headers: { "Accept-Language": "pt-BR,pt;q=0.9" } }
+          );
+          if (res.ok) {
+            const json = (await res.json()) as {
+              address?: {
+                road?: string;
+                house_number?: string;
+                suburb?: string;
+                neighbourhood?: string;
+                city_district?: string;
+                city?: string;
+                town?: string;
+                municipality?: string;
+                postcode?: string;
+              };
+            };
+            const a = json.address;
+            if (a) {
+              const rua = a.road ?? "";
+              const num = a.house_number ? `, ${a.house_number}` : "";
+              onReverseGeocode({
+                cidade: a.city ?? a.town ?? a.municipality ?? undefined,
+                bairro: a.suburb ?? a.neighbourhood ?? a.city_district ?? undefined,
+                endereco_texto: rua ? `${rua}${num}` : undefined,
+                cep: a.postcode ? a.postcode.replace(/\D/g, "").slice(0, 8) : undefined,
+              });
+            }
+          }
+        } catch {
+          // ignore reverse geocode errors; coordinates are already saved
+        }
+      }
+
       setLoadingGps(false);
-      setFeedback("Localização GPS marcada! Arraste o pino se quiser ajustar.");
+      setFeedback("Localização GPS marcada e endereço preenchido!");
     };
 
     const onFinalError = (err: GeolocationPositionError) => {

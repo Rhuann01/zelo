@@ -10,6 +10,7 @@ import {
   Link2,
   Loader2,
   LogOut,
+  Pencil,
   Plus,
   Scissors,
   Search,
@@ -150,6 +151,7 @@ export function GestaoTabs({
   const [espTipo, setEspTipo] = useState<"dia_especial" | "folga" | "feriado">("dia_especial");
   const [espMotivo, setEspMotivo] = useState("");
 
+  const [editingSrvId, setEditingSrvId] = useState<string | null>(null);
   const [srvNome, setSrvNome] = useState("");
   const [srvDuracao, setSrvDuracao] = useState("35");
   const [srvPreco, setSrvPreco] = useState("45,00");
@@ -934,9 +936,31 @@ export function GestaoTabs({
         <div className="space-y-4">
           {isOwner && (
             <section className="rounded-2xl bg-[var(--zelo-card)] p-4 shadow-sm space-y-3">
-              <div className="flex items-center gap-2 text-sm font-bold">
-                <Plus className="h-4 w-4 text-[#F59E0B]" />
-                Novo Serviço
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-sm font-bold">
+                  {editingSrvId ? (
+                    <Pencil className="h-4 w-4 text-[#F59E0B]" />
+                  ) : (
+                    <Plus className="h-4 w-4 text-[#F59E0B]" />
+                  )}
+                  {editingSrvId ? "Editar Serviço" : "Novo Serviço"}
+                </div>
+                {editingSrvId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingSrvId(null);
+                      setSrvNome("");
+                      setSrvDuracao("30");
+                      setSrvPreco("45,00");
+                      setSrvImagemUrl(null);
+                      setSrvExibirImagem(false);
+                    }}
+                    className="rounded-lg px-2.5 py-1 text-[11px] font-semibold text-[var(--zelo-muted)] hover:bg-[var(--zelo-soft)] transition"
+                  >
+                    Cancelar edição
+                  </button>
+                )}
               </div>
               <input
                 type="text"
@@ -1046,6 +1070,7 @@ export function GestaoTabs({
                       Number(srvPreco.replace(/[^\d,.-]/g, "").replace(",", ".")) * 100
                     );
                     const res = await saveServicoAction({
+                      id: editingSrvId ?? undefined,
                       loja_id: lojaId,
                       nome: srvNome,
                       descricao: "",
@@ -1056,17 +1081,21 @@ export function GestaoTabs({
                       exibir_imagem: true,
                     });
                     if (res.ok) {
+                      const wasEditing = Boolean(editingSrvId);
+                      setEditingSrvId(null);
                       setSrvNome("");
+                      setSrvDuracao("30");
+                      setSrvPreco("45,00");
                       setSrvImagemUrl(null);
                       setSrvExibirImagem(false);
-                      return { message: "Serviço adicionado." };
+                      return { message: wasEditing ? "Serviço atualizado." : "Serviço adicionado." };
                     }
                     return res;
                   })
                 }
                 className="h-11 w-full rounded-xl bg-[var(--zelo-btn-bg)] text-xs font-semibold text-[var(--zelo-btn-ink)] transition active:scale-[0.99]"
               >
-                Salvar Serviço
+                {editingSrvId ? "Atualizar Serviço" : "Salvar Serviço"}
               </button>
             </section>
           )}
@@ -1106,15 +1135,36 @@ export function GestaoTabs({
                     </div>
                   </div>
                   {isOwner && (
-                    <button
-                      type="button"
-                      disabled={isPending}
-                      onClick={() => runAction(() => deleteServicoAction(s.id, lojaId))}
-                      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--zelo-soft)] text-red-500 transition hover:bg-red-500/10"
-                      aria-label={`Excluir ${s.nome}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        disabled={isPending}
+                        onClick={() => {
+                          setEditingSrvId(s.id);
+                          setSrvNome(s.nome);
+                          setSrvDuracao(String(s.duracao_min));
+                          setSrvPreco((s.preco_centavos / 100).toFixed(2).replace(".", ","));
+                          setSrvImagemUrl(s.imagem_url ?? null);
+                          setSrvExibirImagem(Boolean(s.exibir_imagem));
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--zelo-soft)] text-[var(--zelo-ink)] transition hover:opacity-80"
+                        aria-label={`Editar ${s.nome}`}
+                        title="Editar serviço"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isPending}
+                        onClick={() => runAction(() => deleteServicoAction(s.id, lojaId))}
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--zelo-soft)] text-red-500 transition hover:bg-red-500/10"
+                        aria-label={`Excluir ${s.nome}`}
+                        title="Excluir serviço"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   )}
                 </div>
 

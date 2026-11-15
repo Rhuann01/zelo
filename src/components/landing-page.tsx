@@ -769,7 +769,7 @@ export function LandingPage() {
 
         <div className="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3">
           <Link
-            href="/entrar?next=/onboarding"
+            href="/entrar?next=/explorar"
             className="inline-flex min-h-[48px] items-center justify-center gap-2.5 rounded-xl bg-[var(--zelo-btn-bg)] px-6 py-3.5 text-sm font-semibold text-[var(--zelo-btn-ink)] shadow-sm transition hover:bg-[var(--zelo-btn-hover)]"
           >
             <GoogleIcon />
@@ -1613,7 +1613,7 @@ export function LandingPage() {
               </ul>
             </div>
             <Link
-              href="/entrar?next=/onboarding"
+              href="/entrar?next=/explorar"
               className="mt-7 flex min-h-[44px] items-center justify-center rounded-xl border border-[var(--zelo-border-strong)] bg-[var(--zelo-card)] py-3 text-center text-sm font-semibold text-[var(--zelo-ink)] transition hover:border-[var(--zelo-ink)]"
             >
               Testar 14 dias grátis
@@ -1654,7 +1654,7 @@ export function LandingPage() {
               </ul>
             </div>
             <Link
-              href="/entrar?next=/onboarding"
+              href="/entrar?next=/explorar"
               className="mt-7 flex min-h-[44px] items-center justify-center rounded-xl bg-[var(--zelo-btn-bg)] py-3 text-center text-sm font-semibold text-[var(--zelo-btn-ink)] transition hover:bg-[var(--zelo-btn-hover)]"
             >
               Testar equipe 14 dias grátis
@@ -1719,7 +1719,7 @@ export function LandingPage() {
             </p>
             <div className="mt-7 flex flex-col sm:flex-row justify-center gap-3">
               <Link
-                href="/entrar?next=/onboarding"
+                href="/entrar?next=/explorar"
                 className="inline-flex min-h-[48px] items-center justify-center gap-2.5 rounded-xl bg-[var(--zelo-btn-bg)] px-6 py-3.5 text-sm font-semibold text-[var(--zelo-btn-ink)] transition hover:bg-[var(--zelo-btn-hover)]"
               >
                 <GoogleIcon />

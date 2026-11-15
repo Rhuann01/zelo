@@ -192,7 +192,7 @@ export function ExplorarVitrine({
     lojasFiltradas.length > 0;
 
   const heroLoja = showHero ? lojasFiltradas[0] : null;
-  const feedLojas = showHero && lojasFiltradas.length > 1 ? lojasFiltradas.slice(1) : lojasFiltradas;
+  const feedLojas = lojasFiltradas;
 
   const cidadeLabel = cidade === "todas" ? "Sua região" : cidade;
 
@@ -373,22 +373,6 @@ export function ExplorarVitrine({
                     </button>
                   )}
                 </div>
-
-                {(nicho !== "todos" || cidade !== "todas" || busca || somenteFavoritosFilter) && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setNicho("todos");
-                      setCidade("todas");
-                      setBusca("");
-                      setSomenteFavoritosFilter(false);
-                    }}
-                    aria-label="Limpar filtros"
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--zelo-card)] text-[var(--zelo-ink)] shadow-xs active:scale-95"
-                  >
-                    <SlidersHorizontal className="h-4 w-4" />
-                  </button>
-                )}
               </div>
 
               {/* Category Horizontal Scroller */}
