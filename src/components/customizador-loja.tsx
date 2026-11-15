@@ -638,8 +638,8 @@ export function CustomizadorLoja({
                       tema === "liquid_glass"
                         ? undefined
                         : {
-                            backgroundColor: "var(--t-surface)",
-                            border: isBrutal ? "1.5px solid #000000" : "1px solid var(--t-border)",
+                            backgroundColor: "#111216",
+                            border: "1px solid rgba(255, 255, 255, 0.12)",
                           }
                     }
                   >

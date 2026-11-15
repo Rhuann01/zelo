@@ -298,10 +298,12 @@ export function LojaPublicaView({
           {loja.sinal_centavos > 0 && (
             <div className="mt-2.5 flex items-center gap-2">
               <span
-                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-medium text-[#10B981]"
+                className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-medium text-[#10B981]"
                 style={{
                   backgroundColor: "var(--t-surface)",
-                  border: "1px solid rgba(16, 185, 129, 0.28)",
+                  borderRadius: "min(calc(var(--t-radius) * 2), 9999px)",
+                  border: isBrutal ? "2px solid #000000" : "1px solid rgba(16, 185, 129, 0.28)",
+                  ...(isBrutal ? { boxShadow: "var(--t-shadow)" } : {}),
                 }}
               >
                 <Zap className="h-3 w-3" />
@@ -318,14 +320,15 @@ export function LojaPublicaView({
             <section className="flex flex-col gap-4">
               {/* Barra de busca interna da loja */}
               <div
-                className={`flex h-11 items-center gap-2.5 rounded-full px-4 ${
+                className={`flex h-11 items-center gap-2.5 px-4 ${
                   isLiquidGlass ? "store-glass-surface" : ""
                 }`}
                 style={
                   isLiquidGlass
-                    ? undefined
+                    ? { borderRadius: "min(calc(var(--t-radius) * 2), 9999px)" }
                     : {
                         backgroundColor: "var(--t-surface)",
+                        borderRadius: "min(calc(var(--t-radius) * 2), 9999px)",
                         border: isBrutal ? "2px solid #000000" : "1px solid var(--t-border)",
                         boxShadow: "var(--t-shadow)",
                       }
@@ -372,7 +375,12 @@ export function LojaPublicaView({
                   <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/45 to-transparent" />
                   <div className="relative z-10 flex h-full max-w-[75%] flex-col justify-between p-4 text-white">
                     <div>
-                      <span className="inline-block rounded-full bg-white/15 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider backdrop-blur-sm">
+                      <span
+                        className="inline-block bg-white/15 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider backdrop-blur-sm"
+                        style={{
+                          borderRadius: "min(calc(var(--t-radius) * 2), 9999px)",
+                        }}
+                      >
                         Atendimento hoje
                       </span>
                       <p className="mt-1.5 text-base font-bold leading-snug">
@@ -388,10 +396,14 @@ export function LojaPublicaView({
                         }
                         setDrawerOpen(true);
                       }}
-                      className="inline-flex h-9 w-fit items-center gap-1.5 rounded-full px-4 text-xs font-semibold shadow transition-transform active:scale-95 disabled:opacity-50"
+                      className="inline-flex h-9 w-fit items-center gap-1.5 px-4 text-xs font-semibold shadow transition-transform active:scale-95 disabled:opacity-50"
                       style={{
                         backgroundColor: "var(--t-accent)",
                         color: "var(--t-accent-ink)",
+                        borderRadius: "min(calc(var(--t-radius) * 2), 9999px)",
+                        ...(isBrutal
+                          ? { border: "2px solid #000000", boxShadow: "var(--t-shadow)" }
+                          : {}),
                       }}
                     >
                       <span>Agendar agora</span>
@@ -416,7 +428,7 @@ export function LojaPublicaView({
                         key={f.key}
                         type="button"
                         onClick={() => setFiltroDuracao(f.key)}
-                        className={`min-h-[36px] shrink-0 rounded-full px-4 text-xs font-semibold transition-all active:scale-95 ${
+                        className={`min-h-[36px] shrink-0 px-4 text-xs font-semibold transition-all active:scale-95 ${
                           !active && isLiquidGlass ? "store-glass-surface" : ""
                         }`}
                         style={
@@ -424,26 +436,35 @@ export function LojaPublicaView({
                             ? {
                                 backgroundColor: "var(--t-accent)",
                                 color: "var(--t-accent-ink)",
+                                borderRadius: "min(calc(var(--t-radius) * 2), 9999px)",
                                 ...(isLiquidGlass
                                   ? {
                                       boxShadow:
                                         "0 3px 10px color-mix(in srgb, var(--t-accent) 24%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.45)",
                                     }
                                   : {}),
-                                ...(isBrutal ? { border: "1.5px solid #000000" } : {}),
+                                ...(isBrutal
+                                  ? {
+                                      border: "2px solid #000000",
+                                      boxShadow: "var(--t-shadow)",
+                                    }
+                                  : {}),
                               }
                             : isLiquidGlass
                               ? {
                                   color: "var(--t-ink)",
+                                  borderRadius: "min(calc(var(--t-radius) * 2), 9999px)",
                                   boxShadow:
                                     "0 2px 8px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.95)",
                                 }
                               : {
                                   backgroundColor: "var(--t-surface)",
-                                  color: "var(--t-muted)",
+                                  color: isBrutal ? "var(--t-ink)" : "var(--t-muted)",
+                                  borderRadius: "min(calc(var(--t-radius) * 2), 9999px)",
                                   border: isBrutal
-                                    ? "1.5px solid #000000"
+                                    ? "2px solid #000000"
                                     : "1px solid var(--t-border)",
+                                  ...(isBrutal ? { boxShadow: "var(--t-shadow)" } : {}),
                                 }
                         }
                       >

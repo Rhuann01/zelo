@@ -87,7 +87,6 @@ export function StoreNavBar({
                   ? {
                       backgroundColor: "#FFFFFF",
                       color: "#111216",
-                      ...(isBrutal ? { border: "1.5px solid #000000" } : {}),
                     }
                   : {
                       backgroundColor: "rgba(255, 255, 255, 0.08)",
@@ -129,12 +128,9 @@ export function StoreNavBar({
             className="zelo-sheet-up pointer-events-auto flex items-center rounded-full p-1.5 backdrop-blur-xl"
             style={{
               backgroundColor: "#111216",
-              boxShadow: isBrutal
-                ? "3px 3px 0px #000000"
-                : "0 14px 36px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.14)",
-              border: isBrutal
-                ? "2px solid #000000"
-                : "1px solid rgba(255, 255, 255, 0.12)",
+              boxShadow:
+                "0 14px 36px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.14)",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
             }}
           >
             {dockContent}
