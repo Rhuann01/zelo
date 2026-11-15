@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { formatBrDataHora, notifyUserPrioritizingPush } from "@/lib/notifications/dispatch";
 
 function isAuthorized(req: NextRequest): boolean {
-  const expected = process.env.CRON_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  const expected = process.env.CRON_SECRET?.trim() ?? "";
   if (!expected) return false;
   const auth = req.headers.get("authorization") ?? "";
   const bearer = auth.startsWith("Bearer ") ? auth.slice(7).trim() : "";

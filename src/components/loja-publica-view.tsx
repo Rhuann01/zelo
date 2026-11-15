@@ -76,17 +76,20 @@ export function LojaPublicaView({
   const storeRootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
     const el = storeRootRef.current;
     if (!el) return;
     const bg = getComputedStyle(el).backgroundColor;
     if (!bg) return;
-    const prevHtmlBg = document.documentElement.style.backgroundColor;
-    const prevBodyBg = document.body.style.backgroundColor;
     document.documentElement.style.backgroundColor = bg;
     document.body.style.backgroundColor = bg;
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) metaTheme.setAttribute("content", bg);
     return () => {
-      document.documentElement.style.backgroundColor = prevHtmlBg;
-      document.body.style.backgroundColor = prevBodyBg;
+      document.documentElement.style.backgroundColor = "";
+      document.body.style.backgroundColor = "";
+      const isDark = document.documentElement.classList.contains("dark");
+      if (metaTheme) metaTheme.setAttribute("content", isDark ? "#0E0E11" : "#FAF9F6");
     };
   }, [loja.tema, isDarkStore]);
 

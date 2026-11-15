@@ -1,0 +1,20 @@
+# Zelo
+
+> Plataforma de agendamento online, vitrine regional e gestão com sinal via PIX para barbearias, salões de beleza, manicures e estúdios.
+
+## Sobre o Produto
+- **Público-alvo:** Barbearias, salões de beleza, nail designers, estúdios de estética e profissionais autônomos no Brasil.
+- **Recursos principais:** Página exclusiva personalizada (`/{slug}`), agendamento online sem fila, confirmação e sinal via PIX, controle de equipe e comissões, lembretes por Web Push e e-mail.
+- **Planos:**
+  - Teste grátis de 14 dias sem compromisso.
+  - Plano Solo: R$ 29/mês (1 profissional, agenda e vitrine).
+  - Plano Estúdio: R$ 59/mês (equipe completa, comissões e Web Push).
+
+## Páginas Públicas
+- [Página Inicial](/) — Apresentação do Zelo, estilos de loja e planos.
+- [Vitrine Regional](/explorar) — Descoberta de barbearias, salões e estúdios próximos por cidade.
+- [Termos de Uso](/termos) — Condições comerciais, cancelamento e direito de arrependimento (7 dias).
+- [Política de Privacidade](/privacidade) — Tratamento de dados (LGPD), segurança e direitos do titular.
+
+## Contato
+- E-mail oficial de suporte e privacidade: suportezelo84@gmail.com

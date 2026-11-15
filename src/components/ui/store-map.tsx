@@ -58,7 +58,16 @@ export function buildExternalMapUrl(params: {
   if (params.latitude != null && params.longitude != null) {
     return `https://www.google.com/maps/search/?api=1&query=${params.latitude},${params.longitude}`;
   }
-  if (params.mapsUrl) return params.mapsUrl;
+  if (params.mapsUrl) {
+    try {
+      const parsed = new URL(params.mapsUrl);
+      if (parsed.protocol === "https:" || parsed.protocol === "http:") {
+        return parsed.toString();
+      }
+    } catch {
+      // ignore invalid mapsUrl
+    }
+  }
   if (params.addressQuery && params.addressQuery.trim().length > 0) {
     return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
       params.addressQuery
@@ -415,6 +424,9 @@ export function StoreMapPicker({
       setLoadingGps(false);
       if (approx) {
         onChangeCoords(approx.lat, approx.lng);
+        if (onReverseGeocode && approx.city) {
+          onReverseGeocode({ cidade: approx.city });
+        }
         setFeedback(
           approx.city
             ? `Localização aproximada em ${approx.city}. Arraste o pino ou toque no mapa para marcar o ponto exato.`
@@ -458,7 +470,12 @@ export function StoreMapPicker({
                 house_number?: string;
                 suburb?: string;
                 neighbourhood?: string;
+                quarter?: string;
+                residential?: string;
                 city_district?: string;
+                district?: string;
+                village?: string;
+                hamlet?: string;
                 city?: string;
                 town?: string;
                 municipality?: string;
@@ -470,8 +487,17 @@ export function StoreMapPicker({
               const rua = a.road ?? "";
               const num = a.house_number ? `, ${a.house_number}` : "";
               onReverseGeocode({
-                cidade: a.city ?? a.town ?? a.municipality ?? undefined,
-                bairro: a.suburb ?? a.neighbourhood ?? a.city_district ?? undefined,
+                cidade: a.city ?? a.town ?? a.municipality ?? a.village ?? undefined,
+                bairro:
+                  a.suburb ??
+                  a.neighbourhood ??
+                  a.quarter ??
+                  a.residential ??
+                  a.city_district ??
+                  a.district ??
+                  a.village ??
+                  a.hamlet ??
+                  undefined,
                 endereco_texto: rua ? `${rua}${num}` : undefined,
                 cep: a.postcode ? a.postcode.replace(/\D/g, "").slice(0, 8) : undefined,
               });

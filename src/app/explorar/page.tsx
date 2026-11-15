@@ -8,6 +8,25 @@ export const metadata: Metadata = {
   title: "Vitrine Regional — Zelo",
   description:
     "Descubra barbearias, salões e estúdios próximos a você e agende seu horário em segundos.",
+  alternates: {
+    canonical: "/explorar",
+  },
+  openGraph: {
+    title: "Vitrine Regional — Zelo",
+    description:
+      "Descubra barbearias, salões e estúdios próximos a você e agende seu horário em segundos.",
+    url: "/explorar",
+    type: "website",
+    locale: "pt_BR",
+    images: [
+      {
+        url: "/og-zelo.png",
+        width: 1200,
+        height: 630,
+        alt: "Vitrine Regional — Zelo",
+      },
+    ],
+  },
 };
 
 export default async function ExplorarPage() {

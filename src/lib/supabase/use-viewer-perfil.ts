@@ -12,6 +12,7 @@ export interface ViewerPerfil {
   avatar_customizado: boolean;
   notificacoes_push: boolean;
   notificacoes_email: boolean;
+  has_loja: boolean;
 }
 
 const STORAGE_KEY = "zelo_viewer_perfil_v1";
@@ -69,27 +70,41 @@ async function fetchViewerPerfil(force = false): Promise<ViewerPerfil | null> {
       return null;
     }
 
-    const { data: perfil } = await supabase
-      .from("perfis")
-      .select(
-        "nome, email, whatsapp, avatar_url, avatar_customizado, notificacoes_push, notificacoes_email"
-      )
-      .eq("id", user.id)
-      .maybeSingle();
+    const [{ data: perfil }, { data: lojaPropria }, { data: profVinculo }] = await Promise.all([
+      supabase
+        .from("perfis")
+        .select(
+          "nome, email, whatsapp, avatar_url, avatar_customizado, notificacoes_push, notificacoes_email"
+        )
+        .eq("id", user.id)
+        .maybeSingle(),
+      supabase.from("lojas").select("id").eq("owner_id", user.id).limit(1).maybeSingle(),
+      supabase
+        .from("profissionais")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("ativo", true)
+        .limit(1)
+        .maybeSingle(),
+    ]);
+
+    const resolvedAvatar = perfil?.avatar_customizado
+      ? (perfil.avatar_url ?? null)
+      : perfil?.avatar_url ||
+        (user.user_metadata?.avatar_url as string) ||
+        (user.user_metadata?.picture as string) ||
+        null;
 
     const next: ViewerPerfil = {
       id: user.id,
       nome: perfil?.nome || (user.user_metadata?.full_name as string) || user.email || "Perfil",
       email: perfil?.email || user.email || "",
       whatsapp: perfil?.whatsapp || "",
-      avatar_url:
-        perfil?.avatar_url ||
-        (user.user_metadata?.avatar_url as string) ||
-        (user.user_metadata?.picture as string) ||
-        null,
+      avatar_url: resolvedAvatar,
       avatar_customizado: perfil?.avatar_customizado ?? false,
       notificacoes_push: perfil?.notificacoes_push ?? true,
       notificacoes_email: perfil?.notificacoes_email ?? true,
+      has_loja: Boolean(lojaPropria || profVinculo),
     };
 
     writeCache(next);

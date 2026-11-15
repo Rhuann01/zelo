@@ -8,25 +8,41 @@ import {
   CheckCircle2,
   Circle,
   Copy,
+  ExternalLink,
   Eye,
+  Globe,
   ImagePlus,
+  Instagram,
   List,
   Loader2,
   MapPin,
+  MessageCircle,
   Moon,
+  Music2,
+  Plus,
   RefreshCw,
   Save,
+  Share2,
   Sparkles,
   Trash2,
   Users,
   Wallet,
   X,
+  Youtube,
 } from "lucide-react";
 import {
+  atualizarDescricaoLinksLojaAction,
+  atualizarSlugLojaAction,
   revalidateLojaMediaAction,
   saveCustomizacaoAction,
   savePresetBannerAction,
 } from "@/app/painel/personalizar/actions";
+import {
+  LINK_PUBLICO_DEFAULT_LABEL,
+  LINK_PUBLICO_TIPOS,
+  type LinkPublico,
+  type LinkPublicoTipo,
+} from "@/lib/schemas/loja-links";
 import { createClient } from "@/lib/supabase/client";
 import { compressImageToWebP, STORE_MEDIA_COMPRESS_CONFIG } from "@/lib/image/compress-webp";
 import { showToast } from "@/components/zelo-toast";
@@ -117,6 +133,7 @@ export function CustomizadorLoja({
   loja,
   isOwner,
   initialLocalizacao,
+  initialSobre,
 }: {
   loja: LojaResumo;
   isOwner: boolean;
@@ -125,6 +142,10 @@ export function CustomizadorLoja({
     endereco_texto: string;
     latitude: number | null;
     longitude: number | null;
+  };
+  initialSobre?: {
+    descricao_publica: string;
+    links_publicos: LinkPublico[];
   };
 }) {
   const [nomeLoja, setNomeLoja] = useState(loja.nome);
@@ -165,6 +186,16 @@ export function CustomizadorLoja({
   const [bannerModalOpen, setBannerModalOpen] = useState(false);
   const [bannerTab, setBannerTab] = useState<"prontos" | "pexels">("prontos");
   const [savingPresetBanner, setSavingPresetBanner] = useState(false);
+  const [slugAtual, setSlugAtual] = useState(loja.slug);
+  const [slugInput, setSlugInput] = useState(loja.slug);
+  const [savingSlug, setSavingSlug] = useState(false);
+  const [descricaoPublica, setDescricaoPublica] = useState(
+    initialSobre?.descricao_publica ?? ""
+  );
+  const [linksPublicos, setLinksPublicos] = useState<LinkPublico[]>(
+    initialSobre?.links_publicos ?? []
+  );
+  const [savingSobre, setSavingSobre] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [savedSnapshot, setSavedSnapshot] = useState({
     nomeLoja: loja.nome,
@@ -413,6 +444,86 @@ export function CustomizadorLoja({
         isSaving={isPending}
         onSave={handleSave}
       />
+
+      {/* Link curto / Personalizado para Bio do Instagram */}
+      <section className="rounded-2xl bg-[var(--zelo-card)] p-4 shadow-sm space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <h2 className="text-sm font-bold text-[var(--zelo-ink)]">
+              Link da Loja (Bio do Instagram)
+            </h2>
+            <p className="text-xs text-[var(--zelo-muted)]">
+              Use um nome curtinho para não cortar no perfil do Instagram.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={async () => {
+              const url = `${window.location.origin}/${slugAtual}`;
+              try {
+                await navigator.clipboard.writeText(url);
+                showToast("Link da bio copiado!", "success", "copy");
+              } catch {
+                showToast("Não foi possível copiar o link.", "error");
+              }
+            }}
+            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-[var(--zelo-soft)] px-3 text-xs font-semibold text-[var(--zelo-ink)] transition hover:opacity-85"
+          >
+            <Copy className="h-3.5 w-3.5" />
+            <span>Copiar link</span>
+          </button>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex flex-1 items-center rounded-xl bg-[var(--zelo-soft)] px-3 h-11 min-w-0">
+            <span className="text-xs font-mono-num text-[var(--zelo-muted)] shrink-0 mr-0.5">
+              /
+            </span>
+            <input
+              type="text"
+              value={slugInput}
+              disabled={!isOwner || savingSlug}
+              onChange={(e) =>
+                setSlugInput(
+                  e.target.value
+                    .toLowerCase()
+                    .replace(/\s+/g, "-")
+                    .replace(/[^a-z0-9-]/g, "")
+                )
+              }
+              placeholder="ex: barber"
+              className="w-full bg-transparent text-sm font-mono-num text-[var(--zelo-ink)] outline-none"
+            />
+          </div>
+          {isOwner && (
+            <button
+              type="button"
+              disabled={savingSlug || slugInput === slugAtual || slugInput.length < 3}
+              onClick={async () => {
+                setSavingSlug(true);
+                const res = await atualizarSlugLojaAction(loja.id, slugInput);
+                setSavingSlug(false);
+                if (!res.ok || !res.slug) {
+                  showToast(res.error ?? "Erro ao atualizar link.", "error");
+                } else {
+                  setSlugAtual(res.slug);
+                  setSlugInput(res.slug);
+                  showToast(`Link atualizado para /${res.slug}!`, "success", "store");
+                }
+              }}
+              className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl bg-[var(--zelo-btn-bg)] px-4 text-xs font-semibold text-[var(--zelo-btn-ink)] transition hover:opacity-90 disabled:opacity-45"
+            >
+              {savingSlug ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Save className="h-3.5 w-3.5" />
+              )}
+              <span>Salvar link</span>
+            </button>
+          )}
+        </div>
+      </section>
+
       {/* Interactive Storefront Mini Preview */}
       <section>
         <div className="mb-2 flex items-center justify-between">
@@ -1069,6 +1180,185 @@ export function CustomizadorLoja({
                 </button>
               )}
             </div>
+          </div>
+        )}
+      </section>
+
+      {/* Sobre o Espaço & Links Sociais */}
+      <section className="rounded-xl bg-[var(--zelo-card)] p-4 shadow-sm space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-bold text-[var(--zelo-ink)]">
+              Sobre o Espaço &amp; Links Sociais
+            </h2>
+            <p className="text-xs text-[var(--zelo-muted)]">
+              Aparece abaixo da equipe na página pública. Se ficar vazio, o card some automaticamente.
+            </p>
+          </div>
+          <span className="font-mono-num text-[11px] text-[var(--zelo-muted)] shrink-0">
+            {descricaoPublica.length}/400
+          </span>
+        </div>
+
+        <textarea
+          rows={3}
+          maxLength={400}
+          disabled={!isOwner || savingSobre}
+          value={descricaoPublica}
+          onChange={(e) => setDescricaoPublica(e.target.value)}
+          placeholder="Conte um pouco sobre o seu espaço, diferenciais, ambiente ou formas de atendimento..."
+          className="w-full resize-none rounded-xl bg-[var(--zelo-soft)] p-3 text-sm text-[var(--zelo-ink)] placeholder:text-[var(--zelo-muted)] outline-none"
+        />
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-[var(--zelo-ink)]">
+              Links com ícones ({linksPublicos.length}/6)
+            </span>
+            {isOwner && linksPublicos.length < 6 && (
+              <button
+                type="button"
+                disabled={savingSobre}
+                onClick={() =>
+                  setLinksPublicos((prev) => [
+                    ...prev,
+                    { tipo: "instagram", label: "Instagram", url: "" },
+                  ])
+                }
+                className="inline-flex h-8 items-center gap-1 rounded-lg bg-[var(--zelo-soft)] px-2.5 text-xs font-semibold text-[var(--zelo-ink)] transition hover:opacity-85"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Adicionar link</span>
+              </button>
+            )}
+          </div>
+
+          {linksPublicos.map((item, idx) => {
+            const IconComp =
+              item.tipo === "instagram"
+                ? Instagram
+                : item.tipo === "whatsapp"
+                  ? MessageCircle
+                  : item.tipo === "tiktok"
+                    ? Music2
+                    : item.tipo === "youtube"
+                      ? Youtube
+                      : item.tipo === "facebook"
+                        ? Share2
+                        : item.tipo === "site"
+                          ? Globe
+                          : ExternalLink;
+
+            return (
+              <div
+                key={`link-item-${idx}`}
+                className="flex flex-col sm:flex-row sm:items-center gap-2 rounded-xl bg-[var(--zelo-soft)] p-2.5"
+              >
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--zelo-card)] text-[var(--zelo-accent)]">
+                    <IconComp className="h-4 w-4" />
+                  </span>
+                  <select
+                    disabled={!isOwner || savingSobre}
+                    value={item.tipo}
+                    onChange={(e) => {
+                      const nextTipo = e.target.value as LinkPublicoTipo;
+                      setLinksPublicos((prev) =>
+                        prev.map((l, i) =>
+                          i === idx
+                            ? {
+                                ...l,
+                                tipo: nextTipo,
+                                label: LINK_PUBLICO_DEFAULT_LABEL[nextTipo],
+                              }
+                            : l
+                        )
+                      );
+                    }}
+                    className="h-9 rounded-lg bg-[var(--zelo-card)] px-2.5 text-xs font-medium text-[var(--zelo-ink)] outline-none"
+                  >
+                    {LINK_PUBLICO_TIPOS.map((t) => (
+                      <option key={t} value={t}>
+                        {LINK_PUBLICO_DEFAULT_LABEL[t]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex flex-1 min-w-0 items-center gap-2">
+                  <input
+                    type="text"
+                    maxLength={300}
+                    disabled={!isOwner || savingSobre}
+                    value={item.url}
+                    onChange={(e) =>
+                      setLinksPublicos((prev) =>
+                        prev.map((l, i) => (i === idx ? { ...l, url: e.target.value } : l))
+                      )
+                    }
+                    placeholder={
+                      item.tipo === "whatsapp"
+                        ? "Ex: (99) 99999-9999 ou https://wa.me/..."
+                        : item.tipo === "instagram" || item.tipo === "tiktok"
+                          ? "Ex: @seuperfil ou https://..."
+                          : "https://..."
+                    }
+                    className="h-9 flex-1 min-w-0 rounded-lg bg-[var(--zelo-card)] px-3 text-xs text-[var(--zelo-ink)] outline-none"
+                  />
+
+                  {isOwner && (
+                    <button
+                      type="button"
+                      disabled={savingSobre}
+                      onClick={() =>
+                        setLinksPublicos((prev) => prev.filter((_, i) => i !== idx))
+                      }
+                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[var(--zelo-muted)] transition hover:bg-[var(--zelo-card)] hover:text-red-500"
+                      aria-label="Remover link"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {isOwner && (
+          <div className="flex justify-end pt-1">
+            <button
+              type="button"
+              disabled={savingSobre}
+              onClick={async () => {
+                setSavingSobre(true);
+                const res = await atualizarDescricaoLinksLojaAction(loja.id, {
+                  descricao_publica: descricaoPublica,
+                  links_publicos: linksPublicos
+                    .filter((l) => l.url.trim().length > 0)
+                    .map((l) => ({
+                      ...l,
+                      label: LINK_PUBLICO_DEFAULT_LABEL[l.tipo],
+                    })),
+                });
+                setSavingSobre(false);
+                if (!res.ok) {
+                  showToast(res.error ?? "Erro ao salvar descrição e links.", "error");
+                  return;
+                }
+                setDescricaoPublica(res.descricao_publica ?? "");
+                setLinksPublicos(res.links_publicos ?? []);
+                showToast("Descrição e links salvos!", "success", "sparkles");
+              }}
+              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl bg-[var(--zelo-btn-bg)] px-4 text-xs font-semibold text-[var(--zelo-btn-ink)] transition hover:opacity-90 disabled:opacity-45"
+            >
+              {savingSobre ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Save className="h-3.5 w-3.5" />
+              )}
+              <span>Salvar descrição e links</span>
+            </button>
           </div>
         )}
       </section>

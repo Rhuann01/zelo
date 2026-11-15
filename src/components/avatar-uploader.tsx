@@ -6,6 +6,7 @@ import { Camera, Loader2, RotateCcw, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { AVATAR_COMPRESS_CONFIG, compressImageToWebP } from "@/lib/image/compress-webp";
 import { showToast } from "@/components/zelo-toast";
+import { syncAvatarProfissionaisAction } from "@/app/painel/configuracoes/actions";
 
 interface AvatarUploaderProps {
   userId: string;
@@ -56,10 +57,11 @@ export function AvatarUploader({
 
       if (updateError) throw updateError;
 
+      await syncAvatarProfissionaisAction(bustedUrl).catch(() => null);
       setAvatarUrl(bustedUrl);
       setCustom(true);
       router.refresh();
-      showToast(`Foto salva (${Math.round(webpBlob.size / 1024)} KB WebP)`, "success");
+      showToast(`Foto salva (${Math.round(webpBlob.size / 1024)} KB WebP)`, "success", "sparkles");
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Erro ao enviar foto.", "error");
     } finally {
@@ -79,6 +81,7 @@ export function AvatarUploader({
         .eq("id", userId);
 
       if (error) throw error;
+      await syncAvatarProfissionaisAction(null).catch(() => null);
       setAvatarUrl(null);
       setCustom(true);
       router.refresh();
@@ -108,6 +111,7 @@ export function AvatarUploader({
         .eq("id", userId);
 
       if (error) throw error;
+      await syncAvatarProfissionaisAction(googlePic).catch(() => null);
       setAvatarUrl(googlePic);
       setCustom(false);
       router.refresh();

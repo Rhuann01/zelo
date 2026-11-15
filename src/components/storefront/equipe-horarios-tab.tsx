@@ -1,8 +1,41 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowRight, ChevronDown, ChevronUp, Clock, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  ExternalLink,
+  Globe,
+  Instagram,
+  MessageCircle,
+  Music2,
+  Share2,
+  Sparkles,
+  Youtube,
+} from "lucide-react";
 import type { LojaPublica, ProfissionalPublico } from "@/lib/public/get-loja-publica";
+import type { LinkPublicoTipo } from "@/lib/schemas/loja-links";
+
+function LinkSocialIcon({ tipo }: { tipo: LinkPublicoTipo }) {
+  switch (tipo) {
+    case "instagram":
+      return <Instagram className="h-3.5 w-3.5" />;
+    case "whatsapp":
+      return <MessageCircle className="h-3.5 w-3.5" />;
+    case "tiktok":
+      return <Music2 className="h-3.5 w-3.5" />;
+    case "youtube":
+      return <Youtube className="h-3.5 w-3.5" />;
+    case "facebook":
+      return <Share2 className="h-3.5 w-3.5" />;
+    case "site":
+      return <Globe className="h-3.5 w-3.5" />;
+    default:
+      return <ExternalLink className="h-3.5 w-3.5" />;
+  }
+}
 
 type DiaKey = "seg" | "ter" | "qua" | "qui" | "sex" | "sab" | "dom";
 
@@ -361,6 +394,51 @@ export function EquipeHorariosTab({
           })
         )}
       </section>
+
+      {/* DESCRIÇÃO E LINKS DO ESPAÇO (só exibe se houver conteúdo) */}
+      {(loja.descricao_publica?.trim() || (loja.links_publicos?.length ?? 0) > 0) && (
+        <section className="space-y-2.5">
+          <div className="space-y-3 p-4" style={cardSurfaceStyle}>
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 shrink-0" style={{ color: "var(--t-accent)" }} />
+              <h2 className="text-sm font-bold">Sobre {loja.nome}</h2>
+            </div>
+
+            {loja.descricao_publica?.trim() && (
+              <p
+                className="whitespace-pre-line text-xs leading-relaxed"
+                style={{ color: "var(--t-muted)" }}
+              >
+                {loja.descricao_publica.trim()}
+              </p>
+            )}
+
+            {Array.isArray(loja.links_publicos) && loja.links_publicos.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-0.5">
+                {loja.links_publicos.map((item, idx) => (
+                  <a
+                    key={`${item.tipo}-${idx}`}
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full px-3 text-xs font-semibold transition-transform active:scale-95"
+                    style={{
+                      backgroundColor: "var(--t-surface-2, rgba(120,120,128,0.12))",
+                      color: "var(--t-ink)",
+                      ...(isBrutal ? { border: "1.5px solid #000000" } : {}),
+                    }}
+                  >
+                    <span style={{ color: "var(--t-accent)" }}>
+                      <LinkSocialIcon tipo={item.tipo} />
+                    </span>
+                    <span>{item.label}</span>
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* HORÁRIO DE FUNCIONAMENTO */}
       <section className="space-y-3 p-4" style={cardSurfaceStyle}>

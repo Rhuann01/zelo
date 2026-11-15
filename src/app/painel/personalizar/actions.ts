@@ -128,3 +128,177 @@ export async function savePresetBannerAction(
   revalidatePath("/explorar");
   return { ok: true };
 }
+
+const SLUG_RESERVADOS = new Set([
+  "api",
+  "auth",
+  "convite",
+  "entrar",
+  "explorar",
+  "onboarding",
+  "painel",
+  "privacidade",
+  "super-admin",
+  "termos",
+]);
+
+export async function atualizarSlugLojaAction(
+  lojaId: string,
+  novoSlugRaw: string
+): Promise<{ ok: boolean; slug?: string; error?: string }> {
+  const clean = novoSlugRaw
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  if (clean.length < 3 || clean.length > 40) {
+    return { ok: false, error: "O link deve ter entre 3 e 40 caracteres." };
+  }
+  if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(clean)) {
+    return { ok: false, error: "Use apenas letras minúsculas, números e hífen." };
+  }
+  if (SLUG_RESERVADOS.has(clean)) {
+    return { ok: false, error: "Esse identificador é reservado pelo sistema." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Sessão expirada." };
+
+  const { data: loja } = await supabase
+    .from("lojas")
+    .select("id, slug")
+    .eq("id", lojaId)
+    .eq("owner_id", user.id)
+    .maybeSingle();
+
+  if (!loja) return { ok: false, error: "Loja não encontrada ou sem permissão." };
+  if (loja.slug === clean) return { ok: true, slug: clean };
+
+  const { data: existente } = await supabase
+    .from("lojas")
+    .select("id")
+    .eq("slug", clean)
+    .neq("id", lojaId)
+    .maybeSingle();
+
+  if (existente) {
+    return { ok: false, error: "Este link já está em uso por outro espaço." };
+  }
+
+  const { error } = await supabase
+    .from("lojas")
+    .update({ slug: clean })
+    .eq("id", lojaId)
+    .eq("owner_id", user.id);
+
+  if (error) {
+    return { ok: false, error: "Não foi possível atualizar o link agora." };
+  }
+
+  revalidateTag(`loja-${loja.slug}`);
+  revalidateTag(`loja-${clean}`);
+  revalidateTag("vitrine-explorar");
+  revalidatePath(`/${loja.slug}`);
+  revalidatePath(`/${clean}`);
+  revalidatePath("/painel");
+  revalidatePath("/painel/personalizar");
+  revalidatePath("/explorar");
+
+  return { ok: true, slug: clean };
+}
+
+export async function atualizarDescricaoLinksLojaAction(
+  lojaId: string,
+  payload: {
+    descricao_publica: string;
+    links_publicos: Array<{ tipo: string; label: string; url: string }>;
+  }
+): Promise<{
+  ok: boolean;
+  descricao_publica?: string;
+  links_publicos?: Array<{
+    tipo: "instagram" | "whatsapp" | "tiktok" | "youtube" | "facebook" | "site" | "outro";
+    label: string;
+    url: string;
+  }>;
+  error?: string;
+}> {
+  const {
+    lojaDescricaoLinksSchema,
+    normalizePublicLinkUrl,
+    LINK_PUBLICO_DEFAULT_LABEL,
+  } = await import("@/lib/schemas/loja-links");
+
+  const parsed = lojaDescricaoLinksSchema.safeParse(payload);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "Dados inválidos.",
+    };
+  }
+
+  const normalizedLinks: Array<{
+    tipo: "instagram" | "whatsapp" | "tiktok" | "youtube" | "facebook" | "site" | "outro";
+    label: string;
+    url: string;
+  }> = [];
+
+  for (const item of parsed.data.links_publicos) {
+    const safeUrl = normalizePublicLinkUrl(item.tipo, item.url);
+    if (!safeUrl) {
+      return {
+        ok: false,
+        error: `Link inválido em ${LINK_PUBLICO_DEFAULT_LABEL[item.tipo]}. Use https://, @usuario ou telefone.`,
+      };
+    }
+    normalizedLinks.push({
+      tipo: item.tipo,
+      label: item.label.trim() || LINK_PUBLICO_DEFAULT_LABEL[item.tipo],
+      url: safeUrl,
+    });
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Sessão expirada." };
+
+  const { data: loja } = await supabase
+    .from("lojas")
+    .select("id, slug")
+    .eq("id", lojaId)
+    .eq("owner_id", user.id)
+    .maybeSingle();
+
+  if (!loja) return { ok: false, error: "Loja não encontrada ou sem permissão." };
+
+  const { error } = await supabase
+    .from("lojas")
+    .update({
+      descricao_publica: parsed.data.descricao_publica,
+      links_publicos: normalizedLinks,
+    })
+    .eq("id", lojaId)
+    .eq("owner_id", user.id);
+
+  if (error) {
+    return { ok: false, error: "Não foi possível salvar descrição e links agora." };
+  }
+
+  revalidateTag(`loja-${loja.slug}`);
+  revalidatePath(`/${loja.slug}`);
+  revalidatePath("/painel/personalizar");
+
+  return {
+    ok: true,
+    descricao_publica: parsed.data.descricao_publica,
+    links_publicos: normalizedLinks,
+  };
+}

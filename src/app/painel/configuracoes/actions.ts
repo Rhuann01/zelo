@@ -254,6 +254,51 @@ export async function checkIsSuperAdminAction(): Promise<boolean> {
   const allowEmails = parseSuperAdminEmailAllowlist();
   return (
     allowUids.has(user.id) ||
-    (!!user.email && allowEmails.has(user.email.toLowerCase()))
+    (Boolean(user.email) &&
+      Boolean(user.email_confirmed_at) &&
+      allowEmails.has(user.email!.toLowerCase()))
   );
+}
+
+export async function syncAvatarProfissionaisAction(avatarUrl: string | null) {
+  const { safeImageUrlSchema } = await import("@/lib/schemas/loja");
+  const parsedAvatar = safeImageUrlSchema.nullable().safeParse(avatarUrl);
+  if (!parsedAvatar.success) {
+    return { ok: false, error: "URL de avatar inválida." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const admin = createAdminClient();
+
+  const { data: profs } = await admin
+    .from("profissionais")
+    .update({ avatar_url: parsedAvatar.data })
+    .eq("user_id", user.id)
+    .select("loja_id");
+
+  const lojaIds = Array.from(new Set((profs ?? []).map((p) => p.loja_id)));
+  if (lojaIds.length > 0) {
+    const { data: lojas } = await admin
+      .from("lojas")
+      .select("slug")
+      .in("id", lojaIds);
+    for (const l of lojas ?? []) {
+      if (l.slug) {
+        revalidateTag(`loja-${l.slug}`);
+        revalidatePath(`/${l.slug}`);
+      }
+    }
+  }
+
+  revalidateTag("vitrine-explorar");
+  revalidatePath("/painel");
+  revalidatePath("/painel/configuracoes");
+  revalidatePath("/explorar");
+  return { ok: true };
 }

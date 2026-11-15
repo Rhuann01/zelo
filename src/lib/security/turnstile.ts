@@ -12,6 +12,12 @@ export async function verifyTurnstileToken(
 ): Promise<TurnstileVerifyResult> {
   const secret = process.env.TURNSTILE_SECRET_KEY;
   if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      return {
+        ok: false,
+        error: "Verificação anti-robô indisponível no momento.",
+      };
+    }
     return { ok: true, skipped: true };
   }
 

@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Instrument_Serif, JetBrains_Mono } from "next/font/google";
 import { DeviceTelemetryPing } from "@/components/device-telemetry-ping";
+import { ZeloToastViewport } from "@/components/zelo-toast";
+import { getSiteUrl } from "@/lib/seo/site-url";
 import "./globals.css";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -26,8 +28,31 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getSiteUrl()),
   title: "Zelo — Sua agenda online com a cara do seu negócio",
-  description: "Sua página exclusiva de agendamento, no seu estilo e com sinal via PIX.",
+  description:
+    "Sistema de agendamento online para barbearias, salões, manicures e estúdios. Página exclusiva, sinal via PIX e lembretes automáticos.",
+  keywords: [
+    "agendamento online barbearia",
+    "sistema para barbearia",
+    "agenda online salão de beleza",
+    "agendamento manicure",
+    "agendamento com sinal pix",
+    "Zelo",
+  ],
+  alternates: {
+    canonical: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   manifest: "/manifest.webmanifest",
   icons: {
     icon: "/icon.svg",
@@ -40,9 +65,27 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Zelo — Sua agenda online com a cara do seu negócio",
-    description: "Crie a página exclusiva do seu negócio com sua cor, seu formato e sua identidade visual.",
+    description:
+      "Crie a página exclusiva do seu negócio com sua cor, seu formato, agendamento sem fila e sinal via PIX.",
+    url: "/",
+    siteName: "Zelo",
     type: "website",
     locale: "pt_BR",
+    images: [
+      {
+        url: "/og-zelo.png",
+        width: 1200,
+        height: 630,
+        alt: "Zelo — Sua agenda online com a cara do seu negócio",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Zelo — Sua agenda online com a cara do seu negócio",
+    description:
+      "Página exclusiva de agendamento online com sinal via PIX para barbearias, salões e estúdios.",
+    images: ["/og-zelo.png"],
   },
 };
 
@@ -72,6 +115,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen antialiased">
         <DeviceTelemetryPing />
+        <ZeloToastViewport />
         {children}
       </body>
     </html>

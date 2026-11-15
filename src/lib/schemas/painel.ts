@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   ESTILO_BARRA_OPTIONS,
   ESTILO_CARD_OPTIONS,
+  safeImageUrlSchema,
   TEMA_OPTIONS,
 } from "@/lib/schemas/loja";
 
@@ -14,7 +15,7 @@ export const servicoSchema = z
     duracao_min: z.number().int().min(5, "Mínimo 5 minutos").max(480, "Máximo 8 horas"),
     preco_centavos: z.number().int().min(0).max(10_000_000),
     ativo: z.boolean().default(true),
-    imagem_url: z.string().url("URL de imagem inválida").nullable().optional(),
+    imagem_url: safeImageUrlSchema.nullable().optional(),
     exibir_imagem: z.boolean().default(false),
   })
   .strict();

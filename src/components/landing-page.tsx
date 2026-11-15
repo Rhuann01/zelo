@@ -1771,8 +1771,8 @@ export function LandingPage() {
               </div>
 
               <div className="flex flex-wrap items-center gap-3 pt-1 text-xs font-medium text-[var(--zelo-muted)]">
-                <a href="mailto:contato@zelo.app" className="text-[var(--zelo-ink)] hover:underline">
-                  contato@zelo.app
+                <a href="mailto:suportezelo84@gmail.com" className="text-[var(--zelo-ink)] hover:underline">
+                  suportezelo84@gmail.com
                 </a>
                 <span>•</span>
                 <Link href="/explorar" className="text-[var(--zelo-ink)] hover:underline">
@@ -1838,12 +1838,12 @@ export function LandingPage() {
                 <div className="font-semibold">Suporte & Legal</div>
                 <ul className="space-y-2 text-xs text-[var(--zelo-muted)]">
                   <li>
-                    <a href="mailto:contato@zelo.app" className="hover:underline">
+                    <a href="mailto:suportezelo84@gmail.com" className="hover:underline">
                       Central de Ajuda
                     </a>
                   </li>
                   <li>
-                    <a href="mailto:contato@zelo.app" className="hover:underline">
+                    <a href="mailto:suportezelo84@gmail.com" className="hover:underline">
                       Fale Conosco
                     </a>
                   </li>

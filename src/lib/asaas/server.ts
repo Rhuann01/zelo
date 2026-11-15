@@ -54,6 +54,7 @@ export async function createAsaasSubscriptionCheckout(
 
   const headers = {
     "Content-Type": "application/json",
+    "User-Agent": "ZeloApp/1.0",
     access_token: apiKey,
   };
 

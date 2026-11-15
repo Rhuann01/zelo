@@ -33,7 +33,12 @@ export async function POST(req: NextRequest) {
   }
 
   const ua = req.headers.get("user-agent") ?? "";
-  if (!ua || /bot|crawler|spider|curl|wget|headless/i.test(ua)) {
+  if (
+    !ua ||
+    /bot|crawler|spider|curl|wget|headless|lighthouse|pagespeed|facebookexternalhit|whatsapp|telegrambot|applebot|bingpreview|google-inspectiontool/i.test(
+      ua
+    )
+  ) {
     return NextResponse.json({ ok: true, skipped: true });
   }
 

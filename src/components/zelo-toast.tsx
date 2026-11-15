@@ -1,20 +1,47 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertCircle, CheckCircle2, Info, X } from "lucide-react";
+import {
+  AlertCircle,
+  AlertTriangle,
+  Bell,
+  CheckCircle2,
+  Copy,
+  CreditCard,
+  Info,
+  Phone,
+  ShieldCheck,
+  Sparkles,
+  Store,
+  X,
+} from "lucide-react";
 
-export type ToastVariant = "success" | "error" | "info";
+export type ToastVariant = "success" | "error" | "warning" | "info";
+export type ToastIcon =
+  | "auto"
+  | "bell"
+  | "shield"
+  | "credit-card"
+  | "store"
+  | "sparkles"
+  | "copy"
+  | "phone";
 
 interface ToastItem {
   id: number;
   message: string;
   variant: ToastVariant;
+  icon: ToastIcon;
   leaving: boolean;
 }
 
 const TOAST_EVENT = "zelo:toast";
 
-export function showToast(message: string, variant: ToastVariant = "success") {
+export function showToast(
+  message: string,
+  variant: ToastVariant = "success",
+  icon: ToastIcon = "auto"
+) {
   if (typeof window === "undefined") return;
   window.dispatchEvent(
     new CustomEvent(TOAST_EVENT, {
@@ -22,6 +49,7 @@ export function showToast(message: string, variant: ToastVariant = "success") {
         id: Date.now() + Math.floor(Math.random() * 1000),
         message,
         variant,
+        icon,
       },
     })
   );
@@ -32,17 +60,25 @@ export function ZeloToastViewport() {
 
   useEffect(() => {
     function handleEvent(e: Event) {
-      const custom = e as CustomEvent<{ id: number; message: string; variant: ToastVariant }>;
-      const { id, message, variant } = custom.detail;
-      setToasts((prev) => [...prev.slice(-2), { id, message, variant, leaving: false }]);
+      const custom = e as CustomEvent<{
+        id: number;
+        message: string;
+        variant: ToastVariant;
+        icon?: ToastIcon;
+      }>;
+      const { id, message, variant, icon = "auto" } = custom.detail;
+      setToasts((prev) => [
+        ...prev.slice(-2),
+        { id, message, variant, icon, leaving: false },
+      ]);
 
       setTimeout(() => {
         setToasts((prev) => prev.map((t) => (t.id === id ? { ...t, leaving: true } : t)));
-      }, 3200);
+      }, 3400);
 
       setTimeout(() => {
         setToasts((prev) => prev.filter((t) => t.id !== id));
-      }, 3550);
+      }, 3750);
     }
 
     window.addEventListener(TOAST_EVENT, handleEvent);
@@ -61,13 +97,48 @@ export function ZeloToastViewport() {
   return (
     <div
       aria-live="polite"
-      className="pointer-events-none fixed inset-x-0 top-3 z-[100] flex flex-col items-center gap-2 px-4"
+      className="pointer-events-none fixed inset-x-0 top-3 z-[120] flex flex-col items-center gap-2 px-4"
     >
       {toasts.map((t) => (
         <ToastCard key={t.id} toast={t} onDismiss={() => dismiss(t.id)} />
       ))}
     </div>
   );
+}
+
+function renderToastIcon(variant: ToastVariant, icon: ToastIcon) {
+  const colorClass =
+    variant === "success"
+      ? "text-[#10B981]"
+      : variant === "error"
+        ? "text-rose-500"
+        : variant === "warning"
+          ? "text-[#FF5A1F]"
+          : "text-amber-500";
+
+  const cls = `mt-0.5 h-4 w-4 shrink-0 ${colorClass}`;
+
+  switch (icon) {
+    case "bell":
+      return <Bell className={cls} />;
+    case "shield":
+      return <ShieldCheck className={cls} />;
+    case "credit-card":
+      return <CreditCard className={cls} />;
+    case "store":
+      return <Store className={cls} />;
+    case "sparkles":
+      return <Sparkles className={cls} />;
+    case "copy":
+      return <Copy className={cls} />;
+    case "phone":
+      return <Phone className={cls} />;
+    default:
+      if (variant === "success") return <CheckCircle2 className={cls} />;
+      if (variant === "error") return <AlertCircle className={cls} />;
+      if (variant === "warning") return <AlertTriangle className={cls} />;
+      return <Info className={cls} />;
+  }
 }
 
 function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: () => void }) {
@@ -87,15 +158,7 @@ function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: () => vo
         visible ? "translate-y-0 scale-100 opacity-100" : "-translate-y-3 scale-95 opacity-0"
       }`}
     >
-      {toast.variant === "success" && (
-        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#10B981]" />
-      )}
-      {toast.variant === "error" && (
-        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
-      )}
-      {toast.variant === "info" && (
-        <Info className="mt-0.5 h-4 w-4 shrink-0 text-[#F59E0B]" />
-      )}
+      {renderToastIcon(toast.variant, toast.icon)}
       <p className="min-w-0 flex-1 break-words text-xs font-medium leading-relaxed">
         {toast.message}
       </p>

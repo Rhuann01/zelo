@@ -26,7 +26,7 @@ import {
 import type { VitrineLojaCard } from "@/lib/public/get-loja-publica";
 import { useViewerPerfil } from "@/lib/supabase/use-viewer-perfil";
 import { ZeloLogo } from "@/components/zelo-logo";
-import { ZeloToastViewport, showToast } from "@/components/zelo-toast";
+import { showToast } from "@/components/zelo-toast";
 import { PwaInstallBanner } from "@/components/pwa-install-banner";
 import { NotificationsSheet } from "@/components/notifications-sheet";
 import { ExplorarMeusHorarios } from "@/components/explorar-meus-horarios";
@@ -90,6 +90,15 @@ export function ExplorarVitrine({
   const { viewer, loaded, refreshViewer } = useViewerPerfil();
 
   useEffect(() => {
+    document.documentElement.style.backgroundColor = "";
+    document.body.style.backgroundColor = "";
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) {
+      const isDark = document.documentElement.classList.contains("dark");
+      metaTheme.setAttribute("content", isDark ? "#0E0E11" : "#FAF9F6");
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+
     try {
       const params = new URLSearchParams(window.location.search);
       const t = params.get("tab");
@@ -198,7 +207,7 @@ export function ExplorarVitrine({
 
   return (
     <>
-      <ZeloToastViewport />
+      {/* Toast viewport global está no RootLayout */}
 
       {/* Fixed Top Header (Stitch Vitrine Regional Premium) */}
       <header className="fixed top-0 left-0 right-0 z-40 bg-[var(--zelo-bg)]/90 backdrop-blur-md">

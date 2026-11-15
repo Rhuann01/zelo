@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { createPublicClient } from "@/lib/supabase/public";
+import type { LinkPublico } from "@/lib/schemas/loja-links";
 
 export interface LojaPublica {
   id: string;
@@ -24,6 +25,8 @@ export interface LojaPublica {
   capa_url: string | null;
   horarios_loja: Record<string, unknown>;
   pausada: boolean;
+  descricao_publica: string;
+  links_publicos: LinkPublico[];
 }
 
 export interface ServicoPublico {
@@ -88,7 +91,7 @@ export async function getLojaPublicaBySlug(slug: string): Promise<LojaPublicaCom
       const { data: loja } = await supabase
         .from("lojas")
         .select(
-          "id, slug, nome, nicho, cidade, bairro, endereco_texto, maps_url, latitude, longitude, whatsapp_loja, sinal_centavos, tema, cor_primaria, raio_borda_px, estilo_card, estilo_barra, modo_escuro, logo_url, capa_url, horarios_loja, pausada"
+          "id, slug, nome, nicho, cidade, bairro, endereco_texto, maps_url, latitude, longitude, whatsapp_loja, sinal_centavos, tema, cor_primaria, raio_borda_px, estilo_card, estilo_barra, modo_escuro, logo_url, capa_url, horarios_loja, pausada, descricao_publica, links_publicos"
         )
         .eq("slug", cleanSlug)
         .maybeSingle();

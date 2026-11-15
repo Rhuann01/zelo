@@ -22,6 +22,7 @@ import {
   signOutConfigAction,
   checkIsSuperAdminAction,
 } from "@/app/painel/configuracoes/actions";
+import { disableBrowserPush, enableBrowserPush } from "@/lib/notifications/client-push";
 import type { ViewerPerfil } from "@/lib/supabase/use-viewer-perfil";
 
 export function ExplorarPerfilForm({
@@ -79,6 +80,47 @@ export function ExplorarPerfilForm({
     } catch {
       // ignore storage errors
     }
+  }
+
+  async function handleTogglePush() {
+    const next = !pushAtivo;
+    if (next) {
+      const pushRes = await enableBrowserPush();
+      if (!pushRes.ok) {
+        showToast(pushRes.error ?? "Permissão de notificação negada.", "error", "bell");
+        setPushAtivo(false);
+        return;
+      }
+      setPushAtivo(true);
+      const saved = await saveConfiguracoesAction({
+        nome,
+        whatsapp,
+        notificacoes_push: true,
+        notificacoes_email: emailAtivo,
+      });
+      if (saved.error) {
+        showToast(saved.error, "error");
+        return;
+      }
+      await onSaved();
+      showToast("Notificações Push ativadas neste aparelho!", "success", "bell");
+      return;
+    }
+
+    await disableBrowserPush();
+    setPushAtivo(false);
+    const saved = await saveConfiguracoesAction({
+      nome,
+      whatsapp,
+      notificacoes_push: false,
+      notificacoes_email: emailAtivo,
+    });
+    if (saved.error) {
+      showToast(saved.error, "error");
+      return;
+    }
+    await onSaved();
+    showToast("Notificações Push desativadas.", "info", "bell");
   }
 
   function handleSave() {
@@ -203,7 +245,7 @@ export function ExplorarPerfilForm({
             </div>
             <button
               type="button"
-              onClick={() => setPushAtivo((v) => !v)}
+              onClick={() => void handleTogglePush()}
               className="inline-flex min-h-[44px] items-center px-1"
               aria-label="Alternar Web Push"
             >
@@ -270,14 +312,16 @@ export function ExplorarPerfilForm({
 
       <div className="flex flex-col gap-2 rounded-2xl bg-[var(--zelo-card)] p-2 shadow-sm">
         <Link
-          href="/painel"
+          href={viewer.has_loja ? "/painel" : "/onboarding"}
           className="flex h-12 items-center justify-between rounded-lg px-2.5 text-sm font-medium text-[var(--zelo-ink)] transition-colors hover:bg-[var(--zelo-soft)]"
         >
           <span className="flex items-center gap-2.5">
             <Store className="h-5 w-5 text-[var(--zelo-muted)]" />
-            <span>Acessar Painel Profissional</span>
+            <span>{viewer.has_loja ? "Acessar Painel Profissional" : "Criar minha loja"}</span>
           </span>
-          <span className="font-mono-num text-xs text-[var(--zelo-muted)]">/painel</span>
+          <span className="font-mono-num text-xs text-[var(--zelo-muted)]">
+            {viewer.has_loja ? "/painel" : "14 dias grátis"}
+          </span>
         </Link>
 
         {isSuperAdmin && (

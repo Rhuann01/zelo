@@ -269,7 +269,7 @@ export function DeviceRoseChart({
 
               const bgPath = roundedPetalPath(cx, cy, rInner, rOuter, startDeg, endDeg, 10);
 
-              const ratio = 0.34 + 0.66 * (item.acessos / maxGroupAcessos);
+              const ratio = 0.48 + 0.52 * (item.acessos / maxGroupAcessos);
               const valRadius = rInner + (rOuter - rInner) * ratio;
               const valPath = roundedPetalPath(
                 cx,
@@ -282,9 +282,9 @@ export function DeviceRoseChart({
               );
 
               const isHovered = hoveredGroup === item.label;
-              const labelRadius = Math.max(
-                rInner + 42,
-                Math.min(rOuter - 26, (rInner + valRadius) / 2 + 6)
+              const labelRadius = Math.min(
+                valRadius - 20,
+                Math.max(rInner + 24, (rInner + valRadius) / 2)
               );
               const [lx, ly] = polar(cx, cy, labelRadius, midDeg);
 

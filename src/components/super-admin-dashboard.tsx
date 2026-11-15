@@ -38,6 +38,7 @@ import {
   Zap,
 } from "lucide-react";
 import { EmptyState } from "@/components/ui";
+import { showToast } from "@/components/zelo-toast";
 import { DeviceRoseChart } from "@/components/device-rose-chart";
 import {
   superAdminBroadcastNotificationAction,
@@ -190,9 +191,15 @@ export function SuperAdminDashboard({
         lojaId,
         pausada: nextPausada,
       });
-      setFeedback(
-        res.error ?? (nextPausada ? "Loja pausada." : "Loja reativada.")
-      );
+      if (res.error) {
+        showToast(res.error, "error", "store");
+      } else {
+        showToast(
+          nextPausada ? "Loja pausada com sucesso." : "Loja reativada com sucesso.",
+          nextPausada ? "warning" : "success",
+          "store"
+        );
+      }
     });
   };
 
@@ -200,7 +207,11 @@ export function SuperAdminDashboard({
     setFeedback(null);
     startTransition(async () => {
       const res = await superAdminExtendTrialAction({ lojaId, dias });
-      setFeedback(res.error ?? `Trial estendido em +${dias} dias.`);
+      if (res.error) {
+        showToast(res.error, "error", "sparkles");
+      } else {
+        showToast(`Trial estendido em +${dias} dias.`, "success", "sparkles");
+      }
     });
   };
 
@@ -216,10 +227,15 @@ export function SuperAdminDashboard({
         plano,
         assinaturaStatus,
       });
-      setFeedback(
-        res.error ??
-          `Plano atualizado para ${plano.toUpperCase()} (${assinaturaStatus}).`
-      );
+      if (res.error) {
+        showToast(res.error, "error", "credit-card");
+      } else {
+        showToast(
+          `Plano atualizado para ${plano.toUpperCase()} (${assinaturaStatus}).`,
+          "success",
+          "credit-card"
+        );
+      }
     });
   };
 
@@ -255,10 +271,10 @@ export function SuperAdminDashboard({
     try {
       await navigator.clipboard.writeText(prompt);
       setCopiedAi(true);
-      setFeedback("Resumo copiado para colar na IA.");
+      showToast("Resumo copiado para colar na IA.", "success", "copy");
       setTimeout(() => setCopiedAi(false), 2500);
     } catch {
-      setFeedback("Não foi possível acessar a área de transferência.");
+      showToast("Não foi possível acessar a área de transferência.", "error");
     }
   };
 
@@ -2089,10 +2105,11 @@ export function SuperAdminDashboard({
                           });
                           if (res.error) {
                             setBroadcastFeedback(res.error);
+                            showToast(res.error, "error", "bell");
                           } else {
-                            setBroadcastFeedback(
-                              `Notificação enviada para ${res.enviados ?? 0} usuário(s)/dispositivo(s).`
-                            );
+                            const msg = `Notificação enviada para ${res.enviados ?? 0} usuário(s)/dispositivo(s).`;
+                            setBroadcastFeedback(msg);
+                            showToast(msg, "success", "bell");
                             setBroadcastTitulo("");
                             setBroadcastMensagem("");
                           }

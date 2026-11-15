@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Terminal } from "lucide-react";
+import { Copy, ExternalLink, Loader2, Terminal } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { showToast } from "@/components/zelo-toast";
 
 export function GoogleAuthButton({
   nextPath = "/painel",
@@ -16,6 +17,23 @@ export function GoogleAuthButton({
   const [loading, setLoading] = useState(false);
   const [devLoading, setDevLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isInAppBrowser, setIsInAppBrowser] = useState(false);
+
+  useEffect(() => {
+    const ua = navigator.userAgent || "";
+    if (/Instagram|FBAN|FBAV|BytedanceWebview|TikTok|Line\//i.test(ua)) {
+      setIsInAppBrowser(true);
+    }
+  }, []);
+
+  async function handleCopyLoginLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      showToast("Link copiado! Cole no Safari ou Chrome para entrar em 1 toque.", "info", "copy");
+    } catch {
+      showToast("Não foi possível copiar o link.", "error");
+    }
+  }
 
   async function handleGoogleLogin() {
     setLoading(true);
@@ -34,10 +52,13 @@ export function GoogleAuthButton({
       });
       if (oauthError) {
         setError(oauthError.message);
+        showToast(oauthError.message, "error", "shield");
         setLoading(false);
       }
     } catch {
-      setError("Não foi possível iniciar o login com Google.");
+      const msg = "Não foi possível iniciar o login com Google.";
+      setError(msg);
+      showToast(msg, "error", "shield");
       setLoading(false);
     }
   }
@@ -49,20 +70,43 @@ export function GoogleAuthButton({
       const res = await fetch("/api/dev-login", { method: "POST" });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        setError(body.error ?? "Erro no login dev local.");
+        const msg = body.error ?? "Erro no login dev local.";
+        setError(msg);
+        showToast(msg, "error");
         setDevLoading(false);
         return;
       }
       router.push(nextPath);
       router.refresh();
     } catch {
-      setError("Não foi possível conectar ao login dev local.");
+      const msg = "Não foi possível conectar ao login dev local.";
+      setError(msg);
+      showToast(msg, "error");
       setDevLoading(false);
     }
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2.5">
+      {isInAppBrowser && (
+        <div className="rounded-xl bg-amber-500/10 p-3 text-xs space-y-2 text-[var(--zelo-ink)]">
+          <div className="flex items-start gap-2">
+            <ExternalLink className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+            <p className="leading-relaxed">
+              Você abriu pelo navegador interno do aplicativo (Instagram/TikTok), onde sua conta Google não fica salva. Para entrar em 1 toque, toque nos <strong>3 pontinhos (•••)</strong> acima e escolha <strong>Abrir no navegador</strong>.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleCopyLoginLink}
+            className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-[var(--zelo-card)] text-xs font-semibold shadow-xs"
+          >
+            <Copy className="h-3.5 w-3.5" />
+            <span>Copiar link para abrir no Safari / Chrome</span>
+          </button>
+        </div>
+      )}
+
       <button
         type="button"
         onClick={handleGoogleLogin}
@@ -98,21 +142,17 @@ export function GoogleAuthButton({
           type="button"
           onClick={handleDevLogin}
           disabled={devLoading}
-          className="flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[var(--zelo-soft)] px-4 text-xs font-semibold text-[var(--zelo-muted)] transition hover:text-[var(--zelo-ink)] disabled:opacity-60"
+          className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[var(--zelo-soft)] px-4 text-xs font-semibold text-[var(--zelo-ink)] transition hover:opacity-85 disabled:opacity-60"
         >
           {devLoading ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : (
-            <Terminal className="h-3.5 w-3.5 text-[#F59E0B]" />
+            <Terminal className="h-3.5 w-3.5 text-[#FF5A1F]" />
           )}
           <span>{devLoading ? "Entrando..." : "Entrar em Modo Dev Local"}</span>
         </button>
       )}
-      {error && (
-        <p className="text-center text-xs text-red-600" role="alert">
-          {error}
-        </p>
-      )}
+      {error && <p className="text-center text-xs text-red-500">{error}</p>}
     </div>
   );
 }

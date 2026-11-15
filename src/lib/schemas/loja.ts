@@ -13,12 +13,37 @@ export const ESTILO_CARD_OPTIONS = ["preenchido", "vidro_borrado"] as const;
 export const ESTILO_BARRA_OPTIONS = ["abas", "dock_flutuante"] as const;
 export const PIX_MODO_OPTIONS = ["loja", "profissional"] as const;
 
+export function isSafeMediaUrl(val: string): boolean {
+  const trimmed = val.trim();
+  if (!trimmed) return false;
+  if (trimmed.startsWith("/") && !trimmed.startsWith("//")) return true;
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol === "https:") return true;
+    if (
+      parsed.protocol === "http:" &&
+      (parsed.hostname === "127.0.0.1" || parsed.hostname === "localhost")
+    ) {
+      return true;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+export const safeImageUrlSchema = z
+  .string()
+  .trim()
+  .max(500, "URL de imagem muito longa")
+  .refine(isSafeMediaUrl, "URL de imagem inválida ou insegura");
+
 export const servicoPresetSchema = z
   .object({
     nome: z.string().trim().min(2, "Nome do serviço muito curto").max(80),
     duracao_min: z.number().int().min(5).max(480),
     preco_centavos: z.number().int().min(0).max(10_000_000),
-    imagem_url: z.string().trim().max(500).nullable().optional().default(null),
+    imagem_url: safeImageUrlSchema.nullable().optional().default(null),
     exibir_imagem: z.boolean().optional().default(false),
   })
   .strict();
@@ -45,8 +70,8 @@ export const createLojaSchema = z
     estilo_card: z.enum(ESTILO_CARD_OPTIONS).optional().default("preenchido"),
     estilo_barra: z.enum(ESTILO_BARRA_OPTIONS).optional().default("abas"),
     modo_escuro: z.boolean().optional().default(false),
-    logo_url: z.string().trim().max(500).nullable().optional().default(null),
-    capa_url: z.string().trim().max(500).nullable().optional().default(null),
+    logo_url: safeImageUrlSchema.nullable().optional().default(null),
+    capa_url: safeImageUrlSchema.nullable().optional().default(null),
     aceitou_termos: z.boolean().optional().default(true),
     servicos: z.array(servicoPresetSchema).min(1, "Selecione pelo menos 1 serviço").max(20),
   })

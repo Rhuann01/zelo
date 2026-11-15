@@ -40,7 +40,7 @@ import { compressImageToWebP, STORE_MEDIA_COMPRESS_CONFIG } from "@/lib/image/co
 import { StockPhotoSearch } from "@/components/ui/stock-photo-search";
 import { StatusBadge, SurfaceCard } from "@/components/ui";
 import { StoreLocationFields } from "@/components/ui/store-location-fields";
-import { ZeloToastViewport, showToast } from "@/components/zelo-toast";
+import { showToast } from "@/components/zelo-toast";
 
 const NICHO_META: Record<
   (typeof NICHO_OPTIONS)[number],
@@ -413,7 +413,7 @@ export function OnboardingWizard() {
 
   return (
     <div className="relative min-h-dvh bg-[var(--zelo-bg)] text-[var(--zelo-ink)] flex flex-col">
-      <ZeloToastViewport />
+      {/* Toast viewport global está no RootLayout */}
       {/* Textura sutil de bolinhas no fundo com degradê (100% no topo -> transparente embaixo) */}
       <div
         aria-hidden="true"
@@ -907,9 +907,24 @@ export function OnboardingWizard() {
 
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--zelo-muted)]">
-                  Chave PIX da Loja (opcional)
-                </label>
+                <div className="flex items-center justify-between gap-2">
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--zelo-muted)]">
+                    Chave PIX da Loja (opcional)
+                  </label>
+                  {whatsapp.replace(/\D/g, "").length >= 10 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setChavePix(whatsapp);
+                        showToast("WhatsApp da loja aplicado como chave PIX!", "info", "phone");
+                      }}
+                      className="inline-flex items-center gap-1 rounded-full bg-[var(--zelo-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--zelo-ink)] transition hover:opacity-80"
+                    >
+                      <Phone className="h-3 w-3 text-[#10B981]" />
+                      <span>Usar WhatsApp da loja</span>
+                    </button>
+                  )}
+                </div>
                 <div className="flex items-center gap-2.5 rounded-xl bg-[var(--zelo-card)] px-3.5 h-12 shadow-xs">
                   <QrCode className="h-4 w-4 text-[var(--zelo-subtle)] shrink-0" />
                   <input

@@ -11,6 +11,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { StatusBadge, SurfaceCard } from "@/components/ui";
+import { showToast } from "@/components/zelo-toast";
 import {
   aplicarCodigoIndicacaoAction,
   iniciarAssinaturaAsaasAction,
@@ -57,9 +58,10 @@ export function AssinaturaPanel({
     try {
       await navigator.clipboard.writeText(codigoIndicacao);
       setCopied(true);
+      showToast("Código de indicação copiado!", "success", "copy");
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // ignore clipboard errors
+      showToast("Não foi possível copiar o código.", "error");
     }
   };
 
@@ -76,11 +78,13 @@ export function AssinaturaPanel({
       });
       if (res.error) {
         setError(res.error);
+        showToast(res.error, "error", "credit-card");
       } else {
+        const msg =
+          "Assinatura criada no Asaas! Assim que o pagamento confirmar, seu acesso é liberado automaticamente.";
         setPaymentLink(res.paymentLink ?? null);
-        setFeedback(
-          "Assinatura criada no Asaas! Assim que o pagamento confirmar, seu acesso é liberado automaticamente."
-        );
+        setFeedback(msg);
+        showToast(msg, "success", "credit-card");
       }
     });
   };
@@ -94,8 +98,15 @@ export function AssinaturaPanel({
         lojaId,
         codigo: codigoInput,
       });
-      if (res.error) setError(res.error);
-      else setFeedback("Código de indicação aplicado! Ao ativar a assinatura, quem indicou ganha +30 dias.");
+      if (res.error) {
+        setError(res.error);
+        showToast(res.error, "error");
+      } else {
+        const msg =
+          "Código de indicação aplicado! Ao ativar a assinatura, quem indicou ganha +30 dias.";
+        setFeedback(msg);
+        showToast(msg, "success", "sparkles");
+      }
     });
   };
 
