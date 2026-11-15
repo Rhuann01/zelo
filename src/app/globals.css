@@ -33,6 +33,7 @@ html.dark {
 html,
 body {
   overscroll-behavior-y: none;
+  overflow-x: clip;
   -ms-overflow-style: none;
   scrollbar-width: none;
 }

@@ -32,6 +32,11 @@ export const metadata: Metadata = {
     icon: "/icon.svg",
     apple: "/icon.svg",
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Zelo",
+  },
   openGraph: {
     title: "Zelo — Sua agenda online com a cara do seu negócio",
     description: "Crie a página exclusiva do seu negócio com sua cor, seu formato e sua identidade visual.",
@@ -43,7 +48,11 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#FAF9F6",
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#FAF9F6" },
+    { media: "(prefers-color-scheme: dark)", color: "#0E0E11" },
+  ],
 };
 
 export default function RootLayout({
