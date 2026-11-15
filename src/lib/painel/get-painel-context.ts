@@ -26,6 +26,7 @@ export interface LojaResumo {
   pausada: boolean;
   plano: "trial" | "solo" | "estudio";
   assinatura_status: string;
+  trial_ate: string | null;
 }
 
 export interface PainelContext {
@@ -38,6 +39,7 @@ export interface PainelContext {
     avatar_url: string | null;
     avatar_customizado: boolean;
     notificacoes_push: boolean;
+    notificacoes_novo_agendamento: boolean;
     notificacoes_email: boolean;
   };
   lojas: LojaResumo[];
@@ -60,13 +62,13 @@ export const getPainelContext = cache(async function getPainelContext(
   const [{ data: perfil }, { data: lojasProprias }, { data: vinculos }] = await Promise.all([
     supabase
       .from("perfis")
-      .select("nome, email, whatsapp, avatar_url, avatar_customizado, notificacoes_push, notificacoes_email")
+      .select("nome, email, whatsapp, avatar_url, avatar_customizado, notificacoes_push, notificacoes_novo_agendamento, notificacoes_email")
       .eq("id", user.id)
       .single(),
     supabase
       .from("lojas")
       .select(
-        "id, owner_id, slug, nome, nicho, cidade, bairro, tema, cor_primaria, raio_borda_px, estilo_card, estilo_barra, modo_escuro, pix_modo, chave_pix, sinal_centavos, logo_url, capa_url, horarios_loja, pausada, plano, assinatura_status"
+        "id, owner_id, slug, nome, nicho, cidade, bairro, tema, cor_primaria, raio_borda_px, estilo_card, estilo_barra, modo_escuro, pix_modo, chave_pix, sinal_centavos, logo_url, capa_url, horarios_loja, pausada, plano, assinatura_status, trial_ate"
       )
       .eq("owner_id", user.id)
       .order("created_at", { ascending: true }),
@@ -87,7 +89,7 @@ export const getPainelContext = cache(async function getPainelContext(
     const { data: memberStores } = await supabase
       .from("lojas")
       .select(
-        "id, owner_id, slug, nome, nicho, cidade, bairro, tema, cor_primaria, raio_borda_px, estilo_card, estilo_barra, modo_escuro, pix_modo, chave_pix, sinal_centavos, logo_url, capa_url, horarios_loja, pausada, plano, assinatura_status"
+        "id, owner_id, slug, nome, nicho, cidade, bairro, tema, cor_primaria, raio_borda_px, estilo_card, estilo_barra, modo_escuro, pix_modo, chave_pix, sinal_centavos, logo_url, capa_url, horarios_loja, pausada, plano, assinatura_status, trial_ate"
       )
       .in("id", extraLojaIds)
       .order("created_at", { ascending: true });
@@ -114,6 +116,7 @@ export const getPainelContext = cache(async function getPainelContext(
       avatar_url: perfil?.avatar_url ?? null,
       avatar_customizado: perfil?.avatar_customizado ?? false,
       notificacoes_push: perfil?.notificacoes_push ?? true,
+      notificacoes_novo_agendamento: perfil?.notificacoes_novo_agendamento ?? true,
       notificacoes_email: perfil?.notificacoes_email ?? true,
     },
     lojas,

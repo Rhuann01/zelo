@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  AlertTriangle,
   Calendar,
   ChevronDown,
   LayoutGrid,
   Palette,
   Settings,
+  Sparkles,
   Store,
   User,
   Wallet,
@@ -122,6 +124,59 @@ export function PainelShell({
 
       <main key={lojaAtual.id} className="mx-auto flex w-full max-w-[480px] flex-1 flex-col px-4 pt-4 pb-28">
         <PwaInstallBanner />
+        {isOwner &&
+          pathname !== "/painel/assinatura" &&
+          (() => {
+            const diasRestantes = lojaAtual.trial_ate
+              ? Math.ceil((Date.parse(lojaAtual.trial_ate) - Date.now()) / 86_400_000)
+              : 14;
+            const bloqueado =
+              lojaAtual.assinatura_status === "atrasada" ||
+              lojaAtual.assinatura_status === "cancelada" ||
+              (lojaAtual.assinatura_status === "trial" && diasRestantes <= 0);
+
+            if (bloqueado) {
+              return (
+                <Link
+                  href="/painel/assinatura"
+                  className="mb-3 flex items-center justify-between gap-3 rounded-2xl bg-rose-500/12 px-3.5 py-2.5 text-xs text-rose-600 dark:text-rose-400"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <AlertTriangle className="h-4 w-4 shrink-0" />
+                    <span className="font-semibold leading-snug">
+                      {lojaAtual.assinatura_status === "trial"
+                        ? "Seu teste grátis encerrou — novos agendamentos online estão pausados."
+                        : "Assinatura pendente — regularize para reabrir agendamentos online."}
+                    </span>
+                  </div>
+                  <span className="shrink-0 rounded-lg bg-rose-500 px-2.5 py-1 text-[11px] font-bold text-white">
+                    Assinar
+                  </span>
+                </Link>
+              );
+            }
+
+            if (lojaAtual.assinatura_status === "trial" && diasRestantes <= 5) {
+              return (
+                <Link
+                  href="/painel/assinatura"
+                  className="mb-3 flex items-center justify-between gap-2 rounded-2xl bg-[#F59E0B]/12 px-3.5 py-2 text-xs text-[#B45309] dark:text-[#FBBF24]"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                    <span className="font-semibold truncate">
+                      Teste grátis: {diasRestantes} {diasRestantes === 1 ? "dia restante" : "dias restantes"}
+                    </span>
+                  </div>
+                  <span className="shrink-0 text-[11px] font-bold underline underline-offset-2">
+                    Ver planos
+                  </span>
+                </Link>
+              );
+            }
+
+            return null;
+          })()}
         {children}
       </main>
 

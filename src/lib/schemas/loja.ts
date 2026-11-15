@@ -47,6 +47,7 @@ export const createLojaSchema = z
     modo_escuro: z.boolean().optional().default(false),
     logo_url: z.string().trim().max(500).nullable().optional().default(null),
     capa_url: z.string().trim().max(500).nullable().optional().default(null),
+    aceitou_termos: z.boolean().optional().default(true),
     servicos: z.array(servicoPresetSchema).min(1, "Selecione pelo menos 1 serviço").max(20),
   })
   .strict();

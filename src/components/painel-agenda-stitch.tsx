@@ -34,6 +34,7 @@ import { formatBrazilPhone } from "@/lib/schemas/agendamento";
 import {
   atualizarStatusAgendamentoAction,
   criarEncaixeManualAction,
+  reagendarOuAdiarAgendamentoAction,
 } from "@/app/painel/actions";
 import {
   addDaysYmd,
@@ -126,6 +127,11 @@ export function PainelAgendaStitch({
   const [encServicos, setEncServicos] = useState<string[]>(() =>
     servicos[0]?.id ? [servicos[0].id] : []
   );
+  const [rescheduleTarget, setRescheduleTarget] = useState<AgendaAgendamentoItem | null>(null);
+  const [rescheduleData, setRescheduleData] = useState(getTodayYmdSaoPaulo);
+  const [rescheduleHora, setRescheduleHora] = useState("14:00");
+  const [rescheduleTipo, setRescheduleTipo] = useState<"adiamento" | "reagendamento">("adiamento");
+  const [rescheduleMotivo, setRescheduleMotivo] = useState("");
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -181,6 +187,48 @@ export function PainelAgendaStitch({
     }
     if (filtroProf !== "todos") setEncProfId(filtroProf);
     setEncaixeOpen(true);
+  }
+
+  function openRescheduleModal(ag: AgendaAgendamentoItem) {
+    setOpenMenuId(null);
+    const d = new Date(ag.inicio);
+    const ymd = d.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+    const hm = msToSaoPauloHm(d.getTime());
+    setRescheduleTarget(ag);
+    setRescheduleData(ymd);
+    setRescheduleHora(hm);
+    setRescheduleTipo("adiamento");
+    setRescheduleMotivo("");
+  }
+
+  function applyRescheduleDelta(deltaMin: number) {
+    if (!rescheduleTarget) return;
+    const nextMs = saoPauloToMs(rescheduleData, rescheduleHora) + deltaMin * 60_000;
+    const d = new Date(nextMs);
+    setRescheduleData(d.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }));
+    setRescheduleHora(msToSaoPauloHm(nextMs));
+  }
+
+  function handleSaveReschedule(e: React.FormEvent) {
+    e.preventDefault();
+    if (!rescheduleTarget) return;
+    const novoInicioIso = new Date(saoPauloToMs(rescheduleData, rescheduleHora)).toISOString();
+    startTransition(async () => {
+      const res = await reagendarOuAdiarAgendamentoAction({
+        agendamento_id: rescheduleTarget.id,
+        loja_id: lojaId,
+        novo_inicio_iso: novoInicioIso,
+        tipo: rescheduleTipo,
+        motivo: rescheduleMotivo,
+      });
+      if (res.error) {
+        showToast(res.error, "error");
+        return;
+      }
+      setRescheduleTarget(null);
+      showToast("Horário atualizado e cliente notificado.", "success");
+      router.refresh();
+    });
   }
 
   function handleQuickStatus(
@@ -649,6 +697,17 @@ export function PainelAgendaStitch({
                                     <span>Voltar p/ Confirmado</span>
                                   </button>
                                 )}
+                                {!isConcluido && ag.status !== "cancelado" && (
+                                  <button
+                                    type="button"
+                                    disabled={isPending}
+                                    onClick={() => openRescheduleModal(ag)}
+                                    className="flex min-h-[40px] w-full items-center gap-2 rounded-xl px-2.5 text-xs font-semibold text-[var(--zelo-ink)] hover:bg-[var(--zelo-soft)]"
+                                  >
+                                    <Clock className="h-4 w-4 shrink-0 text-[#F59E0B]" />
+                                    <span>Adiar / Reagendar</span>
+                                  </button>
+                                )}
                                 <button
                                   type="button"
                                   disabled={isPending}
@@ -742,6 +801,17 @@ export function PainelAgendaStitch({
                                   >
                                     <RotateCcw className="h-4 w-4 shrink-0" />
                                     <span>Voltar p/ Confirmado</span>
+                                  </button>
+                                )}
+                                {!isConcluido && ag.status !== "cancelado" && (
+                                  <button
+                                    type="button"
+                                    disabled={isPending}
+                                    onClick={() => openRescheduleModal(ag)}
+                                    className="flex min-h-[40px] w-full items-center gap-2 rounded-xl px-2.5 text-xs font-semibold text-[var(--zelo-ink)] hover:bg-[var(--zelo-soft)]"
+                                  >
+                                    <Clock className="h-4 w-4 shrink-0 text-[#F59E0B]" />
+                                    <span>Adiar / Reagendar</span>
                                   </button>
                                 )}
                                 <button
@@ -905,6 +975,97 @@ export function PainelAgendaStitch({
               {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
               <span>Salvar Encaixe</span>
             </button>
+        </form>
+      </BottomSheet>
+
+      <BottomSheet
+        open={Boolean(rescheduleTarget)}
+        onClose={() => setRescheduleTarget(null)}
+        title="Adiar ou Reagendar Horário"
+        subtitle={
+          rescheduleTarget
+            ? `${rescheduleTarget.cliente_nome} — ${rescheduleTarget.servicos_resumo}`
+            : undefined
+        }
+      >
+        <form onSubmit={handleSaveReschedule} className="space-y-3">
+          <div className="grid grid-cols-2 gap-1.5 rounded-xl bg-[var(--zelo-soft)] p-1">
+            <button
+              type="button"
+              onClick={() => setRescheduleTipo("adiamento")}
+              className={`min-h-[36px] rounded-lg text-xs font-semibold transition ${
+                rescheduleTipo === "adiamento"
+                  ? "bg-[var(--zelo-card)] text-[var(--zelo-ink)] shadow-sm"
+                  : "text-[var(--zelo-muted)]"
+              }`}
+            >
+              Adiar (atraso / encaixe)
+            </button>
+            <button
+              type="button"
+              onClick={() => setRescheduleTipo("reagendamento")}
+              className={`min-h-[36px] rounded-lg text-xs font-semibold transition ${
+                rescheduleTipo === "reagendamento"
+                  ? "bg-[var(--zelo-card)] text-[var(--zelo-ink)] shadow-sm"
+                  : "text-[var(--zelo-muted)]"
+              }`}
+            >
+              Reagendar data/hora
+            </button>
+          </div>
+
+          <div>
+            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--zelo-muted)]">
+              Ajuste rápido
+            </p>
+            <div className="grid grid-cols-4 gap-1.5">
+              {[15, 30, 45, 60].map((min) => (
+                <button
+                  key={min}
+                  type="button"
+                  onClick={() => applyRescheduleDelta(min)}
+                  className="min-h-[38px] rounded-xl bg-[var(--zelo-soft)] text-xs font-semibold text-[var(--zelo-ink)] transition hover:opacity-80"
+                >
+                  +{min === 60 ? "1h" : `${min}m`}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              type="date"
+              required
+              value={rescheduleData}
+              onChange={(e) => setRescheduleData(e.target.value)}
+              className="h-11 rounded-xl bg-[var(--zelo-soft)] px-3 text-sm outline-none"
+            />
+            <input
+              type="time"
+              required
+              value={rescheduleHora}
+              onChange={(e) => setRescheduleHora(e.target.value)}
+              className="h-11 rounded-xl bg-[var(--zelo-soft)] px-3 text-sm outline-none"
+            />
+          </div>
+
+          <input
+            type="text"
+            placeholder="Motivo opcional (ex: Encaixe de emergência)"
+            maxLength={180}
+            value={rescheduleMotivo}
+            onChange={(e) => setRescheduleMotivo(e.target.value)}
+            className="h-11 w-full rounded-xl bg-[var(--zelo-soft)] px-3 text-sm outline-none"
+          />
+
+          <button
+            type="submit"
+            disabled={isPending}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--zelo-btn-bg)] text-sm font-semibold text-[var(--zelo-btn-ink)] disabled:opacity-50"
+          >
+            {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+            <span>Confirmar e Notificar Cliente</span>
+          </button>
         </form>
       </BottomSheet>
     </div>

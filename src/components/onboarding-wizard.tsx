@@ -183,6 +183,7 @@ export function OnboardingWizard() {
   const [capaBlob, setCapaBlob] = useState<Blob | null>(null);
   const [capaPreview, setCapaPreview] = useState<string | null>(null);
   const [stockTarget, setStockTarget] = useState<"logo" | "capa" | number | null>(null);
+  const [aceitouTermos, setAceitouTermos] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const notifyError = (msg: string) => {
@@ -297,6 +298,11 @@ export function OnboardingWizard() {
 
   const handleSubmit = () => {
     const servicosAtivosLista = servicos.filter((s) => s.ativo);
+    if (!aceitouTermos) {
+      notifyError("Aceite os Termos de Uso e a Política de Privacidade (LGPD) para publicar.");
+      return;
+    }
+
     const servicosAtivos = servicosAtivosLista.map(
       ({ nome: n, duracao_min, preco_centavos, imagem_url }) => ({
         nome: n,
@@ -327,6 +333,7 @@ export function OnboardingWizard() {
         modo_escuro: tema === "glam" || tema === "urban" ? false : modoEscuro,
         logo_url: logoUrl,
         capa_url: capaUrl,
+        aceitou_termos: aceitouTermos,
         servicos: servicosAtivos,
       });
       if (res?.error || !res?.lojaId) {
@@ -1218,6 +1225,52 @@ export function OnboardingWizard() {
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Transparência do Trial + Aceite LGPD / Termos */}
+              <div className="rounded-2xl bg-[var(--zelo-card)] p-4 shadow-xs space-y-3">
+                <div className="flex items-start gap-2.5">
+                  <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-[#F59E0B]" />
+                  <div className="space-y-1">
+                    <p className="text-xs font-bold text-[var(--zelo-ink)]">
+                      14 dias grátis, sem cartão de crédito
+                    </p>
+                    <p className="text-xs leading-relaxed text-[var(--zelo-muted)]">
+                      Você começa no período de teste completo. Depois dos 14 dias, só continua se
+                      escolher um plano em <strong>Assinatura</strong> no painel:{" "}
+                      <strong>Solo (R$ 29/mês)</strong> ou <strong>Estúdio (R$ 59/mês)</strong> via
+                      PIX, Boleto ou Cartão (Asaas). Sem cobrança automática.
+                    </p>
+                  </div>
+                </div>
+
+                <label className="flex cursor-pointer items-start gap-2.5 rounded-xl bg-[var(--zelo-soft)] p-3">
+                  <input
+                    type="checkbox"
+                    checked={aceitouTermos}
+                    onChange={(e) => setAceitouTermos(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--zelo-btn-bg)]"
+                  />
+                  <span className="text-xs leading-relaxed text-[var(--zelo-muted)]">
+                    Li e concordo com os{" "}
+                    <Link
+                      href="/termos"
+                      target="_blank"
+                      className="font-semibold text-[var(--zelo-ink)] underline underline-offset-2"
+                    >
+                      Termos de Uso
+                    </Link>{" "}
+                    e com a{" "}
+                    <Link
+                      href="/privacidade"
+                      target="_blank"
+                      className="font-semibold text-[var(--zelo-ink)] underline underline-offset-2"
+                    >
+                      Política de Privacidade (LGPD)
+                    </Link>{" "}
+                    do Zelo.
+                  </span>
+                </label>
               </div>
             </div>
           </div>

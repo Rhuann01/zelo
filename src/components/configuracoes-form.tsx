@@ -56,6 +56,9 @@ export function ConfiguracoesForm({
   const [nome, setNome] = useState(ctx.perfil.nome);
   const [whatsapp, setWhatsapp] = useState(ctx.perfil.whatsapp ?? "");
   const [pushAtivo, setPushAtivo] = useState(ctx.perfil.notificacoes_push);
+  const [novoAgendamentoPushAtivo, setNovoAgendamentoPushAtivo] = useState(
+    ctx.perfil.notificacoes_novo_agendamento
+  );
   const [emailAtivo, setEmailAtivo] = useState(ctx.perfil.notificacoes_email);
   const [pausada, setPausada] = useState(ctx.lojaAtual.pausada);
   const [nomeLoja, setNomeLoja] = useState(ctx.lojaAtual.nome);
@@ -76,6 +79,7 @@ export function ConfiguracoesForm({
     nome: ctx.perfil.nome,
     whatsapp: ctx.perfil.whatsapp ?? "",
     pushAtivo: ctx.perfil.notificacoes_push,
+    novoAgendamentoPushAtivo: ctx.perfil.notificacoes_novo_agendamento,
     emailAtivo: ctx.perfil.notificacoes_email,
     pausada: ctx.lojaAtual.pausada,
     nomeLoja: ctx.lojaAtual.nome,
@@ -86,6 +90,7 @@ export function ConfiguracoesForm({
     nome !== savedSnapshot.nome ||
     whatsapp !== savedSnapshot.whatsapp ||
     pushAtivo !== savedSnapshot.pushAtivo ||
+    novoAgendamentoPushAtivo !== savedSnapshot.novoAgendamentoPushAtivo ||
     emailAtivo !== savedSnapshot.emailAtivo ||
     (showProfPixField && minhaChavePix !== savedSnapshot.minhaChavePix) ||
     (ctx.isOwner &&
@@ -128,6 +133,7 @@ export function ConfiguracoesForm({
           nome,
           whatsapp,
           notificacoes_push: pushAtivo,
+          notificacoes_novo_agendamento: novoAgendamentoPushAtivo,
           notificacoes_email: emailAtivo,
           ...(showProfPixField
             ? { loja_id: ctx.lojaAtual.id, minha_chave_pix: minhaChavePix.trim() || null }
@@ -142,6 +148,7 @@ export function ConfiguracoesForm({
             nome,
             whatsapp,
             pushAtivo,
+            novoAgendamentoPushAtivo,
             emailAtivo,
             pausada,
             nomeLoja,
@@ -373,6 +380,44 @@ export function ConfiguracoesForm({
           <div className="px-2 pb-2">
             <WebPushOptIn />
           </div>
+
+          <label className="flex h-14 cursor-pointer items-center justify-between rounded-lg px-2.5 transition-colors hover:bg-[var(--zelo-soft)]">
+            <div className="flex items-center gap-2.5">
+              <BellRing className="h-5 w-5 text-[var(--zelo-muted)]" />
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-[var(--zelo-ink)]">
+                  Alerta de novo agendamento
+                </span>
+                <span className="text-xs text-[var(--zelo-muted)]">
+                  {novoAgendamentoPushAtivo
+                    ? "Avisa a cada nova reserva"
+                    : "Silenciado (só aparece na agenda)"}
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setNovoAgendamentoPushAtivo((v) => !v)}
+              className="inline-flex min-h-[44px] items-center px-1"
+              aria-label="Alternar alerta de novo agendamento"
+            >
+              <span
+                className={`flex h-6 w-11 items-center rounded-full p-0.5 transition-colors ${
+                  novoAgendamentoPushAtivo
+                    ? "bg-[var(--zelo-btn-bg)]"
+                    : "bg-[#D4D4D8] dark:bg-[#3F3F46]"
+                }`}
+              >
+                <span
+                  className={`h-5 w-5 rounded-full shadow-sm transition-transform ${
+                    novoAgendamentoPushAtivo
+                      ? "translate-x-5 bg-[var(--zelo-btn-ink)]"
+                      : "translate-x-0 bg-white"
+                  }`}
+                />
+              </span>
+            </button>
+          </label>
 
           <label className="flex h-14 cursor-pointer items-center justify-between rounded-lg px-2.5 transition-colors hover:bg-[var(--zelo-soft)]">
             <div className="flex items-center gap-2.5">

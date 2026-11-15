@@ -2,10 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { formatBrDataHora, notifyUserPrioritizingPush } from "@/lib/notifications/dispatch";
 import {
   atualizarStatusAgendamentoSchema,
   encaixeManualSchema,
   pushSubscriptionSchema,
+  reagendarPainelSchema,
 } from "@/lib/schemas/painel-agenda";
 
 export async function criarEncaixeManualAction(raw: unknown) {
@@ -115,15 +117,125 @@ export async function atualizarStatusAgendamentoAction(raw: unknown) {
     .update({ status, updated_at: new Date().toISOString() })
     .eq("id", agendamento_id)
     .eq("loja_id", loja_id)
-    .select("id")
+    .select("id, cliente_id, inicio, loja:lojas(nome)")
     .maybeSingle();
 
   if (error || !data) {
     return { error: "Sem permissão para atualizar este agendamento." };
   }
 
+  if (status === "cancelado" && data.cliente_id) {
+    try {
+      const lojaObj = Array.isArray(data.loja) ? data.loja[0] : data.loja;
+      const { data: dataBr, hora: horaBr } = formatBrDataHora(data.inicio);
+      await notifyUserPrioritizingPush({
+        userId: data.cliente_id,
+        tipo: "cancelamento",
+        lojaId: loja_id,
+        agendamentoId: data.id,
+        title: `Horário cancelado • ${lojaObj?.nome ?? "Zelo"}`,
+        body: `Seu agendamento de ${dataBr} às ${horaBr} foi cancelado pelo estabelecimento.`,
+        url: "/explorar",
+      });
+    } catch {
+      // silencioso
+    }
+  }
+
   revalidatePath("/painel");
   revalidatePath("/painel/financeiro");
+  revalidatePath("/explorar");
+  return { ok: true };
+}
+
+export async function reagendarOuAdiarAgendamentoAction(raw: unknown) {
+  const parsed = reagendarPainelSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos para reagendar." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sessão expirada." };
+
+  const { agendamento_id, loja_id, novo_inicio_iso, tipo, motivo } = parsed.data;
+  const novoInicioMs = Date.parse(novo_inicio_iso);
+  if (Number.isNaN(novoInicioMs) || novoInicioMs < Date.now() - 60_000) {
+    return { error: "Escolha um horário futuro para reagendar ou adiar." };
+  }
+
+  const { data: atual, error: fetchErr } = await supabase
+    .from("agendamentos")
+    .select("id, inicio, fim, cliente_id, cliente_nome, status, loja:lojas(nome)")
+    .eq("id", agendamento_id)
+    .eq("loja_id", loja_id)
+    .maybeSingle();
+
+  if (fetchErr || !atual) {
+    return { error: "Agendamento não encontrado ou sem permissão." };
+  }
+
+  const duracaoMs = Math.max(15 * 60_000, Date.parse(atual.fim) - Date.parse(atual.inicio));
+  const novoFimIso = new Date(novoInicioMs + duracaoMs).toISOString();
+
+  const { error: updateErr } = await supabase
+    .from("agendamentos")
+    .update({
+      inicio: novo_inicio_iso,
+      fim: novoFimIso,
+      status: "confirmado",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", agendamento_id)
+    .eq("loja_id", loja_id);
+
+  if (updateErr) {
+    if (updateErr.code === "23P01") {
+      return {
+        error:
+          "Já existe outro agendamento nesse novo horário para este profissional. Escolha outro horário.",
+      };
+    }
+    return { error: "Não foi possível atualizar o horário do agendamento." };
+  }
+
+  if (atual.cliente_id) {
+    try {
+      const lojaObj = Array.isArray(atual.loja) ? atual.loja[0] : atual.loja;
+      const lojaNome = lojaObj?.nome ?? "Zelo";
+      const antigo = formatBrDataHora(atual.inicio);
+      const novo = formatBrDataHora(novo_inicio_iso);
+
+      const titulo =
+        tipo === "adiamento"
+          ? `Seu horário foi adiado • ${lojaNome}`
+          : `Horário reagendado • ${lojaNome}`;
+      const motivoTxt = motivo?.trim() ? ` Motivo: ${motivo.trim()}.` : "";
+      const body = `Seu atendimento de ${antigo.data} às ${antigo.hora} foi ajustado para ${novo.data} às ${novo.hora}.${motivoTxt}`;
+
+      await notifyUserPrioritizingPush({
+        userId: atual.cliente_id,
+        tipo,
+        lojaId: loja_id,
+        agendamentoId: atual.id,
+        title: titulo,
+        body,
+        url: "/explorar",
+        acaoTipo: "confirmar_adiamento",
+        acaoPayload: {
+          agendamento_id: atual.id,
+          loja_id,
+          novo_inicio_iso,
+        },
+      });
+    } catch {
+      // silencioso
+    }
+  }
+
+  revalidatePath("/painel");
   revalidatePath("/explorar");
   return { ok: true };
 }

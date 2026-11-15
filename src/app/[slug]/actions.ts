@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { formatBrDataHora, notifyUserPrioritizingPush } from "@/lib/notifications/dispatch";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/security/rate-limit";
 import { verifyTurnstileToken } from "@/lib/security/turnstile";
 import {
@@ -111,6 +113,28 @@ export async function criarAgendamentoAction(raw: unknown): Promise<{
     return { error: "Escolha um horário futuro para agendar." };
   }
 
+  const admin = createAdminClient();
+  const { data: lojaBilling } = await admin
+    .from("lojas")
+    .select("nome, owner_id, assinatura_status, trial_ate")
+    .eq("id", input.loja_id)
+    .maybeSingle();
+
+  if (lojaBilling) {
+    const trialExpirado =
+      lojaBilling.assinatura_status === "trial" &&
+      Date.parse(lojaBilling.trial_ate) < Date.now();
+    if (
+      trialExpirado ||
+      lojaBilling.assinatura_status === "atrasada" ||
+      lojaBilling.assinatura_status === "cancelada"
+    ) {
+      return {
+        error: "Este estabelecimento está com a agenda online temporariamente indisponível.",
+      };
+    }
+  }
+
   // Salva WhatsApp no perfil do cliente se informado no 1º agendamento
   if (input.whatsapp_cliente && input.whatsapp_cliente.trim().length >= 10) {
     await supabase
@@ -150,6 +174,60 @@ export async function criarAgendamentoAction(raw: unknown): Promise<{
   const row = Array.isArray(data) ? data[0] : data;
   if (!row) {
     return { error: "Falha ao registrar o agendamento." };
+  }
+
+  try {
+    const [{ data: prof }, { data: srvs }, { data: perfilCli }] = await Promise.all([
+      admin
+        .from("profissionais")
+        .select("user_id")
+        .eq("id", input.profissional_id)
+        .maybeSingle(),
+      admin
+        .from("servicos")
+        .select("nome")
+        .in("id", input.servicos_ids),
+      admin
+        .from("perfis")
+        .select("nome")
+        .eq("id", user.id)
+        .maybeSingle(),
+    ]);
+
+    const { data: dataBr, hora: horaBr } = formatBrDataHora(row.inicio);
+    const servicosTexto = (srvs ?? []).map((s) => s.nome).join(" + ") || "Atendimento";
+    const clienteNome =
+      input.beneficiario_nome?.trim() || perfilCli?.nome?.trim() || "Cliente";
+    const lojaNome = lojaBilling?.nome ?? "Zelo";
+
+    const destinatarios = new Set<string>();
+    if (prof?.user_id) destinatarios.add(prof.user_id);
+    if (lojaBilling?.owner_id) destinatarios.add(lojaBilling.owner_id);
+
+    await Promise.all([
+      ...Array.from(destinatarios).map((destId) =>
+        notifyUserPrioritizingPush({
+          userId: destId,
+          tipo: "novo_agendamento",
+          lojaId: input.loja_id,
+          agendamentoId: row.agendamento_id,
+          title: `Novo agendamento • ${lojaNome}`,
+          body: `${clienteNome} marcou ${servicosTexto} em ${dataBr} às ${horaBr}.`,
+          url: "/painel",
+        })
+      ),
+      notifyUserPrioritizingPush({
+        userId: user.id,
+        tipo: "sistema",
+        lojaId: input.loja_id,
+        agendamentoId: row.agendamento_id,
+        title: `Horário confirmado • ${lojaNome}`,
+        body: `Seu atendimento (${servicosTexto}) está marcado para ${dataBr} às ${horaBr}.`,
+        url: "/explorar",
+      }),
+    ]);
+  } catch {
+    // Falha de push/notificação não cancela reserva confirmada
   }
 
   revalidatePath("/painel");
@@ -195,6 +273,46 @@ export async function cancelarOuRemarcarAction(raw: unknown): Promise<{
       return { error: "O novo horário escolhido já está ocupado." };
     }
     return { error: "Não foi possível atualizar o agendamento." };
+  }
+
+  try {
+    const admin = createAdminClient();
+    const { data: ag } = await admin
+      .from("agendamentos")
+      .select("id, loja_id, cliente_nome, inicio, loja:lojas(nome, owner_id), profissional:profissionais(user_id)")
+      .eq("id", agendamento_id)
+      .maybeSingle();
+
+    if (ag) {
+      const lojaObj = Array.isArray(ag.loja) ? ag.loja[0] : ag.loja;
+      const profObj = Array.isArray(ag.profissional) ? ag.profissional[0] : ag.profissional;
+      const { data: dataBr, hora: horaBr } = formatBrDataHora(ag.inicio);
+      const destinatarios = new Set<string>();
+      if (profObj?.user_id) destinatarios.add(profObj.user_id);
+      if (lojaObj?.owner_id) destinatarios.add(lojaObj.owner_id);
+
+      await Promise.all(
+        Array.from(destinatarios).map((destId) =>
+          notifyUserPrioritizingPush({
+            userId: destId,
+            tipo: acao === "cancelar" ? "cancelamento" : "reagendamento",
+            lojaId: ag.loja_id,
+            agendamentoId: ag.id,
+            title:
+              acao === "cancelar"
+                ? `Horário cancelado • ${lojaObj?.nome ?? "Zelo"}`
+                : `Horário remarcado • ${lojaObj?.nome ?? "Zelo"}`,
+            body:
+              acao === "cancelar"
+                ? `${ag.cliente_nome} cancelou o horário de ${dataBr} às ${horaBr}.`
+                : `${ag.cliente_nome} remarcou o atendimento para ${dataBr} às ${horaBr}.`,
+            url: "/painel",
+          })
+        )
+      );
+    }
+  } catch {
+    // silencioso
   }
 
   revalidatePath("/painel");

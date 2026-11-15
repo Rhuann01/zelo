@@ -28,7 +28,7 @@ import { useViewerPerfil } from "@/lib/supabase/use-viewer-perfil";
 import { ZeloLogo } from "@/components/zelo-logo";
 import { ZeloToastViewport, showToast } from "@/components/zelo-toast";
 import { PwaInstallBanner } from "@/components/pwa-install-banner";
-import { ExplorarHeaderAvatar } from "@/components/explorar-header-avatar";
+import { NotificationsSheet } from "@/components/notifications-sheet";
 import { ExplorarMeusHorarios } from "@/components/explorar-meus-horarios";
 import { StoreBannerMedia } from "@/components/ui/store-banner-media";
 import { ExplorarPerfilForm } from "@/components/explorar-perfil-form";
@@ -238,7 +238,7 @@ export function ExplorarVitrine({
                 <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-rose-500" />
               )}
             </button>
-            <ExplorarHeaderAvatar onSelectPerfil={() => setTab("perfil")} />
+            <NotificationsSheet />
           </div>
         </div>
       </header>

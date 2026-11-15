@@ -20,6 +20,16 @@ export const atualizarStatusAgendamentoSchema = z
   })
   .strict();
 
+export const reagendarPainelSchema = z
+  .object({
+    agendamento_id: z.string().uuid(),
+    loja_id: z.string().uuid(),
+    novo_inicio_iso: z.string().datetime({ offset: true, message: "Horário inválido" }),
+    tipo: z.enum(["adiamento", "reagendamento"]).default("adiamento"),
+    motivo: z.string().trim().max(180).optional().default(""),
+  })
+  .strict();
+
 export const pushSubscriptionSchema = z
   .object({
     endpoint: z.string().url(),

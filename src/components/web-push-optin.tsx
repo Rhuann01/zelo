@@ -124,6 +124,9 @@ export function WebPushOptIn() {
       if (reg && Notification.permission === "granted") {
         await reg.showNotification("Zelo — Teste de Alerta", {
           body: "As notificações estão funcionando perfeitamente neste aparelho!",
+          icon: "/icon.svg",
+          badge: "/icon.svg",
+          tag: "zelo-teste",
           data: { url: "/painel" },
         });
         showToast("Notificação de teste enviada!", "success");

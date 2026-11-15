@@ -56,6 +56,7 @@ export async function createLojaAction(rawInput: CreateLojaInput): Promise<Onboa
   }
 
   const input = parsed.data;
+  const nowIso = new Date().toISOString();
 
   const { data: loja, error: lojaError } = await supabase
     .from("lojas")
@@ -82,6 +83,7 @@ export async function createLojaAction(rawInput: CreateLojaInput): Promise<Onboa
       capa_url: input.capa_url || null,
       cor_primaria: COR_PADRAO_POR_TEMA[input.tema],
       raio_borda_px: RAIO_PADRAO_POR_TEMA[input.tema],
+      termos_aceitos_em: input.aceitou_termos ? nowIso : null,
       horarios_loja: {
         seg: { ativo: true, abre: "09:00", fecha: "20:00" },
         ter: { ativo: true, abre: "09:00", fecha: "20:00" },
@@ -100,6 +102,13 @@ export async function createLojaAction(rawInput: CreateLojaInput): Promise<Onboa
       return { error: "Esse link já está em uso. Escolha outro endereço para sua loja." };
     }
     return { error: "Não foi possível criar a loja agora. Tente novamente." };
+  }
+
+  if (input.aceitou_termos) {
+    await supabase
+      .from("perfis")
+      .update({ termos_aceitos_em: nowIso, updated_at: nowIso })
+      .eq("id", user.id);
   }
 
   const { data: perfil } = await supabase

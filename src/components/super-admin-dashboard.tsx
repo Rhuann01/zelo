@@ -646,7 +646,7 @@ export function SuperAdminDashboard({
                                 className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold ${darkMode ? "hover:bg-white/8" : "hover:bg-black/5"}`}
                               >
                                 <CreditCard className="h-3.5 w-3.5 text-[#FF5A1F]" />
-                                <span>Ativar Solo (R$ 29)</span>
+                                <span>Liberar Solo (Cortesia/Manual)</span>
                               </button>
                               <button
                                 type="button"
@@ -658,7 +658,7 @@ export function SuperAdminDashboard({
                                 className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold ${darkMode ? "hover:bg-white/8" : "hover:bg-black/5"}`}
                               >
                                 <CreditCard className="h-3.5 w-3.5 text-[#FF5A1F]" />
-                                <span>Ativar Estúdio (R$ 59)</span>
+                                <span>Liberar Estúdio (Cortesia/Manual)</span>
                               </button>
                               <button
                                 type="button"

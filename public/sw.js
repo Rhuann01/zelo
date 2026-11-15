@@ -1,6 +1,13 @@
 self.addEventListener("push", (event) => {
   if (!event.data) return;
-  let payload = { title: "Zelo", body: "Você tem uma atualização na agenda.", url: "/painel" };
+  let payload = {
+    title: "Zelo",
+    body: "Você tem uma atualização na agenda.",
+    url: "/painel",
+    icon: "/icon.svg",
+    badge: "/icon.svg",
+    tag: "zelo-alerta",
+  };
   try {
     payload = { ...payload, ...event.data.json() };
   } catch {
@@ -10,6 +17,10 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(payload.title, {
       body: payload.body,
+      icon: payload.icon || "/icon.svg",
+      badge: payload.badge || "/icon.svg",
+      tag: payload.tag || "zelo-alerta",
+      renotify: true,
       data: { url: payload.url || "/painel" },
     })
   );

@@ -36,6 +36,9 @@ export async function saveConfiguracoesAction(raw: unknown) {
       nome: input.nome,
       whatsapp: input.whatsapp || null,
       notificacoes_push: input.notificacoes_push,
+      ...(input.notificacoes_novo_agendamento !== undefined
+        ? { notificacoes_novo_agendamento: input.notificacoes_novo_agendamento }
+        : {}),
       notificacoes_email: input.notificacoes_email,
       updated_at: new Date().toISOString(),
     })

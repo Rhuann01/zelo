@@ -116,6 +116,7 @@ export const perfilConfigSchema = z
     nome: z.string().trim().min(2, "Informe seu nome").max(80),
     whatsapp: z.string().trim().max(20).default(""),
     notificacoes_push: z.boolean(),
+    notificacoes_novo_agendamento: z.boolean().optional(),
     notificacoes_email: z.boolean(),
     loja_id: z.string().uuid().optional(),
     nome_loja: z.string().trim().min(2, "Informe o nome da loja").max(80).optional(),
