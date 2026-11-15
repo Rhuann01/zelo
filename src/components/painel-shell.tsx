@@ -125,7 +125,7 @@ export function PainelShell({
         {children}
       </main>
 
-      <nav className="fixed bottom-0 z-50 w-full bg-[var(--zelo-bg)]/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(0,0,0,0.04)] pb-[min(env(safe-area-inset-bottom,0px),8px)]">
+      <nav className="fixed bottom-0 z-50 w-full bg-[var(--zelo-bg)]/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(0,0,0,0.04)] pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="mx-auto flex h-14 max-w-[480px] items-center justify-evenly px-3">
           {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
             const active =
