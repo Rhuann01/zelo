@@ -47,8 +47,9 @@ export function PwaInstallBanner() {
 
     const ua = window.navigator.userAgent || "";
     const iosDevice =
-      /iPad|iPhone|iPod/.test(ua) ||
-      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      /iPad|iPhone|iPod/i.test(ua) ||
+      ((navigator.platform === "MacIntel" || /Macintosh/i.test(ua)) &&
+        navigator.maxTouchPoints > 1);
     const androidDevice = /Android/i.test(ua);
 
     if (iosDevice) {

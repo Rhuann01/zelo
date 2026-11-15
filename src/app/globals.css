@@ -64,6 +64,15 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* Evita auto-zoom do Safari no iOS ao focar inputs com fonte < 16px */
+@supports (-webkit-touch-callout: none) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 .hero-grid-bg {
   background-image: radial-gradient(color-mix(in srgb, var(--zelo-ink) 16%, transparent) 1.15px, transparent 1.15px);
   background-size: 22px 22px;

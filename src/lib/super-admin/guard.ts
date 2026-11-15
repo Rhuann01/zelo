@@ -106,14 +106,17 @@ export async function verifySuperAdminBaseIdentity(): Promise<SuperAdminGuardRes
     return { ok: false, status: 403, reason: "not_allowlisted" };
   }
 
-  // Camada 2: MFA AAL2
+  // Camada 2: MFA AAL2 (ou PIN do fundador configurado no servidor, salvo se SUPER_ADMIN_REQUIRE_MFA=true)
   const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
   const currentLevel = aalData?.currentLevel ?? null;
   const allowLocalAal1 =
     process.env.NODE_ENV !== "production" &&
     process.env.SUPER_ADMIN_ALLOW_LOCAL_AAL1 === "true";
+  const hasPinSecondFactor =
+    process.env.SUPER_ADMIN_REQUIRE_MFA !== "true" &&
+    Boolean(process.env.SUPER_ADMIN_PIN?.trim());
 
-  if (currentLevel !== "aal2" && !allowLocalAal1) {
+  if (currentLevel !== "aal2" && !allowLocalAal1 && !hasPinSecondFactor) {
     return { ok: false, status: 403, reason: "mfa_required" };
   }
 
