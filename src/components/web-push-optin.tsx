@@ -111,6 +111,15 @@ export function WebPushOptIn() {
 
       setEnabled(true);
       showToast("Alertas Web Push ativados neste aparelho.", "success");
+      await reg
+        .showNotification("Zelo — Notificações ativadas!", {
+          body: "Tudo certo! Agora você receberá avisos de agendamentos e alterações em tempo real.",
+          icon: "/icon.svg",
+          badge: "/icon.svg",
+          tag: "zelo-ativado",
+          data: { url: "/explorar" },
+        })
+        .catch(() => {});
     } catch {
       showToast("Não foi possível ativar notificações neste navegador.", "error");
     } finally {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
@@ -16,6 +17,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { cancelarOuRemarcarAction } from "@/app/[slug]/actions";
+import { WebPushOptIn } from "@/components/web-push-optin";
 import { showToast } from "@/components/zelo-toast";
 
 export interface NotificacaoItem {
@@ -63,6 +65,7 @@ function getTipoIcon(tipo: string) {
 
 export function NotificationsSheet() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const [rendered, setRendered] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -90,6 +93,7 @@ export function NotificationsSheet() {
   }, []);
 
   useEffect(() => {
+    setMounted(true);
     loadNotifications();
   }, [loadNotifications]);
 
@@ -206,25 +210,28 @@ export function NotificationsSheet() {
         )}
       </button>
 
-      {rendered && (
-        <div
-          className="fixed inset-0 z-50 flex justify-end"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Central de notificações"
-        >
+      {mounted &&
+        rendered &&
+        createPortal(
           <div
-            onClick={() => setOpen(false)}
-            className={`fixed inset-0 bg-black/50 backdrop-blur-[2px] transition-opacity duration-250 ${
-              open ? "opacity-100" : "opacity-0"
-            }`}
-          />
-
-          <aside
-            className={`relative z-10 flex h-full w-full max-w-[380px] flex-col bg-[var(--zelo-bg)] text-[var(--zelo-ink)] shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-              open ? "translate-x-0" : "translate-x-full"
-            }`}
+            className="fixed inset-0 z-[100] flex justify-end"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Central de notificações"
           >
+            <div
+              onClick={() => setOpen(false)}
+              className={`fixed inset-0 bg-black/55 backdrop-blur-[2px] transition-opacity duration-250 ${
+                open ? "opacity-100" : "opacity-0"
+              }`}
+            />
+
+            <aside
+              onClick={(e) => e.stopPropagation()}
+              className={`relative z-10 flex h-dvh w-full max-w-[380px] flex-col bg-[var(--zelo-bg)] text-[var(--zelo-ink)] shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                open ? "translate-x-0" : "translate-x-full"
+              }`}
+            >
             <div className="flex items-center justify-between gap-2 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-3">
               <div>
                 <h2 className="text-base font-extrabold tracking-tight">Notificações</h2>
@@ -268,6 +275,7 @@ export function NotificationsSheet() {
             </div>
 
             <div className="flex-1 overflow-y-auto px-4 pb-6 space-y-2.5">
+              {authenticated && <WebPushOptIn />}
               {loading && items.length === 0 ? (
                 <div className="flex items-center justify-center py-14 text-xs text-[var(--zelo-muted)] gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -375,8 +383,9 @@ export function NotificationsSheet() {
               )}
             </div>
           </aside>
-        </div>
-      )}
+        </div>,
+          document.body
+        )}
     </>
   );
 }
