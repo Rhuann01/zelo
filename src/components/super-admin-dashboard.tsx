@@ -38,6 +38,7 @@ import {
   Zap,
 } from "lucide-react";
 import { EmptyState } from "@/components/ui";
+import { DeviceRoseChart } from "@/components/device-rose-chart";
 import {
   superAdminBroadcastNotificationAction,
   superAdminExtendTrialAction,
@@ -133,7 +134,6 @@ export function SuperAdminDashboard({
     });
   };
   const [periodo, setPeriodo] = useState<"hoje" | "7d" | "30d" | "mes">("30d");
-  const [quickActionsOpen, setQuickActionsOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [busca, setBusca] = useState("");
   const [filtroSemaforo, setFiltroSemaforo] = useState<"todos" | SemaforoCor>(
@@ -313,6 +313,14 @@ export function SuperAdminDashboard({
       </span>
     );
 
+  const NichoIcon = (nicho: string) => {
+    if (nicho === "barbearia") return <Scissors className="h-4 w-4" />;
+    if (nicho === "estetica" || nicho === "salao") {
+      return <Sparkles className="h-4 w-4" />;
+    }
+    return <Store className="h-4 w-4" />;
+  };
+
   const renderSemaforoTable = (limit = 6) => {
     const pageSize = limit;
     const totalFiltered = lojasFiltradas.length;
@@ -339,14 +347,6 @@ export function SuperAdminDashboard({
       }
     };
 
-    const NichoIcon = (nicho: string) => {
-      if (nicho === "barbearia") return <Scissors className="h-4 w-4" />;
-      if (nicho === "estetica" || nicho === "salao") {
-        return <Sparkles className="h-4 w-4" />;
-      }
-      return <Store className="h-4 w-4" />;
-    };
-
     return (
       <section className={`rounded-3xl ${bgCard} p-5 space-y-4`}>
         <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-3">
@@ -362,7 +362,7 @@ export function SuperAdminDashboard({
           <div className="flex flex-col sm:flex-row sm:items-center gap-2">
             <div className="flex flex-wrap items-center gap-2">
               <div
-                className={`inline-flex items-center gap-1 rounded-full ${bgSub} p-1 overflow-x-auto no-scrollbar`}
+                className={`flex flex-wrap items-center gap-1 rounded-2xl sm:rounded-full ${bgSub} p-1 max-w-full`}
               >
                 {(
                   [
@@ -496,7 +496,8 @@ export function SuperAdminDashboard({
                       />
                     </th>
                     <th className="py-3 px-2.5">Código/ID</th>
-                    <th className="py-3 px-2.5">Estabelecimento &amp; Nicho</th>
+                    <th className="py-3 px-2.5">Estabelecimento</th>
+                    <th className="py-3 px-2.5">Nicho</th>
                     <th className="py-3 px-2.5">Polo / Bairro</th>
                     <th className="py-3 px-2.5">Plano &amp; Volume</th>
                     <th className="py-3 px-2.5">Status Operacional</th>
@@ -568,10 +569,20 @@ export function SuperAdminDashboard({
                                 )}
                               </div>
                               <p className={`text-[11px] font-mono-num ${textMuted}`}>
-                                /{loja.slug} • {loja.nicho}
+                                /{loja.slug}
                               </p>
                             </div>
                           </div>
+                        </td>
+                        <td className="py-3.5 px-2.5">
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-full ${bgSub} px-2.5 py-1 text-[11px] font-semibold capitalize`}
+                          >
+                            <span className="text-[#FF5A1F]">
+                              {NichoIcon(loja.nicho)}
+                            </span>
+                            <span>{loja.nicho}</span>
+                          </span>
                         </td>
                         <td className="py-3.5 px-2.5">
                           <span className="font-semibold">{loja.cidade}</span>
@@ -761,67 +772,106 @@ export function SuperAdminDashboard({
                 return (
                   <article
                     key={loja.id}
-                    className={`rounded-2xl ${bgSub} p-3.5 space-y-2.5`}
+                    className={`rounded-2xl ${bgSub} p-3.5 space-y-3`}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-bold truncate">
-                            {loja.nome}
-                          </span>
+                    <div className="flex items-start justify-between gap-2.5">
+                      <div className="flex items-start gap-2.5 min-w-0">
+                        {loja.logo_url ? (
+                          <img
+                            src={loja.logo_url}
+                            alt={loja.nome}
+                            className="h-9 w-9 shrink-0 rounded-xl object-cover mt-0.5"
+                          />
+                        ) : (
                           <span
-                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${semaforoPill(sem.tone)}`}
+                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${bgCard} text-[#FF5A1F] mt-0.5`}
                           >
-                            <span
-                              className={`h-1.5 w-1.5 rounded-full ${semaforoDot(sem.tone)}`}
-                            />
-                            <span>{sem.label}</span>
+                            {NichoIcon(loja.nicho)}
                           </span>
+                        )}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-sm font-bold truncate">
+                              {loja.nome}
+                            </span>
+                            {loja.is_cortesia && (
+                              <span className="rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-bold text-amber-500">
+                                Cortesia
+                              </span>
+                            )}
+                          </div>
+                          <p className={`text-[11px] font-mono-num ${textMuted} truncate mt-0.5`}>
+                            /{loja.slug} • {loja.cidade}
+                          </p>
                         </div>
-                        <p className={`text-xs font-mono-num ${textMuted} mt-0.5`}>
-                          /{loja.slug} • {loja.cidade} ({loja.nicho})
-                        </p>
                       </div>
                       <span
-                        className={`rounded-full ${bgCard} px-2.5 py-0.5 text-[10px] font-bold font-mono-num`}
+                        className={`shrink-0 rounded-full ${bgCard} px-2.5 py-0.5 text-[10px] font-bold font-mono-num`}
                       >
                         {loja.plano.toUpperCase()}
                       </span>
                     </div>
 
-                    <div className={`flex flex-wrap items-center gap-2.5 text-[11px] font-mono-num ${textMuted}`}>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${semaforoPill(sem.tone)}`}
+                      >
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full ${semaforoDot(sem.tone)}`}
+                        />
+                        <span>{sem.label}</span>
+                      </span>
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full ${bgCard} px-2.5 py-0.5 text-[11px] font-semibold capitalize`}
+                      >
+                        <span className="text-[#FF5A1F]">{NichoIcon(loja.nicho)}</span>
+                        <span>{loja.nicho}</span>
+                      </span>
+                    </div>
+
+                    <div className={`flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] font-mono-num ${textMuted}`}>
                       <span>{loja.semaforoMotivo}</span>
                       <span>• {loja.servicos_count} serv.</span>
                       <span>• {loja.agendamentos_30d} agend./30d</span>
                       <span>• Trial {formatDateBr(loja.trial_ate)}</span>
                     </div>
 
-                    <div className="flex flex-wrap gap-2">
+                    <div className="grid grid-cols-2 gap-2">
                       <a
                         href={`/${loja.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-xl ${bgCard} px-3 text-xs font-semibold`}
+                        className={`inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl ${bgCard} px-3 text-xs font-semibold`}
                       >
                         <ExternalLink className="h-3.5 w-3.5" />
                         <span>Vitrine</span>
                       </a>
-                      {whatsappHref(loja.whatsapp_loja) && (
+                      {whatsappHref(loja.whatsapp_loja) ? (
                         <a
                           href={whatsappHref(loja.whatsapp_loja)!}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-xl ${badgeEmerald} px-3 text-xs font-semibold`}
+                          className={`inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl ${badgeEmerald} px-3 text-xs font-semibold`}
                         >
                           <MessageCircle className="h-3.5 w-3.5" />
                           <span>WhatsApp</span>
                         </a>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={isPending}
+                          onClick={() => handleSetPlano(loja.id, "solo", "ativa")}
+                          className={`inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl ${bgCard} px-3 text-xs font-semibold disabled:opacity-50`}
+                        >
+                          <CreditCard className="h-3.5 w-3.5 text-[#FF5A1F]" />
+                          <span>Cortesia Solo</span>
+                        </button>
                       )}
                       <button
                         type="button"
                         disabled={isPending}
                         onClick={() => handleExtendTrial(loja.id, 7)}
-                        className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-xl ${bgCard} px-3 text-xs font-semibold disabled:opacity-50`}
+                        className={`inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl ${bgCard} px-3 text-xs font-semibold disabled:opacity-50`}
                       >
                         <Clock className="h-3.5 w-3.5" />
                         <span>+7d Trial</span>
@@ -830,10 +880,8 @@ export function SuperAdminDashboard({
                         type="button"
                         disabled={isPending}
                         onClick={() => handleTogglePausa(loja.id, !loja.pausada)}
-                        className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-xl px-3 text-xs font-semibold disabled:opacity-50 ${
-                          loja.pausada
-                            ? "${badgeEmerald}"
-                            : "${badgeRose}"
+                        className={`inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl px-3 text-xs font-semibold disabled:opacity-50 ${
+                          loja.pausada ? badgeEmerald : badgeRose
                         }`}
                       >
                         {loja.pausada ? (
@@ -1227,58 +1275,6 @@ export function SuperAdminDashboard({
                   )}
                   <span>{copiedAi ? "Copiado!" : "Copiar p/ IA (Prompt)"}</span>
                 </button>
-              </div>
-
-              {/* Botão Ações Rápidas (Foto 2 do Stitch) */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setQuickActionsOpen((v) => !v)}
-                  className={`inline-flex h-9 items-center gap-2 rounded-full ${pillActive} px-4 text-xs font-bold shadow-sm hover:opacity-95`}
-                >
-                  <Zap className="h-3.5 w-3.5 text-[#FF5A1F]" />
-                  <span>Ações Rápidas</span>
-                </button>
-                {quickActionsOpen && (
-                  <div
-                    className={`absolute right-0 top-11 z-40 w-52 rounded-2xl ${bgCard} p-1.5 shadow-xl border ${dividerBorder} space-y-1 text-left`}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFiltroSemaforo("vermelho");
-                        setTab("lojas");
-                        setQuickActionsOpen(false);
-                      }}
-                      className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold ${darkMode ? "hover:bg-white/8" : "hover:bg-black/5"}`}
-                    >
-                      <AlertTriangle className="h-3.5 w-3.5 text-rose-500" />
-                      <span>Ver Lojas Críticas</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTab("infra");
-                        setQuickActionsOpen(false);
-                      }}
-                      className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold ${darkMode ? "hover:bg-white/8" : "hover:bg-black/5"}`}
-                    >
-                      <Server className="h-3.5 w-3.5 text-[#FF5A1F]" />
-                      <span>Ver Infra &amp; Webhooks</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleCopyForAi();
-                        setQuickActionsOpen(false);
-                      }}
-                      className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold ${darkMode ? "hover:bg-white/8" : "hover:bg-black/5"}`}
-                    >
-                      <Copy className="h-3.5 w-3.5 text-emerald-500" />
-                      <span>Copiar Prompt p/ IA</span>
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -1955,139 +1951,323 @@ export function SuperAdminDashboard({
                 </section>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                <section className={`rounded-3xl ${bgCard} p-5 space-y-3`}>
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-stretch">
+                <section className={`lg:col-span-5 rounded-3xl ${bgCard} p-5 flex flex-col justify-between gap-4`}>
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <Smartphone className="h-4 w-4 text-[#FF5A1F]" />
-                      <h2 className="text-sm font-bold">
-                        Dispositivos Mais Usados
-                      </h2>
+                      <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#FF5A1F]/12 text-[#FF5A1F]">
+                        <Smartphone className="h-4 w-4" />
+                      </span>
+                      <div>
+                        <h2 className="text-sm font-bold leading-tight">
+                          Dispositivos Mais Usados
+                        </h2>
+                        <span className={`text-[11px] ${textMuted}`}>
+                          Sistemas principais · Sessões únicas
+                        </span>
+                      </div>
                     </div>
-                    <span className={`text-[11px] font-mono-num ${textMuted}`}>
-                      Sessões únicas
-                    </span>
                   </div>
                   {data.infra.dispositivos.length === 0 ? (
-                    <p className={`text-xs ${textMuted}`}>
+                    <p className={`text-xs ${textMuted} py-8 text-center`}>
                       Nenhum acesso registrado ainda após a ativação da telemetria.
                     </p>
                   ) : (
-                    <div className="space-y-2.5">
-                      {(() => {
-                        const maxAcessos = Math.max(
-                          1,
-                          ...data.infra.dispositivos.map((d) => d.acessos)
-                        );
-                        return data.infra.dispositivos.map((d) => {
-                          const pct = Math.max(
-                            8,
-                            Math.round((d.acessos / maxAcessos) * 100)
-                          );
+                    <DeviceRoseChart
+                      items={data.infra.dispositivos}
+                      darkMode={darkMode}
+                    />
+                  )}
+                </section>
+
+                <div className="lg:col-span-7 flex flex-col gap-3.5">
+                  <section className={`rounded-3xl ${bgCard} p-4 sm:p-5 flex flex-col gap-3 shrink-0`}>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#FF5A1F]/12 text-[#FF5A1F]">
+                          <Bell className="h-4 w-4" />
+                        </span>
+                        <div>
+                          <h2 className="text-sm font-bold leading-tight">
+                            Estúdio de Notificação Global
+                          </h2>
+                          <span className={`text-[11px] ${textMuted}`}>
+                            Central do app + Web Push ({data.infra.pushSubscriptions} ativos)
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Modelos rápidos inline */}
+                      <div className="flex flex-wrap items-center gap-1">
+                        {[
+                          {
+                            label: "Novidade",
+                            titulo: "Novidade no Zelo",
+                            mensagem: "Acabamos de liberar melhorias na agenda e nas notificações para você.",
+                            url: "/explorar",
+                          },
+                          {
+                            label: "Dica",
+                            titulo: "Personalize sua vitrine",
+                            mensagem: "Adicione fotos nos seus serviços para converter até 2x mais clientes.",
+                            url: "/painel/gestao",
+                          },
+                          {
+                            label: "Manutenção",
+                            titulo: "Atualização rápida hoje",
+                            mensagem: "Faremos uma breve melhoria de performance às 03h. Tudo volta em segundos.",
+                            url: "/painel",
+                          },
+                        ].map((tpl) => {
+                          const isActive =
+                            broadcastTitulo === tpl.titulo && broadcastMensagem === tpl.mensagem;
                           return (
-                            <div
-                              key={d.chave}
-                              className={`rounded-2xl ${bgSub} px-3.5 py-2.5 space-y-1.5`}
+                            <button
+                              key={tpl.label}
+                              type="button"
+                              onClick={() => {
+                                setBroadcastTitulo(tpl.titulo);
+                                setBroadcastMensagem(tpl.mensagem);
+                                setBroadcastUrl(tpl.url);
+                              }}
+                              className={`rounded-full px-2.5 py-1 text-[10px] font-semibold transition-all ${
+                                isActive
+                                  ? pillActive
+                                  : `${bgSub} ${darkMode ? "hover:bg-white/10" : "hover:bg-black/8"}`
+                              }`}
                             >
+                              {tpl.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Live Preview compacto */}
+                    <div
+                      className={`rounded-2xl p-3 transition-all ${
+                        darkMode
+                          ? "bg-white/[0.045] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
+                          : "bg-[#F7F6F3] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]"
+                      }`}
+                    >
+                      <div className="flex items-start gap-2.5">
+                        <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#111216] text-white font-extrabold text-xs shadow-sm">
+                          Z
+                          <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-[#FF5A1F]" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className={`text-[9px] font-bold uppercase tracking-wider ${textMuted}`}>
+                              ZELO · PRÉVIA AO VIVO
+                            </span>
+                            <span className="font-mono-num text-[10px] font-semibold text-[#FF5A1F]">
+                              {broadcastUrl.trim() || "/explorar"}
+                            </span>
+                          </div>
+                          <p className="text-xs font-bold truncate mt-0.5">
+                            {broadcastTitulo.trim() || "Título da sua notificação aparecerá aqui"}
+                          </p>
+                          <p className={`text-[11px] leading-snug line-clamp-1 ${textMuted}`}>
+                            {broadcastMensagem.trim() ||
+                              "Escreva abaixo a mensagem que será exibida na central e no push."}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <form
+                      className="space-y-2"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        setBroadcastFeedback(null);
+                        startBroadcastTransition(async () => {
+                          const res = await superAdminBroadcastNotificationAction({
+                            titulo: broadcastTitulo,
+                            mensagem: broadcastMensagem,
+                            url: broadcastUrl || "/explorar",
+                          });
+                          if (res.error) {
+                            setBroadcastFeedback(res.error);
+                          } else {
+                            setBroadcastFeedback(
+                              `Notificação enviada para ${res.enviados ?? 0} usuário(s)/dispositivo(s).`
+                            );
+                            setBroadcastTitulo("");
+                            setBroadcastMensagem("");
+                          }
+                        });
+                      }}
+                    >
+                      <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                        <div className="sm:col-span-7 relative">
+                          <input
+                            type="text"
+                            required
+                            minLength={3}
+                            maxLength={80}
+                            value={broadcastTitulo}
+                            onChange={(e) => setBroadcastTitulo(e.target.value)}
+                            placeholder="Título da notificação (ex: Novidade no Zelo)"
+                            className={`w-full rounded-xl ${bgSub} px-3 py-2 pr-11 text-xs outline-none transition focus:ring-1 focus:ring-[#FF5A1F]/50`}
+                          />
+                          <span className={`pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] font-mono-num ${textMuted}`}>
+                            {broadcastTitulo.length}/80
+                          </span>
+                        </div>
+                        <div className="sm:col-span-5">
+                          <input
+                            type="text"
+                            value={broadcastUrl}
+                            onChange={(e) => setBroadcastUrl(e.target.value)}
+                            placeholder="/explorar"
+                            className={`w-full rounded-xl ${bgSub} px-3 py-2 text-xs font-mono-num outline-none transition focus:ring-1 focus:ring-[#FF5A1F]/50`}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="relative">
+                        <textarea
+                          required
+                          minLength={5}
+                          maxLength={240}
+                          rows={2}
+                          value={broadcastMensagem}
+                          onChange={(e) => setBroadcastMensagem(e.target.value)}
+                          placeholder="Mensagem curta e direta para os usuários e lojistas..."
+                          className={`w-full rounded-xl ${bgSub} px-3 py-2 text-xs outline-none resize-none transition focus:ring-1 focus:ring-[#FF5A1F]/50`}
+                        />
+                        <span className={`pointer-events-none absolute right-2.5 bottom-2 text-[9px] font-mono-num ${textMuted}`}>
+                          {broadcastMensagem.length}/240
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+                        <div className="flex flex-wrap items-center gap-1">
+                          {["/explorar", "/painel", "/painel/assinatura"].map((route) => (
+                            <button
+                              key={route}
+                              type="button"
+                              onClick={() => setBroadcastUrl(route)}
+                              className={`rounded-full px-2.5 py-1 text-[10px] font-mono-num font-semibold transition-all ${
+                                broadcastUrl === route
+                                  ? pillActive
+                                  : `${bgSub} ${textMuted}`
+                              }`}
+                            >
+                              {route}
+                            </button>
+                          ))}
+                        </div>
+                        <button
+                          type="submit"
+                          disabled={isBroadcasting}
+                          className="inline-flex min-h-[36px] w-full mt-2 items-center justify-center gap-1.5 rounded-xl bg-[#FF5A1F] px-4 py-1.5 text-xs font-bold text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50"
+                        >
+                          <Send className="h-3.5 w-3.5" />
+                          <span>{isBroadcasting ? "Disparando..." : "Enviar para todos"}</span>
+                        </button>
+                      </div>
+                      {broadcastFeedback && (
+                        <div
+                          className={`rounded-xl px-3 py-2 text-xs font-semibold ${
+                            broadcastFeedback.startsWith("Notificação enviada")
+                              ? badgeEmerald
+                              : badgeRose
+                          }`}
+                        >
+                          {broadcastFeedback}
+                        </div>
+                      )}
+                    </form>
+                  </section>
+
+                  {/* Card de Nichos Mais Usados nas Lojas (flex-1 alinha o fundo com Dispositivos) */}
+                  <section className={`flex-1 rounded-3xl ${bgCard} p-4 sm:p-5 flex flex-col justify-between gap-3`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#FF5A1F]/12 text-[#FF5A1F]">
+                          <Store className="h-4 w-4" />
+                        </span>
+                        <div>
+                          <h2 className="text-sm font-bold leading-tight">
+                            Nichos Mais Usados nas Lojas
+                          </h2>
+                          <span className={`text-[11px] ${textMuted}`}>
+                            Todos os nichos do catálogo ({data.lojas.length} lojas)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 flex flex-col justify-center gap-2.5">
+                      {(() => {
+                        const NICHO_LABELS: Record<string, string> = {
+                          barbearia: "Barbearia",
+                          manicure: "Manicure",
+                          salao: "Salão",
+                          estetica: "Estética",
+                          outro: "Outro",
+                        };
+                        const counts = new Map<string, number>(
+                          Object.keys(NICHO_LABELS).map((k) => [k, 0])
+                        );
+                        for (const l of data.lojas) {
+                          const key = l.nicho && counts.has(l.nicho) ? l.nicho : "outro";
+                          counts.set(key, (counts.get(key) ?? 0) + 1);
+                        }
+                        const ranked = Array.from(counts.entries())
+                          .map(([nicho, total]) => ({
+                            nicho,
+                            label: NICHO_LABELS[nicho] ?? nicho,
+                            total,
+                          }))
+                          .sort((a, b) => b.total - a.total);
+                        const maxTotal = Math.max(1, ranked[0]?.total ?? 1);
+                        const totalLojas = Math.max(1, data.lojas.length);
+
+                        return ranked.map((item) => {
+                          const barPct =
+                            item.total === 0
+                              ? 0
+                              : Math.max(12, Math.round((item.total / maxTotal) * 100));
+                          const sharePct =
+                            data.lojas.length === 0
+                              ? 0
+                              : Math.round((item.total / totalLojas) * 100);
+                          return (
+                            <div key={item.nicho} className="space-y-1.5">
                               <div className="flex items-center justify-between gap-2 text-xs">
-                                <span className="font-semibold truncate">
-                                  {d.chave}
+                                <span className="inline-flex items-center gap-1.5 font-semibold">
+                                  <span className={item.total > 0 ? "text-[#FF5A1F]" : textMuted}>
+                                    {NichoIcon(item.nicho)}
+                                  </span>
+                                  <span className={item.total === 0 ? textMuted : ""}>
+                                    {item.label}
+                                  </span>
                                 </span>
-                                <span className="font-mono-num font-bold shrink-0">
-                                  {d.acessos}
+                                <span className="font-mono-num text-[11px]">
+                                  <strong className={`font-bold ${item.total === 0 ? textMuted : ""}`}>
+                                    {item.total}
+                                  </strong>{" "}
+                                  <span className={textMuted}>({sharePct}%)</span>
                                 </span>
                               </div>
-                              <div className={`h-1.5 w-full rounded-full ${trackBg} overflow-hidden`}>
-                                <div
-                                  className="h-full rounded-full bg-[#FF5A1F]"
-                                  style={{ width: `${pct}%` }}
-                                />
+                              <div className={`h-2 w-full rounded-full ${trackBg} overflow-hidden`}>
+                                {barPct > 0 && (
+                                  <div
+                                    className="h-full rounded-full bg-gradient-to-r from-[#FF5A1F] to-[#FF8E53] transition-all duration-300"
+                                    style={{ width: `${barPct}%` }}
+                                  />
+                                )}
                               </div>
                             </div>
                           );
                         });
                       })()}
                     </div>
-                  )}
-                </section>
-
-                <section className={`rounded-3xl ${bgCard} p-5 space-y-3`}>
-                  <div className="flex items-center gap-2">
-                    <Bell className="h-4 w-4 text-[#FF5A1F]" />
-                    <h2 className="text-sm font-bold">
-                      Notificação Global (Todos os Usuários)
-                    </h2>
-                  </div>
-                  <p className={`text-xs ${textMuted}`}>
-                    Envia uma notificação personalizada na central e via Web Push para todos os usuários e dispositivos ativos.
-                  </p>
-                  <form
-                    className="space-y-2.5"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      setBroadcastFeedback(null);
-                      startBroadcastTransition(async () => {
-                        const res = await superAdminBroadcastNotificationAction({
-                          titulo: broadcastTitulo,
-                          mensagem: broadcastMensagem,
-                          url: broadcastUrl || "/explorar",
-                        });
-                        if (res.error) {
-                          setBroadcastFeedback(res.error);
-                        } else {
-                          setBroadcastFeedback(
-                            `Notificação enviada para ${res.enviados ?? 0} usuário(s)/dispositivo(s).`
-                          );
-                          setBroadcastTitulo("");
-                          setBroadcastMensagem("");
-                        }
-                      });
-                    }}
-                  >
-                    <input
-                      type="text"
-                      required
-                      minLength={3}
-                      maxLength={80}
-                      value={broadcastTitulo}
-                      onChange={(e) => setBroadcastTitulo(e.target.value)}
-                      placeholder="Título da notificação (ex: Novidade no Zelo)"
-                      className={`w-full rounded-xl ${bgSub} px-3 py-2.5 text-xs outline-none`}
-                    />
-                    <textarea
-                      required
-                      minLength={5}
-                      maxLength={240}
-                      rows={3}
-                      value={broadcastMensagem}
-                      onChange={(e) => setBroadcastMensagem(e.target.value)}
-                      placeholder="Mensagem curta para os usuários e lojistas..."
-                      className={`w-full rounded-xl ${bgSub} px-3 py-2.5 text-xs outline-none resize-none`}
-                    />
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={broadcastUrl}
-                        onChange={(e) => setBroadcastUrl(e.target.value)}
-                        placeholder="/explorar"
-                        className={`flex-1 rounded-xl ${bgSub} px-3 py-2.5 text-xs font-mono-num outline-none`}
-                      />
-                      <button
-                        type="submit"
-                        disabled={isBroadcasting}
-                        className="inline-flex min-h-[40px] items-center gap-1.5 rounded-xl bg-[#FF5A1F] px-4 py-2 text-xs font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-                      >
-                        <Send className="h-3.5 w-3.5" />
-                        <span>{isBroadcasting ? "Enviando..." : "Enviar para todos"}</span>
-                      </button>
-                    </div>
-                    {broadcastFeedback && (
-                      <p className={`text-xs font-semibold ${textEmerald}`}>
-                        {broadcastFeedback}
-                      </p>
-                    )}
-                  </form>
-                </section>
+                  </section>
+                </div>
               </div>
             </div>
           )}

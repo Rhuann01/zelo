@@ -70,7 +70,7 @@ export async function superAdminExtendTrialAction(
   const admin = createAdminClient();
   const { data: current } = await admin
     .from("lojas")
-    .select("trial_ate, slug")
+    .select("trial_ate, slug, nome, dono_uid")
     .eq("id", parsed.data.lojaId)
     .single();
 
@@ -94,6 +94,18 @@ export async function superAdminExtendTrialAction(
     alvo_loja_id: parsed.data.lojaId,
     detalhes: { dias: parsed.data.dias, novo_trial_ate: nextTrialIso },
   });
+
+  if (current.dono_uid) {
+    await notifyUserPrioritizingPush({
+      userId: current.dono_uid,
+      lojaId: parsed.data.lojaId,
+      tipo: "sistema",
+      title: `Você ganhou +${parsed.data.dias} dias de teste!`,
+      body: `O período de teste da loja ${current.nome} foi estendido pela equipe do Zelo.`,
+      url: "/painel/assinatura",
+      tag: `trial-estendido-${parsed.data.lojaId}`,
+    });
+  }
 
   revalidateTag(`loja-${current.slug}`);
   revalidateTag("vitrine-explorar");
@@ -182,7 +194,7 @@ export async function superAdminSetPlanoAction(
       pausada,
     })
     .eq("id", parsed.data.lojaId)
-    .select("slug")
+    .select("slug, nome, dono_uid")
     .single();
 
   if (error || !loja) {
@@ -199,6 +211,19 @@ export async function superAdminSetPlanoAction(
       assinatura_status: parsed.data.assinaturaStatus,
     },
   });
+
+  if (parsed.data.assinaturaStatus === "ativa" && loja.dono_uid) {
+    const planoLabel = parsed.data.plano === "estudio" ? "Estúdio" : "Solo";
+    await notifyUserPrioritizingPush({
+      userId: loja.dono_uid,
+      lojaId: parsed.data.lojaId,
+      tipo: "sistema",
+      title: `Plano ${planoLabel} liberado em cortesia!`,
+      body: `A equipe do Zelo liberou o plano ${planoLabel} gratuitamente para a loja ${loja.nome}.`,
+      url: "/painel/assinatura",
+      tag: `cortesia-${parsed.data.lojaId}`,
+    });
+  }
 
   revalidateTag(`loja-${loja.slug}`);
   revalidateTag("vitrine-explorar");
