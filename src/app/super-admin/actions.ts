@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { notifyUserPrioritizingPush } from "@/lib/notifications/dispatch";
 import { checkRateLimit } from "@/lib/security/rate-limit";
 import {
   SUPER_ADMIN_PIN_COOKIE,
@@ -177,6 +178,7 @@ export async function superAdminSetPlanoAction(
     .update({
       plano: parsed.data.plano,
       assinatura_status: parsed.data.assinaturaStatus,
+      is_cortesia: parsed.data.assinaturaStatus === "ativa",
       pausada,
     })
     .eq("id", parsed.data.lojaId)
@@ -202,4 +204,63 @@ export async function superAdminSetPlanoAction(
   revalidateTag("vitrine-explorar");
   revalidatePath("/super-admin");
   return {};
+}
+
+const broadcastSchema = z.object({
+  titulo: z.string().trim().min(2, "Informe um título.").max(80),
+  mensagem: z.string().trim().min(4, "Informe a mensagem.").max(280),
+  url: z
+    .string()
+    .trim()
+    .max(120)
+    .optional()
+    .default("/explorar")
+    .refine((v) => v.startsWith("/") && !v.startsWith("//"), "URL interna inválida."),
+});
+
+export async function superAdminBroadcastNotificationAction(
+  rawInput: { titulo: string; mensagem: string; url?: string }
+): Promise<{ error?: string; enviados?: number }> {
+  const guard = await verifySuperAdminAccess();
+  if (!guard.ok) return { error: "Acesso negado ao Super Admin." };
+
+  const rl = checkRateLimit(`super-admin:broadcast:${guard.session.userId}`, 10, 10 * 60_000);
+  if (!rl.allowed) {
+    return { error: "Aguarde alguns minutos antes de enviar outro comunicado global." };
+  }
+
+  const parsed = broadcastSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
+  }
+
+  const admin = createAdminClient();
+  const { data: perfis } = await admin.from("perfis").select("id").limit(500);
+  const ids = (perfis ?? []).map((p) => p.id);
+
+  let enviados = 0;
+  for (const uid of ids) {
+    const res = await notifyUserPrioritizingPush({
+      userId: uid,
+      tipo: "sistema",
+      title: parsed.data.titulo,
+      body: parsed.data.mensagem,
+      url: parsed.data.url || "/explorar",
+      tag: `sa-broadcast-${Date.now()}`,
+    });
+    if (res.channel !== "none") enviados++;
+  }
+
+  await admin.from("super_admin_audit_logs").insert({
+    actor_uid: guard.session.userId,
+    acao: "notificacao_global",
+    alvo_loja_id: null,
+    detalhes: {
+      titulo: parsed.data.titulo,
+      enviados,
+    },
+  });
+
+  revalidatePath("/super-admin");
+  return { enviados };
 }

@@ -28,6 +28,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { AvatarUploader } from "@/components/avatar-uploader";
+import { formatBrazilPhone } from "@/lib/schemas/agendamento";
 import { WebPushOptIn } from "@/components/web-push-optin";
 import { showToast } from "@/components/zelo-toast";
 import { UnsavedChangesGuard } from "@/components/ui/unsaved-changes-guard";
@@ -237,7 +238,7 @@ export function ConfiguracoesForm({
                 <input
                   type="tel"
                   value={whatsapp}
-                  onChange={(e) => setWhatsapp(e.target.value)}
+                  onChange={(e) => setWhatsapp(formatBrazilPhone(e.target.value))}
                   placeholder="(31) 99999-8888"
                   className="w-full bg-transparent font-mono-num text-sm text-[var(--zelo-ink)] outline-none"
                 />

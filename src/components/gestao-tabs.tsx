@@ -153,8 +153,8 @@ export function GestaoTabs({
 
   const [editingSrvId, setEditingSrvId] = useState<string | null>(null);
   const [srvNome, setSrvNome] = useState("");
-  const [srvDuracao, setSrvDuracao] = useState("35");
-  const [srvPreco, setSrvPreco] = useState("45,00");
+  const [srvDuracao, setSrvDuracao] = useState("");
+  const [srvPreco, setSrvPreco] = useState("");
   const [srvImagemUrl, setSrvImagemUrl] = useState<string | null>(null);
   const [srvExibirImagem, setSrvExibirImagem] = useState(false);
   const [uploadingSrvId, setUploadingSrvId] = useState<string | null>(null);
@@ -951,8 +951,8 @@ export function GestaoTabs({
                     onClick={() => {
                       setEditingSrvId(null);
                       setSrvNome("");
-                      setSrvDuracao("30");
-                      setSrvPreco("45,00");
+                      setSrvDuracao("");
+                      setSrvPreco("");
                       setSrvImagemUrl(null);
                       setSrvExibirImagem(false);
                     }}
@@ -1084,8 +1084,8 @@ export function GestaoTabs({
                       const wasEditing = Boolean(editingSrvId);
                       setEditingSrvId(null);
                       setSrvNome("");
-                      setSrvDuracao("30");
-                      setSrvPreco("45,00");
+                      setSrvDuracao("");
+                      setSrvPreco("");
                       setSrvImagemUrl(null);
                       setSrvExibirImagem(false);
                       return { message: wasEditing ? "Serviço atualizado." : "Serviço adicionado." };

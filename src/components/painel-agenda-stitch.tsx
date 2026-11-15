@@ -905,7 +905,7 @@ export function PainelAgendaStitch({
             <input
               type="tel"
               value={encWhatsapp}
-              onChange={(e) => setEncWhatsapp(e.target.value)}
+              onChange={(e) => setEncWhatsapp(formatBrazilPhone(e.target.value))}
               placeholder="WhatsApp (opcional)"
               className="h-11 w-full rounded-xl bg-[var(--zelo-soft)] px-3.5 font-mono-num text-sm outline-none"
             />

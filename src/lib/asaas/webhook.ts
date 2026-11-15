@@ -152,6 +152,7 @@ export async function processAsaasWebhookEvent(
     assinatura_status: transition.assinatura_status,
     pausada: transition.pausada,
     assinatura_atualizada_em: new Date().toISOString(),
+    ...(transition.assinatura_status === "ativa" ? { is_cortesia: false } : {}),
   };
 
   if (subscriptionId) updateFields.asaas_subscription_id = subscriptionId;

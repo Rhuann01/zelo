@@ -34,6 +34,7 @@ import {
   type PresetServico,
 } from "@/lib/schemas/loja";
 import { createLojaAction, updateOnboardingMediaAction } from "@/app/onboarding/actions";
+import { formatBrazilPhone } from "@/lib/schemas/agendamento";
 import { createClient } from "@/lib/supabase/client";
 import { compressImageToWebP, STORE_MEDIA_COMPRESS_CONFIG } from "@/lib/image/compress-webp";
 import { StockPhotoSearch } from "@/components/ui/stock-photo-search";
@@ -868,7 +869,7 @@ export function OnboardingWizard() {
                   <input
                     type="tel"
                     value={whatsapp}
-                    onChange={(e) => setWhatsapp(e.target.value)}
+                    onChange={(e) => setWhatsapp(formatBrazilPhone(e.target.value))}
                     placeholder="(31) 99999-9999"
                     className="w-full bg-transparent text-sm font-mono-num outline-none"
                   />

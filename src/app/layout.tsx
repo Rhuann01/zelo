@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Instrument_Serif, JetBrains_Mono } from "next/font/google";
+import { DeviceTelemetryPing } from "@/components/device-telemetry-ping";
 import "./globals.css";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -69,7 +70,10 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-screen antialiased">{children}</body>
+      <body className="min-h-screen antialiased">
+        <DeviceTelemetryPing />
+        {children}
+      </body>
     </html>
   );
 }

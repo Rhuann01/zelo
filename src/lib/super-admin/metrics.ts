@@ -10,12 +10,14 @@ export interface SuperAdminLojaRow {
   id: string;
   nome: string;
   slug: string;
+  logo_url: string | null;
   nicho: string;
   cidade: string;
   bairro: string;
   whatsapp_loja: string;
   plano: "trial" | "solo" | "estudio";
   assinatura_status: "trial" | "ativa" | "atrasada" | "cancelada";
+  is_cortesia: boolean;
   pausada: boolean;
   trial_ate: string;
   created_at: string;
@@ -32,6 +34,7 @@ export interface SuperAdminDashboardData {
   kpis: {
     totalLojas: number;
     lojasAtivas: number;
+    lojasCortesia: number;
     lojasTrial: number;
     lojasAtrasadas: number;
     mrrBrutoCentavos: number;
@@ -58,6 +61,14 @@ export interface SuperAdminDashboardData {
   infra: {
     agendamentosTotal: number;
     pushSubscriptions: number;
+    dispositivos: Array<{
+      chave: string;
+      sistema: string;
+      navegador: string;
+      tipo: string;
+      acessos: number;
+      ultimo_acesso_em: string;
+    }>;
     webhooksRecentes: Array<{
       id: string;
       provider: string;
@@ -142,11 +153,12 @@ export async function loadSuperAdminDashboardData(): Promise<SuperAdminDashboard
     { count: pushCount, error: pushError },
     { data: webhooksRaw, error: webhooksError },
     { data: auditRaw, error: auditError },
+    { data: dispositivosRaw, error: dispositivosError },
   ] = await Promise.all([
     admin
       .from("lojas")
       .select(
-        "id, nome, slug, nicho, cidade, bairro, whatsapp_loja, plano, assinatura_status, pausada, trial_ate, created_at, ultimo_acesso_painel_em, primeiro_agendamento_em, indicado_por_loja_id, bonus_indicacao_pago, taxa_asaas_centavos"
+        "id, nome, slug, logo_url, nicho, cidade, bairro, whatsapp_loja, plano, assinatura_status, is_cortesia, pausada, trial_ate, created_at, ultimo_acesso_painel_em, primeiro_agendamento_em, indicado_por_loja_id, bonus_indicacao_pago, taxa_asaas_centavos"
       )
       .order("created_at", { ascending: false }),
     admin.from("servicos").select("loja_id").eq("ativo", true),
@@ -167,6 +179,11 @@ export async function loadSuperAdminDashboardData(): Promise<SuperAdminDashboard
       .select("id, acao, alvo_loja_id, detalhes, created_at")
       .order("created_at", { ascending: false })
       .limit(15),
+    admin
+      .from("dispositivos_acesso")
+      .select("chave, sistema, navegador, tipo, acessos, ultimo_acesso_em")
+      .order("acessos", { ascending: false })
+      .limit(12),
   ]);
 
   const queryErrors = [
@@ -177,6 +194,7 @@ export async function loadSuperAdminDashboardData(): Promise<SuperAdminDashboard
     ["push_subscriptions", pushError],
     ["webhook_events", webhooksError],
     ["super_admin_audit_logs", auditError],
+    ["dispositivos_acesso", dispositivosError],
   ].filter(([, err]) => Boolean(err));
 
   if (queryErrors.length > 0) {
@@ -207,6 +225,7 @@ export async function loadSuperAdminDashboardData(): Promise<SuperAdminDashboard
   }
 
   let lojasAtivas = 0;
+  let lojasCortesia = 0;
   let lojasTrial = 0;
   let lojasAtrasadas = 0;
   let lojasCanceladas = 0;
@@ -232,11 +251,15 @@ export async function loadSuperAdminDashboardData(): Promise<SuperAdminDashboard
     const indicacoesConfirmadas = indicacoesPorLoja.get(l.id) ?? 0;
 
     if (l.assinatura_status === "ativa") {
-      lojasAtivas++;
-      const precoPlano = l.plano === "estudio" ? 5900 : 2900;
-      const taxaAsaas = l.taxa_asaas_centavos ?? 199;
-      mrrBrutoCentavos += precoPlano;
-      mrrLiquidoCentavos += Math.max(0, precoPlano - taxaAsaas);
+      if (l.is_cortesia) {
+        lojasCortesia++;
+      } else {
+        lojasAtivas++;
+        const precoPlano = l.plano === "estudio" ? 5900 : 2900;
+        const taxaAsaas = l.taxa_asaas_centavos ?? 199;
+        mrrBrutoCentavos += precoPlano;
+        mrrLiquidoCentavos += Math.max(0, precoPlano - taxaAsaas);
+      }
     } else if (l.assinatura_status === "trial") {
       lojasTrial++;
     } else if (l.assinatura_status === "atrasada") {
@@ -249,7 +272,7 @@ export async function loadSuperAdminDashboardData(): Promise<SuperAdminDashboard
       funil14d.cadastradas++;
       if (servicosCount > 0) funil14d.comServicos++;
       if (l.primeiro_agendamento_em) funil14d.comPrimeiroAgendamento++;
-      if (l.assinatura_status === "ativa") funil14d.assinantes++;
+      if (l.assinatura_status === "ativa" && !l.is_cortesia) funil14d.assinantes++;
     }
 
     const cidadeKey = l.cidade || "Não informada";
@@ -275,6 +298,7 @@ export async function loadSuperAdminDashboardData(): Promise<SuperAdminDashboard
       id: l.id,
       nome: l.nome,
       slug: l.slug,
+      logo_url: l.logo_url ?? null,
       nicho: l.nicho,
       cidade: l.cidade,
       bairro: l.bairro,
@@ -285,6 +309,7 @@ export async function loadSuperAdminDashboardData(): Promise<SuperAdminDashboard
         | "ativa"
         | "atrasada"
         | "cancelada",
+      is_cortesia: Boolean(l.is_cortesia),
       pausada: l.pausada,
       trial_ate: l.trial_ate,
       created_at: l.created_at,
@@ -315,6 +340,7 @@ export async function loadSuperAdminDashboardData(): Promise<SuperAdminDashboard
     kpis: {
       totalLojas,
       lojasAtivas,
+      lojasCortesia,
       lojasTrial,
       lojasAtrasadas,
       mrrBrutoCentavos,
@@ -328,6 +354,14 @@ export async function loadSuperAdminDashboardData(): Promise<SuperAdminDashboard
     infra: {
       agendamentosTotal: agsTotalCount ?? 0,
       pushSubscriptions: pushCount ?? 0,
+      dispositivos: (dispositivosRaw ?? []) as Array<{
+        chave: string;
+        sistema: string;
+        navegador: string;
+        tipo: string;
+        acessos: number;
+        ultimo_acesso_em: string;
+      }>,
       webhooksRecentes: webhooksRaw ?? [],
       auditLogsRecentes: (auditRaw ?? []) as Array<{
         id: string;

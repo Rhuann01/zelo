@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
   ArrowLeft,
+  Bell,
   Check,
   CheckCircle2,
   ChevronDown,
@@ -24,9 +25,11 @@ import {
   PlayCircle,
   Scissors,
   Search,
+  Send,
   Server,
   ShieldCheck,
   SlidersHorizontal,
+  Smartphone,
   Sparkles,
   Store,
   Sun,
@@ -36,6 +39,7 @@ import {
 } from "lucide-react";
 import { EmptyState } from "@/components/ui";
 import {
+  superAdminBroadcastNotificationAction,
   superAdminExtendTrialAction,
   superAdminSetPlanoAction,
   superAdminTogglePausaAction,
@@ -101,6 +105,33 @@ export function SuperAdminDashboard({
 }) {
   const [tab, setTab] = useState<TabId>("visao");
   const [darkMode, setDarkMode] = useState(false);
+  const [broadcastTitulo, setBroadcastTitulo] = useState("");
+  const [broadcastMensagem, setBroadcastMensagem] = useState("");
+  const [broadcastUrl, setBroadcastUrl] = useState("/explorar");
+  const [broadcastFeedback, setBroadcastFeedback] = useState<string | null>(null);
+  const [isBroadcasting, startBroadcastTransition] = useTransition();
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("zelo_sa_dark");
+      if (saved === "1") setDarkMode(true);
+      else if (saved === "0") setDarkMode(false);
+    } catch {
+      // ignore storage errors
+    }
+  }, []);
+
+  const updateDarkMode = (next: boolean | ((prev: boolean) => boolean)) => {
+    setDarkMode((prev) => {
+      const value = typeof next === "function" ? next(prev) : next;
+      try {
+        window.localStorage.setItem("zelo_sa_dark", value ? "1" : "0");
+      } catch {
+        // ignore storage errors
+      }
+      return value;
+    });
+  };
   const [periodo, setPeriodo] = useState<"hoje" | "7d" | "30d" | "mes">("30d");
   const [quickActionsOpen, setQuickActionsOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -514,13 +545,28 @@ export function SuperAdminDashboard({
                         </td>
                         <td className="py-3.5 px-2.5">
                           <div className="flex items-center gap-2.5">
-                            <span
-                              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${iconTint}`}
-                            >
-                              {NichoIcon(loja.nicho)}
-                            </span>
+                            {loja.logo_url ? (
+                              <img
+                                src={loja.logo_url}
+                                alt={loja.nome}
+                                className="h-8 w-8 shrink-0 rounded-xl object-cover"
+                              />
+                            ) : (
+                              <span
+                                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${iconTint}`}
+                              >
+                                {NichoIcon(loja.nicho)}
+                              </span>
+                            )}
                             <div className="min-w-0">
-                              <p className="font-bold truncate">{loja.nome}</p>
+                              <div className="flex items-center gap-1.5">
+                                <p className="font-bold truncate">{loja.nome}</p>
+                                {loja.is_cortesia && (
+                                  <span className="shrink-0 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-bold text-amber-500">
+                                    Cortesia
+                                  </span>
+                                )}
+                              </div>
                               <p className={`text-[11px] font-mono-num ${textMuted}`}>
                                 /{loja.slug} • {loja.nicho}
                               </p>
@@ -612,16 +658,16 @@ export function SuperAdminDashboard({
                                   bottom: menuPos.bottom,
                                   right: menuPos.right,
                                 }}
-                                className={`fixed z-50 w-48 rounded-2xl ${bgCard} p-1.5 shadow-xl border ${dividerBorder} text-left space-y-1`}
+                                className={`fixed z-50 w-60 rounded-2xl ${bgCard} p-1.5 shadow-xl border ${dividerBorder} text-left space-y-1`}
                               >
                               <a
                                 href={`/${loja.slug}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={() => setOpenMenuId(null)}
-                                className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold ${darkMode ? "hover:bg-white/8" : "hover:bg-black/5"}`}
+                                className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold whitespace-nowrap ${darkMode ? "hover:bg-white/8" : "hover:bg-black/5"}`}
                               >
-                                <ExternalLink className="h-3.5 w-3.5" />
+                                <ExternalLink className="h-3.5 w-3.5 shrink-0" />
                                 <span>Abrir vitrine</span>
                               </a>
                               {whatsappHref(loja.whatsapp_loja) && (
@@ -630,9 +676,9 @@ export function SuperAdminDashboard({
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   onClick={() => setOpenMenuId(null)}
-                                  className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-emerald-600 ${darkMode ? "hover:bg-white/8" : "hover:bg-black/5"}`}
+                                  className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold whitespace-nowrap text-emerald-600 ${darkMode ? "hover:bg-white/8" : "hover:bg-black/5"}`}
                                 >
-                                  <MessageCircle className="h-3.5 w-3.5" />
+                                  <MessageCircle className="h-3.5 w-3.5 shrink-0" />
                                   <span>WhatsApp do lojista</span>
                                 </a>
                               )}
@@ -643,10 +689,10 @@ export function SuperAdminDashboard({
                                   handleSetPlano(loja.id, "solo", "ativa");
                                   setOpenMenuId(null);
                                 }}
-                                className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold ${darkMode ? "hover:bg-white/8" : "hover:bg-black/5"}`}
+                                className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold whitespace-nowrap ${darkMode ? "hover:bg-white/8" : "hover:bg-black/5"}`}
                               >
-                                <CreditCard className="h-3.5 w-3.5 text-[#FF5A1F]" />
-                                <span>Liberar Solo (Cortesia/Manual)</span>
+                                <CreditCard className="h-3.5 w-3.5 shrink-0 text-[#FF5A1F]" />
+                                <span>Liberar Solo (Cortesia)</span>
                               </button>
                               <button
                                 type="button"
@@ -655,10 +701,10 @@ export function SuperAdminDashboard({
                                   handleSetPlano(loja.id, "estudio", "ativa");
                                   setOpenMenuId(null);
                                 }}
-                                className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold ${darkMode ? "hover:bg-white/8" : "hover:bg-black/5"}`}
+                                className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold whitespace-nowrap ${darkMode ? "hover:bg-white/8" : "hover:bg-black/5"}`}
                               >
-                                <CreditCard className="h-3.5 w-3.5 text-[#FF5A1F]" />
-                                <span>Liberar Estúdio (Cortesia/Manual)</span>
+                                <CreditCard className="h-3.5 w-3.5 shrink-0 text-[#FF5A1F]" />
+                                <span>Liberar Estúdio (Cortesia)</span>
                               </button>
                               <button
                                 type="button"
@@ -875,7 +921,7 @@ export function SuperAdminDashboard({
           <div className={`flex flex-col items-center gap-1 p-1 rounded-full ${bgSub}`}>
             <button
               type="button"
-              onClick={() => setDarkMode(false)}
+              onClick={() => updateDarkMode(false)}
               title="Tema Claro"
               aria-label="Tema Claro"
               className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
@@ -888,7 +934,7 @@ export function SuperAdminDashboard({
             </button>
             <button
               type="button"
-              onClick={() => setDarkMode(true)}
+              onClick={() => updateDarkMode(true)}
               title="Tema Escuro"
               aria-label="Tema Escuro"
               className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
@@ -986,7 +1032,7 @@ export function SuperAdminDashboard({
           <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
-              onClick={() => setDarkMode((v) => !v)}
+              onClick={() => updateDarkMode((v) => !v)}
               aria-label="Alternar tema"
               className={`flex h-8 w-8 items-center justify-center rounded-full ${bgCard}`}
             >
@@ -1408,16 +1454,21 @@ export function SuperAdminDashboard({
                       </span>
                     </div>
 
-                    <div className="flex items-baseline gap-1.5 font-mono-num pt-1">
+                    <div className="flex flex-wrap items-baseline gap-1.5 font-mono-num pt-1">
                       <span className="text-2xl sm:text-3xl font-extrabold">
                         {data.kpis.lojasAtivas}
                       </span>
-                      <span className={`text-xs ${textMuted}`}>ativas</span>
+                      <span className={`text-xs ${textMuted}`}>pagantes</span>
                       <span className={`text-xs ${textMuted}`}>/</span>
                       <span className="text-xl font-bold">
                         {data.kpis.lojasTrial}
                       </span>
                       <span className={`text-xs ${textMuted}`}>trial</span>
+                      {data.kpis.lojasCortesia > 0 && (
+                        <span className="ml-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-500">
+                          +{data.kpis.lojasCortesia} cortesia
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -1452,14 +1503,19 @@ export function SuperAdminDashboard({
                 <div className={`min-h-[188px] rounded-3xl ${bgCard} p-6 flex flex-col justify-between gap-4`}>
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between gap-2">
-                      <span className={`text-xs font-semibold ${textMuted}`}>
-                        Churn Mensal
-                      </span>
+                      <div>
+                        <span className={`text-xs font-semibold ${textMuted}`}>
+                          Churn Mensal
+                        </span>
+                        <span className={`block text-[10px] ${textMuted}`}>
+                          Taxa de cancelamento
+                        </span>
+                      </div>
                       <span
                         className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold font-mono-num ${
                           data.semaforoResumo.vermelho > 0
-                            ? "${badgeRose}"
-                            : "${badgeAmber}"
+                            ? badgeRose
+                            : badgeAmber
                         }`}
                       >
                         • {sobRadar} sob radar
@@ -1481,8 +1537,8 @@ export function SuperAdminDashboard({
                     <span
                       className={`rounded-full px-2 py-0.5 font-mono-num font-bold ${
                         data.kpis.lojasAtrasadas > 0
-                          ? "${badgeRose}"
-                          : "${badgeAmber}"
+                          ? badgeRose
+                          : badgeAmber
                       }`}
                     >
                       {data.kpis.lojasAtrasadas}{" "}
@@ -1896,6 +1952,141 @@ export function SuperAdminDashboard({
                       ))}
                     </div>
                   )}
+                </section>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                <section className={`rounded-3xl ${bgCard} p-5 space-y-3`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Smartphone className="h-4 w-4 text-[#FF5A1F]" />
+                      <h2 className="text-sm font-bold">
+                        Dispositivos Mais Usados
+                      </h2>
+                    </div>
+                    <span className={`text-[11px] font-mono-num ${textMuted}`}>
+                      Sessões únicas
+                    </span>
+                  </div>
+                  {data.infra.dispositivos.length === 0 ? (
+                    <p className={`text-xs ${textMuted}`}>
+                      Nenhum acesso registrado ainda após a ativação da telemetria.
+                    </p>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {(() => {
+                        const maxAcessos = Math.max(
+                          1,
+                          ...data.infra.dispositivos.map((d) => d.acessos)
+                        );
+                        return data.infra.dispositivos.map((d) => {
+                          const pct = Math.max(
+                            8,
+                            Math.round((d.acessos / maxAcessos) * 100)
+                          );
+                          return (
+                            <div
+                              key={d.chave}
+                              className={`rounded-2xl ${bgSub} px-3.5 py-2.5 space-y-1.5`}
+                            >
+                              <div className="flex items-center justify-between gap-2 text-xs">
+                                <span className="font-semibold truncate">
+                                  {d.chave}
+                                </span>
+                                <span className="font-mono-num font-bold shrink-0">
+                                  {d.acessos}
+                                </span>
+                              </div>
+                              <div className={`h-1.5 w-full rounded-full ${trackBg} overflow-hidden`}>
+                                <div
+                                  className="h-full rounded-full bg-[#FF5A1F]"
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+                  )}
+                </section>
+
+                <section className={`rounded-3xl ${bgCard} p-5 space-y-3`}>
+                  <div className="flex items-center gap-2">
+                    <Bell className="h-4 w-4 text-[#FF5A1F]" />
+                    <h2 className="text-sm font-bold">
+                      Notificação Global (Todos os Usuários)
+                    </h2>
+                  </div>
+                  <p className={`text-xs ${textMuted}`}>
+                    Envia uma notificação personalizada na central e via Web Push para todos os usuários e dispositivos ativos.
+                  </p>
+                  <form
+                    className="space-y-2.5"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      setBroadcastFeedback(null);
+                      startBroadcastTransition(async () => {
+                        const res = await superAdminBroadcastNotificationAction({
+                          titulo: broadcastTitulo,
+                          mensagem: broadcastMensagem,
+                          url: broadcastUrl || "/explorar",
+                        });
+                        if (res.error) {
+                          setBroadcastFeedback(res.error);
+                        } else {
+                          setBroadcastFeedback(
+                            `Notificação enviada para ${res.enviados ?? 0} usuário(s)/dispositivo(s).`
+                          );
+                          setBroadcastTitulo("");
+                          setBroadcastMensagem("");
+                        }
+                      });
+                    }}
+                  >
+                    <input
+                      type="text"
+                      required
+                      minLength={3}
+                      maxLength={80}
+                      value={broadcastTitulo}
+                      onChange={(e) => setBroadcastTitulo(e.target.value)}
+                      placeholder="Título da notificação (ex: Novidade no Zelo)"
+                      className={`w-full rounded-xl ${bgSub} px-3 py-2.5 text-xs outline-none`}
+                    />
+                    <textarea
+                      required
+                      minLength={5}
+                      maxLength={240}
+                      rows={3}
+                      value={broadcastMensagem}
+                      onChange={(e) => setBroadcastMensagem(e.target.value)}
+                      placeholder="Mensagem curta para os usuários e lojistas..."
+                      className={`w-full rounded-xl ${bgSub} px-3 py-2.5 text-xs outline-none resize-none`}
+                    />
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={broadcastUrl}
+                        onChange={(e) => setBroadcastUrl(e.target.value)}
+                        placeholder="/explorar"
+                        className={`flex-1 rounded-xl ${bgSub} px-3 py-2.5 text-xs font-mono-num outline-none`}
+                      />
+                      <button
+                        type="submit"
+                        disabled={isBroadcasting}
+                        className="inline-flex min-h-[40px] items-center gap-1.5 rounded-xl bg-[#FF5A1F] px-4 py-2 text-xs font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                      >
+                        <Send className="h-3.5 w-3.5" />
+                        <span>{isBroadcasting ? "Enviando..." : "Enviar para todos"}</span>
+                      </button>
+                    </div>
+                    {broadcastFeedback && (
+                      <p className={`text-xs font-semibold ${textEmerald}`}>
+                        {broadcastFeedback}
+                      </p>
+                    )}
+                  </form>
                 </section>
               </div>
             </div>
