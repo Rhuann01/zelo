@@ -219,7 +219,7 @@ export function CustomizadorLoja({
       const supabase = createClient();
       const path = `${loja.id}/logo.webp`;
       const { error: upErr } = await supabase.storage.from("lojas-media").upload(path, blob, {
-        contentType: "image/webp",
+        contentType: blob.type || "image/webp",
         upsert: true,
         cacheControl: "31536000",
       });
@@ -274,7 +274,7 @@ export function CustomizadorLoja({
       const supabase = createClient();
       const path = `${loja.id}/capa.webp`;
       const { error: upErr } = await supabase.storage.from("lojas-media").upload(path, blob, {
-        contentType: "image/webp",
+        contentType: blob.type || "image/webp",
         upsert: true,
         cacheControl: "31536000",
       });

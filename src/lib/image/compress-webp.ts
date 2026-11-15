@@ -17,9 +17,19 @@ export async function compressImageToWebP(
   }
 
   const bitmap = await createImageBitmap(file);
+  if (
+    file.type === "image/webp" &&
+    file.size <= maxBytes &&
+    bitmap.width <= maxDimension &&
+    bitmap.height <= maxDimension
+  ) {
+    bitmap.close();
+    return file;
+  }
+
   const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
-  const width = Math.max(1, Math.round(bitmap.width * scale));
-  const height = Math.max(1, Math.round(bitmap.height * scale));
+  let width = Math.max(1, Math.round(bitmap.width * scale));
+  let height = Math.max(1, Math.round(bitmap.height * scale));
 
   const canvas = document.createElement("canvas");
   canvas.width = width;
@@ -34,12 +44,37 @@ export async function compressImageToWebP(
   ctx.drawImage(bitmap, 0, 0, width, height);
   bitmap.close();
 
+  // iOS Safari não suporta encoding image/webp no <canvas> e devolve image/png sem compressão.
+  let targetMime: "image/webp" | "image/jpeg" = "image/webp";
   let quality = initialQuality;
-  let blob = await canvasToWebP(canvas, quality);
+  let blob = await canvasToBlob(canvas, targetMime, quality);
+
+  if (blob.type !== "image/webp") {
+    targetMime = "image/jpeg";
+    blob = await canvasToBlob(canvas, targetMime, quality);
+  }
 
   while (blob.size > maxBytes && quality > 0.25) {
     quality = Math.max(0.25, quality - 0.12);
-    blob = await canvasToWebP(canvas, quality);
+    blob = await canvasToBlob(canvas, targetMime, quality);
+  }
+
+  if (blob.size > maxBytes) {
+    const downscaled = document.createElement("canvas");
+    width = Math.max(1, Math.round(width * 0.6));
+    height = Math.max(1, Math.round(height * 0.6));
+    downscaled.width = width;
+    downscaled.height = height;
+    const dCtx = downscaled.getContext("2d");
+    if (dCtx) {
+      dCtx.drawImage(canvas, 0, 0, width, height);
+      quality = 0.72;
+      blob = await canvasToBlob(downscaled, targetMime, quality);
+      while (blob.size > maxBytes && quality > 0.25) {
+        quality = Math.max(0.25, quality - 0.12);
+        blob = await canvasToBlob(downscaled, targetMime, quality);
+      }
+    }
   }
 
   if (blob.size > maxBytes) {
@@ -49,17 +84,21 @@ export async function compressImageToWebP(
   return blob;
 }
 
-function canvasToWebP(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
+function canvasToBlob(
+  canvas: HTMLCanvasElement,
+  mimeType: "image/webp" | "image/jpeg",
+  quality: number
+): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (result) => {
         if (!result) {
-          reject(new Error("Falha ao converter imagem para WebP."));
+          reject(new Error("Falha ao comprimir imagem."));
           return;
         }
         resolve(result);
       },
-      "image/webp",
+      mimeType,
       quality
     );
   });

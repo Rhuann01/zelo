@@ -39,7 +39,7 @@ export function AvatarUploader({
       const { error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(path, webpBlob, {
-          contentType: "image/webp",
+          contentType: webpBlob.type || "image/webp",
           upsert: true,
           cacheControl: "31536000",
         });

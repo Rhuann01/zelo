@@ -349,7 +349,7 @@ export function OnboardingWizard() {
           const path = `${res.lojaId}/logo-${Date.now()}.webp`;
           const { error: upErr } = await supabase.storage
             .from("lojas-media")
-            .upload(path, logoBlob, { contentType: "image/webp", upsert: true });
+            .upload(path, logoBlob, { contentType: logoBlob.type || "image/webp", upsert: true });
           if (!upErr) {
             finalLogoUrl = supabase.storage.from("lojas-media").getPublicUrl(path).data.publicUrl;
           }
@@ -359,7 +359,7 @@ export function OnboardingWizard() {
           const path = `${res.lojaId}/capa-${Date.now()}.webp`;
           const { error: upErr } = await supabase.storage
             .from("lojas-media")
-            .upload(path, capaBlob, { contentType: "image/webp", upsert: true });
+            .upload(path, capaBlob, { contentType: capaBlob.type || "image/webp", upsert: true });
           if (!upErr) {
             finalCapaUrl = supabase.storage.from("lojas-media").getPublicUrl(path).data.publicUrl;
           }
@@ -373,7 +373,7 @@ export function OnboardingWizard() {
             const path = `${res.lojaId}/srv-${srvId}-${Date.now()}.webp`;
             const { error: upErr } = await supabase.storage
               .from("lojas-media")
-              .upload(path, srv.localBlob, { contentType: "image/webp", upsert: true });
+              .upload(path, srv.localBlob, { contentType: srv.localBlob.type || "image/webp", upsert: true });
             if (!upErr) {
               const publicUrl = supabase.storage.from("lojas-media").getPublicUrl(path).data.publicUrl;
               servicosMedia.push({ id: srvId, imagem_url: publicUrl });

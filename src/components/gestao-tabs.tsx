@@ -183,7 +183,7 @@ export function GestaoTabs({
     const path = `${lojaId}/servicos/${targetId}.webp`;
     const { error: uploadErr } = await supabase.storage
       .from("lojas-media")
-      .upload(path, blob, { contentType: "image/webp", upsert: true });
+      .upload(path, blob, { contentType: blob.type || "image/webp", upsert: true });
     if (uploadErr) throw uploadErr;
 
     const { data: pub } = supabase.storage.from("lojas-media").getPublicUrl(path);
