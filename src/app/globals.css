@@ -30,6 +30,16 @@ html.dark {
   --zelo-btn-hover: #E4E4E7;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 html,
 body {
   overscroll-behavior-y: none;

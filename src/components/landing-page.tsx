@@ -602,7 +602,23 @@ export function LandingPage() {
   const totalMin = extraAdded ? 60 : 35;
 
   return (
-    <div className="min-h-screen bg-[var(--zelo-bg)] text-[var(--zelo-ink)] transition-colors duration-200">
+    <div
+      className="min-h-screen bg-[var(--zelo-bg)] text-[var(--zelo-ink)] transition-colors duration-200"
+      onClick={(e) => {
+        const anchor = (e.target as HTMLElement).closest('a[href^="#"]') as HTMLAnchorElement | null;
+        if (!anchor) return;
+        const hash = anchor.getAttribute("href");
+        if (!hash || hash === "#") return;
+        const target = document.getElementById(hash.slice(1));
+        if (!target) return;
+        e.preventDefault();
+        setMobileMenuOpen(false);
+        requestAnimationFrame(() => {
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+          window.history.replaceState(null, "", hash);
+        });
+      }}
+    >
       {/* Navbar Flutuante */}
       <div className="sticky top-2.5 sm:top-3 z-40 mx-auto max-w-5xl px-3 sm:px-4">
         <header
