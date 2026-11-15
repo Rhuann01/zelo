@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { getPainelContext } from "@/lib/painel/get-painel-context";
-import { PainelShell } from "@/components/painel-shell";
 import { CustomizadorLoja } from "@/components/customizador-loja";
 
 export default async function PersonalizarPage() {
@@ -14,23 +13,15 @@ export default async function PersonalizarPage() {
     .maybeSingle();
 
   return (
-    <PainelShell
-      lojas={ctx.lojas}
-      lojaAtual={ctx.lojaAtual}
+    <CustomizadorLoja
+      loja={ctx.lojaAtual}
       isOwner={ctx.isOwner}
-      avatarUrl={ctx.perfil.avatar_url}
-      perfilNome={ctx.perfil.nome}
-    >
-      <CustomizadorLoja
-        loja={ctx.lojaAtual}
-        isOwner={ctx.isOwner}
-        initialLocalizacao={{
-          cep: loc?.cep ?? "",
-          endereco_texto: loc?.endereco_texto ?? "",
-          latitude: loc?.latitude ?? null,
-          longitude: loc?.longitude ?? null,
-        }}
-      />
-    </PainelShell>
+      initialLocalizacao={{
+        cep: loc?.cep ?? "",
+        endereco_texto: loc?.endereco_texto ?? "",
+        latitude: loc?.latitude ?? null,
+        longitude: loc?.longitude ?? null,
+      }}
+    />
   );
 }

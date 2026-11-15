@@ -1,8 +1,12 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 import { ZeloLogo } from "@/components/zelo-logo";
 import { GoogleAuthButton } from "@/components/google-auth-button";
 import { sanitizeNextPath } from "@/lib/security/sanitize-next";
+import { createClient } from "@/lib/supabase/server";
+
+export const dynamic = "force-dynamic";
 
 export default async function EntrarPage({
   searchParams,
@@ -11,6 +15,28 @@ export default async function EntrarPage({
 }) {
   const params = await searchParams;
   const nextPath = sanitizeNextPath(params.next, "/painel");
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    if (params.next) {
+      redirect(nextPath);
+    }
+    const [{ data: lojaPropria }, { data: vinculo }] = await Promise.all([
+      supabase.from("lojas").select("id").eq("owner_id", user.id).limit(1).maybeSingle(),
+      supabase
+        .from("profissionais")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("ativo", true)
+        .limit(1)
+        .maybeSingle(),
+    ]);
+    redirect(lojaPropria || vinculo ? "/painel" : "/explorar");
+  }
 
   return (
     <main className="relative min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-[var(--zelo-bg)] overflow-hidden">

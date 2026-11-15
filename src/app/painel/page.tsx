@@ -2,7 +2,6 @@ import { getPainelContext } from "@/lib/painel/get-painel-context";
 import { createClient } from "@/lib/supabase/server";
 import type { AgendaAgendamentoItem, AgendaBloqueioItem } from "@/lib/booking/agenda-timeline";
 import type { HorariosLojaConfig } from "@/lib/booking/disponibilidade";
-import { PainelShell } from "@/components/painel-shell";
 import { PainelAgendaStitch } from "@/components/painel-agenda-stitch";
 import { WebPushOptIn } from "@/components/web-push-optin";
 
@@ -104,14 +103,7 @@ export default async function PainelPage() {
       : [];
 
   return (
-    <PainelShell
-      lojas={ctx.lojas}
-      lojaAtual={ctx.lojaAtual}
-      isOwner={ctx.isOwner}
-      avatarUrl={ctx.perfil.avatar_url}
-      perfilNome={ctx.perfil.nome}
-    >
-      <div className="space-y-4">
+    <div className="space-y-4">
         {/* Agenda do Dia (Stitch) */}
         <PainelAgendaStitch
           lojaId={ctx.lojaAtual.id}
@@ -130,6 +122,5 @@ export default async function PainelPage() {
 
         <WebPushOptIn />
       </div>
-    </PainelShell>
   );
 }

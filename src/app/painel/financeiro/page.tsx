@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { getPainelContext } from "@/lib/painel/get-painel-context";
-import { PainelShell } from "@/components/painel-shell";
 import {
   FinanceiroDashboard,
   type FinanceiroAgendamentoItem,
@@ -75,22 +74,14 @@ export default async function FinanceiroPage() {
   });
 
   return (
-    <PainelShell
-      lojas={ctx.lojas}
-      lojaAtual={ctx.lojaAtual}
+    <FinanceiroDashboard
+      lojaId={ctx.lojaAtual.id}
+      lojaNome={ctx.lojaAtual.nome}
+      chavePixLoja={ctx.lojaAtual.chave_pix}
       isOwner={ctx.isOwner}
-      avatarUrl={ctx.perfil.avatar_url}
-      perfilNome={ctx.perfil.nome}
-    >
-      <FinanceiroDashboard
-        lojaId={ctx.lojaAtual.id}
-        lojaNome={ctx.lojaAtual.nome}
-        chavePixLoja={ctx.lojaAtual.chave_pix}
-        isOwner={ctx.isOwner}
-        currentUserId={ctx.userId}
-        profissionais={profissionais}
-        agendamentos={agendamentos}
-      />
-    </PainelShell>
+      currentUserId={ctx.userId}
+      profissionais={profissionais}
+      agendamentos={agendamentos}
+    />
   );
 }

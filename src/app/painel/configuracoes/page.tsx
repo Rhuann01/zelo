@@ -4,7 +4,6 @@ import {
   parseSuperAdminAllowlist,
   parseSuperAdminEmailAllowlist,
 } from "@/lib/super-admin/guard";
-import { PainelShell } from "@/components/painel-shell";
 import { ConfiguracoesForm } from "@/components/configuracoes-form";
 
 export default async function ConfiguracoesPage() {
@@ -44,20 +43,12 @@ export default async function ConfiguracoesPage() {
         emailAllowlist.has(userEmail)));
 
   return (
-    <PainelShell
-      lojas={ctx.lojas}
-      lojaAtual={ctx.lojaAtual}
-      isOwner={ctx.isOwner}
-      avatarUrl={ctx.perfil.avatar_url}
-      perfilNome={ctx.perfil.nome}
-    >
-      <ConfiguracoesForm
-        ctx={ctx}
-        initialMinhaChavePix={prof?.chave_pix ?? ""}
-        canEditProfPix={Boolean(prof)}
-        initialTemSenhaSeguranca={temSenhaSeguranca}
-        isSuperAdmin={isSuperAdmin}
-      />
-    </PainelShell>
+    <ConfiguracoesForm
+      ctx={ctx}
+      initialMinhaChavePix={prof?.chave_pix ?? ""}
+      canEditProfPix={Boolean(prof)}
+      initialTemSenhaSeguranca={temSenhaSeguranca}
+      isSuperAdmin={isSuperAdmin}
+    />
   );
 }

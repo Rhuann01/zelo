@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { getPainelContext } from "@/lib/painel/get-painel-context";
-import { PainelShell } from "@/components/painel-shell";
 import { AssinaturaPanel } from "@/components/assinatura-panel";
 
 export default async function AssinaturaPage() {
@@ -14,29 +13,21 @@ export default async function AssinaturaPage() {
     .single();
 
   return (
-    <PainelShell
-      lojas={ctx.lojas}
-      lojaAtual={ctx.lojaAtual}
+    <AssinaturaPanel
+      lojaId={ctx.lojaAtual.id}
+      lojaNome={ctx.lojaAtual.nome}
+      planoAtual={(lojaBilling?.plano ?? "trial") as "trial" | "solo" | "estudio"}
+      assinaturaStatus={
+        (lojaBilling?.assinatura_status ?? "trial") as
+          | "trial"
+          | "ativa"
+          | "atrasada"
+          | "cancelada"
+      }
+      trialAte={lojaBilling?.trial_ate ?? new Date().toISOString()}
+      codigoIndicacao={lojaBilling?.codigo_indicacao ?? ""}
+      jaIndicado={Boolean(lojaBilling?.indicado_por_loja_id)}
       isOwner={ctx.isOwner}
-      avatarUrl={ctx.perfil.avatar_url}
-      perfilNome={ctx.perfil.nome}
-    >
-      <AssinaturaPanel
-        lojaId={ctx.lojaAtual.id}
-        lojaNome={ctx.lojaAtual.nome}
-        planoAtual={(lojaBilling?.plano ?? "trial") as "trial" | "solo" | "estudio"}
-        assinaturaStatus={
-          (lojaBilling?.assinatura_status ?? "trial") as
-            | "trial"
-            | "ativa"
-            | "atrasada"
-            | "cancelada"
-        }
-        trialAte={lojaBilling?.trial_ate ?? new Date().toISOString()}
-        codigoIndicacao={lojaBilling?.codigo_indicacao ?? ""}
-        jaIndicado={Boolean(lojaBilling?.indicado_por_loja_id)}
-        isOwner={ctx.isOwner}
-      />
-    </PainelShell>
+    />
   );
 }

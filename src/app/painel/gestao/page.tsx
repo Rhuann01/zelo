@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { getPainelContext } from "@/lib/painel/get-painel-context";
-import { PainelShell } from "@/components/painel-shell";
 import { GestaoTabs } from "@/components/gestao-tabs";
 
 export default async function GestaoPage() {
@@ -37,24 +36,16 @@ export default async function GestaoPage() {
     ]);
 
   return (
-    <PainelShell
-      lojas={ctx.lojas}
-      lojaAtual={ctx.lojaAtual}
+    <GestaoTabs
+      lojaId={ctx.lojaAtual.id}
+      plano={ctx.lojaAtual.plano}
       isOwner={ctx.isOwner}
-      avatarUrl={ctx.perfil.avatar_url}
-      perfilNome={ctx.perfil.nome}
-    >
-      <GestaoTabs
-        lojaId={ctx.lojaAtual.id}
-        plano={ctx.lojaAtual.plano}
-        isOwner={ctx.isOwner}
-        currentUserId={ctx.userId}
-        horariosIniciais={ctx.lojaAtual.horarios_loja}
-        servicos={servicos ?? []}
-        profissionais={profissionais ?? []}
-        convitesPendentes={convitesPendentes ?? []}
-        bloqueios={bloqueios ?? []}
-      />
-    </PainelShell>
+      currentUserId={ctx.userId}
+      horariosIniciais={ctx.lojaAtual.horarios_loja}
+      servicos={servicos ?? []}
+      profissionais={profissionais ?? []}
+      convitesPendentes={convitesPendentes ?? []}
+      bloqueios={bloqueios ?? []}
+    />
   );
 }

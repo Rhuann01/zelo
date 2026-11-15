@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -44,7 +45,9 @@ export interface PainelContext {
   isOwner: boolean;
 }
 
-export async function getPainelContext(nextPath = "/painel"): Promise<PainelContext> {
+export const getPainelContext = cache(async function getPainelContext(
+  nextPath = "/painel"
+): Promise<PainelContext> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -117,4 +120,4 @@ export async function getPainelContext(nextPath = "/painel"): Promise<PainelCont
     lojaAtual,
     isOwner: lojaAtual.owner_id === user.id,
   };
-}
+});

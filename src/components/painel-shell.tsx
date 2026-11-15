@@ -134,6 +134,7 @@ export function PainelShell({
               <Link
                 key={href}
                 href={href}
+                prefetch={true}
                 aria-current={active ? "page" : undefined}
                 className={`flex min-h-[44px] min-w-[52px] flex-col items-center justify-center transition-colors ${
                   active
