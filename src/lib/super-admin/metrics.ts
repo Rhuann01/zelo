@@ -135,13 +135,13 @@ export async function loadSuperAdminDashboardData(): Promise<SuperAdminDashboard
   const ago14dIso = new Date(nowMs - 14 * 86_400_000).toISOString();
 
   const [
-    { data: lojasRaw },
-    { data: servicosRaw },
-    { data: ags30dRaw },
-    { count: agsTotalCount },
-    { count: pushCount },
-    { data: webhooksRaw },
-    { data: auditRaw },
+    { data: lojasRaw, error: lojasError },
+    { data: servicosRaw, error: servicosError },
+    { data: ags30dRaw, error: ags30dError },
+    { count: agsTotalCount, error: agsTotalError },
+    { count: pushCount, error: pushError },
+    { data: webhooksRaw, error: webhooksError },
+    { data: auditRaw, error: auditError },
   ] = await Promise.all([
     admin
       .from("lojas")
@@ -168,6 +168,23 @@ export async function loadSuperAdminDashboardData(): Promise<SuperAdminDashboard
       .order("created_at", { ascending: false })
       .limit(15),
   ]);
+
+  const queryErrors = [
+    ["lojas", lojasError],
+    ["servicos", servicosError],
+    ["agendamentos_30d", ags30dError],
+    ["agendamentos_total", agsTotalError],
+    ["push_subscriptions", pushError],
+    ["webhook_events", webhooksError],
+    ["super_admin_audit_logs", auditError],
+  ].filter(([, err]) => Boolean(err));
+
+  if (queryErrors.length > 0) {
+    console.error(
+      "[super-admin] Falha ao consultar dados administrativos:",
+      queryErrors.map(([table, err]) => `${table}: ${(err as { message?: string })?.message ?? err}`)
+    );
+  }
 
   const servicosPorLoja = new Map<string, number>();
   for (const s of servicosRaw ?? []) {
