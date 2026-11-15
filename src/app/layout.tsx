@@ -34,7 +34,7 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "Zelo",
   },
   openGraph: {
@@ -49,10 +49,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#FAF9F6" },
-    { media: "(prefers-color-scheme: dark)", color: "#0E0E11" },
-  ],
+  themeColor: "#FAF9F6",
 };
 
 export default function RootLayout({
@@ -69,7 +66,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{if(localStorage.getItem('zelo_theme')==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})();`,
+            __html: `(function(){try{var d=document.documentElement;function sync(){var dark=d.classList.contains('dark');d.style.colorScheme=dark?'dark':'light';var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',dark?'#0E0E11':'#FAF9F6');}if(localStorage.getItem('zelo_theme')==='dark'){d.classList.add('dark');}sync();new MutationObserver(sync).observe(d,{attributes:true,attributeFilter:['class']});}catch(e){}})();`,
           }}
         />
       </head>
