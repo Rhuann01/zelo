@@ -59,6 +59,7 @@ export function PwaInstallBanner() {
     }
 
     const handleBeforeInstall = (e: Event) => {
+      if (!androidDevice) return;
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       setVisible(true);

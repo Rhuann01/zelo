@@ -144,7 +144,7 @@ export function GestaoTabs({
     (horariosIniciais.almoco_fim as string) || "13:30"
   );
 
-  const [espData, setEspData] = useState("");
+  const [espData, setEspData] = useState(() => new Date().toLocaleDateString("en-CA"));
   const [espInicio, setEspInicio] = useState("09:00");
   const [espFim, setEspFim] = useState("15:00");
   const [espTipo, setEspTipo] = useState<"dia_especial" | "folga" | "feriado">("dia_especial");
@@ -460,12 +460,12 @@ export function GestaoTabs({
 
           {/* Abrir Dia Especial ou Bloqueio */}
           {isOwner && (
-            <section className="rounded-2xl bg-[var(--zelo-card)] p-4 shadow-sm space-y-3">
+            <section className="overflow-hidden rounded-2xl bg-[var(--zelo-card)] p-4 shadow-sm space-y-3">
               <div className="flex items-center gap-2.5">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F59E0B]/15 text-[#D97706]">
                   <CalendarPlus className="h-4 w-4" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <h2 className="text-sm font-bold">Abrir Dia Especial ou Bloqueio</h2>
                   <p className="text-[11px] text-[var(--zelo-muted)]">
                     Exceções avulsas fora da grade semanal
@@ -473,36 +473,59 @@ export function GestaoTabs({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <select
-                  value={espTipo}
-                  onChange={(e) =>
-                    setEspTipo(e.target.value as "dia_especial" | "folga" | "feriado")
-                  }
-                  className="h-11 rounded-xl bg-[var(--zelo-soft)] px-3 text-xs font-semibold outline-none"
-                >
-                  <option value="dia_especial">Dia Especial Aberto</option>
-                  <option value="folga">Folga / Bloqueio</option>
-                  <option value="feriado">Feriado (Fechado)</option>
-                </select>
-                <input
-                  type="date"
-                  value={espData}
-                  onChange={(e) => setEspData(e.target.value)}
-                  className="h-11 rounded-xl bg-[var(--zelo-soft)] px-3 text-xs font-mono-num outline-none"
-                />
-                <input
-                  type="time"
-                  value={espInicio}
-                  onChange={(e) => setEspInicio(e.target.value)}
-                  className="h-11 rounded-xl bg-[var(--zelo-soft)] px-3 text-xs font-mono-num outline-none"
-                />
-                <input
-                  type="time"
-                  value={espFim}
-                  onChange={(e) => setEspFim(e.target.value)}
-                  className="h-11 rounded-xl bg-[var(--zelo-soft)] px-3 text-xs font-mono-num outline-none"
-                />
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                <div className="min-w-0 space-y-1">
+                  <label className="block text-[11px] font-medium text-[var(--zelo-muted)]">
+                    Tipo de exceção
+                  </label>
+                  <select
+                    value={espTipo}
+                    onChange={(e) =>
+                      setEspTipo(e.target.value as "dia_especial" | "folga" | "feriado")
+                    }
+                    className="h-11 w-full min-w-0 max-w-full rounded-xl bg-[var(--zelo-soft)] px-3 text-sm font-semibold outline-none"
+                  >
+                    <option value="dia_especial">Dia Especial Aberto</option>
+                    <option value="folga">Folga / Bloqueio</option>
+                    <option value="feriado">Feriado (Fechado)</option>
+                  </select>
+                </div>
+                <div className="min-w-0 space-y-1">
+                  <label className="block text-[11px] font-medium text-[var(--zelo-muted)]">
+                    Data
+                  </label>
+                  <input
+                    type="date"
+                    value={espData}
+                    onChange={(e) => setEspData(e.target.value)}
+                    className="h-11 w-full min-w-0 max-w-full appearance-none rounded-xl bg-[var(--zelo-soft)] px-3 text-sm font-mono-num outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="min-w-0 space-y-1">
+                  <label className="block text-[11px] font-medium text-[var(--zelo-muted)]">
+                    Início
+                  </label>
+                  <input
+                    type="time"
+                    value={espInicio}
+                    onChange={(e) => setEspInicio(e.target.value)}
+                    className="h-11 w-full min-w-0 max-w-full appearance-none rounded-xl bg-[var(--zelo-soft)] px-3 text-sm font-mono-num outline-none"
+                  />
+                </div>
+                <div className="min-w-0 space-y-1">
+                  <label className="block text-[11px] font-medium text-[var(--zelo-muted)]">
+                    Fim
+                  </label>
+                  <input
+                    type="time"
+                    value={espFim}
+                    onChange={(e) => setEspFim(e.target.value)}
+                    className="h-11 w-full min-w-0 max-w-full appearance-none rounded-xl bg-[var(--zelo-soft)] px-3 text-sm font-mono-num outline-none"
+                  />
+                </div>
               </div>
 
               <input
@@ -510,7 +533,7 @@ export function GestaoTabs({
                 value={espMotivo}
                 onChange={(e) => setEspMotivo(e.target.value)}
                 placeholder="Motivo (ex: Domingo pré-feriado)"
-                className="h-11 w-full rounded-xl bg-[var(--zelo-soft)] px-3 text-xs outline-none"
+                className="h-11 w-full min-w-0 rounded-xl bg-[var(--zelo-soft)] px-3 text-sm outline-none"
               />
 
               <button

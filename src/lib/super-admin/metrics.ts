@@ -1,5 +1,6 @@
 import "server-only";
 
+import { unstable_noStore as noStore } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sanitizeCsvCell } from "@/lib/security/sanitize-next";
 
@@ -127,6 +128,7 @@ function calcularSemaforo(params: {
 }
 
 export async function loadSuperAdminDashboardData(): Promise<SuperAdminDashboardData> {
+  noStore();
   const admin = createAdminClient();
   const nowMs = Date.now();
   const ago30dIso = new Date(nowMs - 30 * 86_400_000).toISOString();

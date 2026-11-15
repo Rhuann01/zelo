@@ -152,6 +152,7 @@ export async function createLojaAction(rawInput: CreateLojaInput): Promise<Onboa
   revalidateTag("vitrine-explorar");
   revalidatePath("/explorar");
   revalidatePath("/painel", "layout");
+  revalidatePath("/super-admin");
   revalidatePath(`/${input.slug}`);
 
   return {

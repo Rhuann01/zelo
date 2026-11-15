@@ -305,7 +305,7 @@ function InteractiveLeafletPicker({
   }, [latitude, longitude]);
 
   return (
-    <div className="relative overflow-hidden rounded-xl bg-[var(--zelo-soft)]">
+    <div className="relative isolate z-0 overflow-hidden rounded-xl bg-[var(--zelo-soft)]">
       <div ref={containerRef} className="h-60 w-full z-0" />
       <span className="pointer-events-none absolute top-2 left-2 z-[400] rounded-lg bg-black/75 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-xs">
         Toque no mapa ou arraste o pino para ajustar
