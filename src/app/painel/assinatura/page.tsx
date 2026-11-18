@@ -1,12 +1,12 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getPainelContext } from "@/lib/painel/get-painel-context";
 import { AssinaturaPanel } from "@/components/assinatura-panel";
 
 export default async function AssinaturaPage() {
   const ctx = await getPainelContext("/painel/assinatura");
-  const supabase = await createClient();
+  const admin = createAdminClient();
 
-  const { data: lojaBilling } = await supabase
+  const { data: lojaBilling } = await admin
     .from("lojas")
     .select("plano, assinatura_status, trial_ate, codigo_indicacao, indicado_por_loja_id")
     .eq("id", ctx.lojaAtual.id)
@@ -25,7 +25,7 @@ export default async function AssinaturaPage() {
           | "cancelada"
       }
       trialAte={lojaBilling?.trial_ate ?? new Date().toISOString()}
-      codigoIndicacao={lojaBilling?.codigo_indicacao ?? ""}
+      codigoIndicacao={ctx.isOwner ? (lojaBilling?.codigo_indicacao ?? "") : ""}
       jaIndicado={Boolean(lojaBilling?.indicado_por_loja_id)}
       isOwner={ctx.isOwner}
     />

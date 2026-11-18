@@ -70,7 +70,7 @@ export async function superAdminExtendTrialAction(
   const admin = createAdminClient();
   const { data: current } = await admin
     .from("lojas")
-    .select("trial_ate, slug, nome, dono_uid")
+    .select("trial_ate, slug, nome, owner_id")
     .eq("id", parsed.data.lojaId)
     .single();
 
@@ -95,9 +95,9 @@ export async function superAdminExtendTrialAction(
     detalhes: { dias: parsed.data.dias, novo_trial_ate: nextTrialIso },
   });
 
-  if (current.dono_uid) {
+  if (current.owner_id) {
     await notifyUserPrioritizingPush({
-      userId: current.dono_uid,
+      userId: current.owner_id,
       lojaId: parsed.data.lojaId,
       tipo: "sistema",
       title: `Você ganhou +${parsed.data.dias} dias de teste!`,

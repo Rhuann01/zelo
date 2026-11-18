@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import gsap from "gsap";
+import { LandingIphoneShowcase } from "@/components/landing-iphone-showcase";
 import {
   Bell,
   Check,
@@ -1339,6 +1340,8 @@ export function LandingPage() {
           )}
         </div>
       </section>
+
+      <LandingIphoneShowcase />
 
       {/* BENTO GRID DE FUNCIONALIDADES */}
       <section

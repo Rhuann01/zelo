@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Instrument_Serif, JetBrains_Mono } from "next/font/google";
 import { DeviceTelemetryPing } from "@/components/device-telemetry-ping";
+import { PwaRegister } from "@/components/pwa-register";
 import { ZeloToastViewport } from "@/components/zelo-toast";
 import { getSiteUrl } from "@/lib/seo/site-url";
 import "./globals.css";
@@ -55,8 +56,11 @@ export const metadata: Metadata = {
   },
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/icon.svg",
-    apple: "/icon.svg",
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
   appleWebApp: {
     capable: true,
@@ -92,7 +96,11 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#FAF9F6",
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#FAF9F6" },
+    { media: "(prefers-color-scheme: dark)", color: "#0F0F12" },
+  ],
 };
 
 export default function RootLayout({
@@ -114,6 +122,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen antialiased">
+        <PwaRegister />
         <DeviceTelemetryPing />
         <ZeloToastViewport />
         {children}

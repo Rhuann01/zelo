@@ -1,10 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getPainelContext } from "@/lib/painel/get-painel-context";
 import { GestaoTabs } from "@/components/gestao-tabs";
 
 export default async function GestaoPage() {
   const ctx = await getPainelContext("/painel/gestao");
   const supabase = await createClient();
+  const admin = createAdminClient();
 
   const [{ data: servicos }, { data: profissionais }, { data: bloqueios }, { data: convitesPendentes }] =
     await Promise.all([
@@ -13,7 +15,7 @@ export default async function GestaoPage() {
         .select("id, nome, descricao, duracao_min, preco_centavos, ativo, imagem_url, exibir_imagem")
         .eq("loja_id", ctx.lojaAtual.id)
         .order("ordem", { ascending: true }),
-      supabase
+      admin
         .from("profissionais")
         .select("id, user_id, nome, cargo, eh_dono, ativo, avatar_url, comissao_percentual")
         .eq("loja_id", ctx.lojaAtual.id)

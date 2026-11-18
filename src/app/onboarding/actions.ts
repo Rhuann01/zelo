@@ -4,7 +4,11 @@ import { cookies } from "next/headers";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { createLojaSchema, type CreateLojaInput } from "@/lib/schemas/loja";
+import {
+  createLojaSchema,
+  safeImageUrlSchema,
+  type CreateLojaInput,
+} from "@/lib/schemas/loja";
 
 export interface OnboardingResult {
   ok?: boolean;
@@ -156,6 +160,8 @@ export async function createLojaAction(rawInput: CreateLojaInput): Promise<Onboa
     path: "/",
     maxAge: 2592000,
     sameSite: "lax",
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
   });
 
   revalidateTag("vitrine-explorar");
@@ -174,13 +180,13 @@ export async function createLojaAction(rawInput: CreateLojaInput): Promise<Onboa
 const updateOnboardingMediaSchema = z
   .object({
     lojaId: z.string().uuid(),
-    logo_url: z.string().trim().max(500).nullable().optional(),
-    capa_url: z.string().trim().max(500).nullable().optional(),
+    logo_url: safeImageUrlSchema.nullable().optional(),
+    capa_url: safeImageUrlSchema.nullable().optional(),
     servicosMedia: z
       .array(
         z.object({
           id: z.string().uuid(),
-          imagem_url: z.string().trim().max(500),
+          imagem_url: safeImageUrlSchema,
         })
       )
       .max(20)

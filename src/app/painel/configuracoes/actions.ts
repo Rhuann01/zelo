@@ -5,6 +5,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { perfilConfigSchema } from "@/lib/schemas/painel";
 import {
   hashSecurityPassword,
@@ -77,7 +78,8 @@ export async function saveConfiguracoesAction(raw: unknown) {
   }
 
   if (input.minha_chave_pix !== undefined && input.loja_id) {
-    const { data: lojaCfg } = await supabase
+    const admin = createAdminClient();
+    const { data: lojaCfg } = await admin
       .from("lojas")
       .select("pix_modo")
       .eq("id", input.loja_id)
@@ -130,7 +132,8 @@ export async function definirSenhaSegurancaAction(raw: unknown) {
     return { error: "Muitas tentativas. Aguarde alguns minutos." };
   }
 
-  const { data: perfil } = await supabase
+  const admin = createAdminClient();
+  const { data: perfil } = await admin
     .from("perfis")
     .select("seguranca_pin_hash")
     .eq("id", user.id)
@@ -146,7 +149,7 @@ export async function definirSenhaSegurancaAction(raw: unknown) {
   }
 
   const hash = hashSecurityPassword(parsed.data.nova_senha);
-  const { error: updateErr } = await supabase
+  const { error: updateErr } = await admin
     .from("perfis")
     .update({
       seguranca_pin_hash: hash,
@@ -192,13 +195,14 @@ export async function excluirLojaAction(raw: unknown) {
     return { error: "Muitas tentativas de exclusão. Aguarde 15 minutos." };
   }
 
+  const admin = createAdminClient();
   const [{ data: loja }, { data: perfil }] = await Promise.all([
     supabase
       .from("lojas")
       .select("id, slug, owner_id")
       .eq("id", parsed.data.loja_id)
       .maybeSingle(),
-    supabase
+    admin
       .from("perfis")
       .select("seguranca_pin_hash")
       .eq("id", user.id)
@@ -221,12 +225,19 @@ export async function excluirLojaAction(raw: unknown) {
     return { error: "Senha de segurança incorreta." };
   }
 
-  const { error: rpcErr } = await supabase.rpc("excluir_loja_segura", {
-    p_loja_id: loja.id,
-  });
+  await admin.from("agendamentos").delete().eq("loja_id", loja.id);
+  await admin.from("bloqueios_agenda").delete().eq("loja_id", loja.id);
+  await admin.from("convites_equipe").delete().eq("loja_id", loja.id);
+  await admin.from("servicos").delete().eq("loja_id", loja.id);
+  await admin.from("profissionais").delete().eq("loja_id", loja.id);
+  const { error: delErr } = await admin
+    .from("lojas")
+    .delete()
+    .eq("id", loja.id)
+    .eq("owner_id", user.id);
 
-  if (rpcErr) {
-    return { error: rpcErr.message || "Não foi possível apagar a loja." };
+  if (delErr) {
+    return { error: delErr.message || "Não foi possível apagar a loja." };
   }
 
   const cookieStore = await cookies();
@@ -273,7 +284,6 @@ export async function syncAvatarProfissionaisAction(avatarUrl: string | null) {
   } = await supabase.auth.getUser();
   if (!user) return { ok: false };
 
-  const { createAdminClient } = await import("@/lib/supabase/admin");
   const admin = createAdminClient();
 
   const { data: profs } = await admin

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getPainelContext } from "@/lib/painel/get-painel-context";
 import {
   FinanceiroDashboard,
@@ -9,11 +10,12 @@ import {
 export default async function FinanceiroPage() {
   const ctx = await getPainelContext("/painel/financeiro");
   const supabase = await createClient();
+  const admin = createAdminClient();
 
   const sinceIso = new Date(Date.now() - 31 * 86_400_000).toISOString();
 
   const [{ data: profsData }, { data: agsData }] = await Promise.all([
-    supabase
+    admin
       .from("profissionais")
       .select("id, nome, comissao_percentual, meta_semanal_centavos, eh_dono, user_id")
       .eq("loja_id", ctx.lojaAtual.id)

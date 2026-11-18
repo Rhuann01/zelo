@@ -2,6 +2,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export interface LojaResumo {
   id: string;
@@ -59,13 +60,15 @@ export const getPainelContext = cache(async function getPainelContext(
     redirect(`/entrar?next=${encodeURIComponent(nextPath)}`);
   }
 
+  const admin = createAdminClient();
+
   const [{ data: perfil }, { data: lojasProprias }, { data: vinculos }] = await Promise.all([
     supabase
       .from("perfis")
       .select("nome, email, whatsapp, avatar_url, avatar_customizado, notificacoes_push, notificacoes_novo_agendamento, notificacoes_email")
       .eq("id", user.id)
       .single(),
-    supabase
+    admin
       .from("lojas")
       .select(
         "id, owner_id, slug, nome, nicho, cidade, bairro, tema, cor_primaria, raio_borda_px, estilo_card, estilo_barra, modo_escuro, pix_modo, chave_pix, sinal_centavos, logo_url, capa_url, horarios_loja, pausada, plano, assinatura_status, trial_ate"
@@ -86,7 +89,7 @@ export const getPainelContext = cache(async function getPainelContext(
 
   let lojasMembro: LojaResumo[] = [];
   if (extraLojaIds.length > 0) {
-    const { data: memberStores } = await supabase
+    const { data: memberStores } = await admin
       .from("lojas")
       .select(
         "id, owner_id, slug, nome, nicho, cidade, bairro, tema, cor_primaria, raio_borda_px, estilo_card, estilo_barra, modo_escuro, pix_modo, chave_pix, sinal_centavos, logo_url, capa_url, horarios_loja, pausada, plano, assinatura_status, trial_ate"

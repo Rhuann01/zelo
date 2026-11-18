@@ -1326,40 +1326,38 @@ export function CustomizadorLoja({
         </div>
 
         {isOwner && (
-          <div className="flex justify-end pt-1">
-            <button
-              type="button"
-              disabled={savingSobre}
-              onClick={async () => {
-                setSavingSobre(true);
-                const res = await atualizarDescricaoLinksLojaAction(loja.id, {
-                  descricao_publica: descricaoPublica,
-                  links_publicos: linksPublicos
-                    .filter((l) => l.url.trim().length > 0)
-                    .map((l) => ({
-                      ...l,
-                      label: LINK_PUBLICO_DEFAULT_LABEL[l.tipo],
-                    })),
-                });
-                setSavingSobre(false);
-                if (!res.ok) {
-                  showToast(res.error ?? "Erro ao salvar descrição e links.", "error");
-                  return;
-                }
-                setDescricaoPublica(res.descricao_publica ?? "");
-                setLinksPublicos(res.links_publicos ?? []);
-                showToast("Descrição e links salvos!", "success", "sparkles");
-              }}
-              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl bg-[var(--zelo-btn-bg)] px-4 text-xs font-semibold text-[var(--zelo-btn-ink)] transition hover:opacity-90 disabled:opacity-45"
-            >
-              {savingSobre ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Save className="h-3.5 w-3.5" />
-              )}
-              <span>Salvar descrição e links</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            disabled={savingSobre}
+            onClick={async () => {
+              setSavingSobre(true);
+              const res = await atualizarDescricaoLinksLojaAction(loja.id, {
+                descricao_publica: descricaoPublica,
+                links_publicos: linksPublicos
+                  .filter((l) => l.url.trim().length > 0)
+                  .map((l) => ({
+                    ...l,
+                    label: LINK_PUBLICO_DEFAULT_LABEL[l.tipo],
+                  })),
+              });
+              setSavingSobre(false);
+              if (!res.ok) {
+                showToast(res.error ?? "Erro ao salvar descrição e links.", "error");
+                return;
+              }
+              setDescricaoPublica(res.descricao_publica ?? "");
+              setLinksPublicos(res.links_publicos ?? []);
+              showToast("Descrição e links salvos!", "success", "sparkles");
+            }}
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--zelo-btn-bg)] px-4 text-sm font-semibold text-[var(--zelo-btn-ink)] transition hover:opacity-90 disabled:opacity-45"
+          >
+            {savingSobre ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
+            <span>Salvar descrição e links</span>
+          </button>
         )}
       </section>
 

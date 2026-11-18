@@ -286,13 +286,13 @@ export function PainelAgendaStitch({
   return (
     <div className="flex flex-col gap-3.5">
       {/* Date & Staff Sub-header Filter (Stitch) */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5">
+      <div className="flex w-full items-center justify-between gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-1.5">
           <button
             type="button"
             aria-label="Dia anterior"
             onClick={() => setSelectedDate((d) => addDaysYmd(d, -1))}
-            className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--zelo-soft)] text-[var(--zelo-ink)] transition-colors hover:opacity-80"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--zelo-soft)] text-[var(--zelo-ink)] transition-colors hover:opacity-80"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -300,17 +300,17 @@ export function PainelAgendaStitch({
           <button
             type="button"
             onClick={() => setSelectedDate(todayYmd)}
-            className="flex h-9 items-center gap-1.5 rounded-lg bg-[var(--zelo-card)] px-3 text-xs font-semibold text-[var(--zelo-ink)] shadow-sm"
+            className="flex h-10 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl bg-[var(--zelo-card)] px-3 text-xs font-semibold text-[var(--zelo-ink)] shadow-sm"
           >
-            <Calendar className="h-3.5 w-3.5 text-[var(--zelo-muted)]" />
-            <span>{formatDateLabel(selectedDate, todayYmd)}</span>
+            <Calendar className="h-3.5 w-3.5 shrink-0 text-[var(--zelo-muted)]" />
+            <span className="truncate">{formatDateLabel(selectedDate, todayYmd)}</span>
           </button>
 
           <button
             type="button"
             aria-label="Próximo dia"
             onClick={() => setSelectedDate((d) => addDaysYmd(d, 1))}
-            className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--zelo-soft)] text-[var(--zelo-ink)] transition-colors hover:opacity-80"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--zelo-soft)] text-[var(--zelo-ink)] transition-colors hover:opacity-80"
           >
             <ChevronRight className="h-4 w-4" />
           </button>

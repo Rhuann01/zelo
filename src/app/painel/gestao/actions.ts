@@ -4,7 +4,9 @@ import crypto from "node:crypto";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { checkRateLimit } from "@/lib/security/rate-limit";
+import { safeImageUrlSchema } from "@/lib/schemas/loja";
 import {
   conviteProfissionalSchema,
   diaEspecialSchema,
@@ -107,7 +109,7 @@ export async function updateServicoImagemAction(
     .object({
       servicoId: z.string().uuid(),
       lojaId: z.string().uuid(),
-      imagemUrl: z.string().url().nullable(),
+      imagemUrl: safeImageUrlSchema.nullable(),
       exibirImagem: z.boolean().optional(),
     })
     .safeParse({ servicoId, lojaId, imagemUrl, exibirImagem });
@@ -323,9 +325,10 @@ export async function gerarConviteEquipeAction(raw: unknown): Promise<ActionResu
   }
 
   const input = parsed.data;
+  const admin = createAdminClient();
 
   const [{ data: loja }, { count }] = await Promise.all([
-    supabase
+    admin
       .from("lojas")
       .select("plano, owner_id")
       .eq("id", input.loja_id)

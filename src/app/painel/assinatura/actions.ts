@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createAsaasSubscriptionCheckout } from "@/lib/asaas/server";
 
 const iniciarAssinaturaSchema = z.object({
@@ -62,14 +63,16 @@ export async function iniciarAssinaturaAsaasAction(
     return { error: checkout.error };
   }
 
-  await supabase
+  const admin = createAdminClient();
+  await admin
     .from("lojas")
     .update({
       plano: parsed.data.plano,
       asaas_customer_id: checkout.customerId,
       asaas_subscription_id: checkout.subscriptionId,
     })
-    .eq("id", loja.id);
+    .eq("id", loja.id)
+    .eq("owner_id", user.id);
 
   revalidatePath("/painel/assinatura");
   return { paymentLink: checkout.paymentLink ?? null };

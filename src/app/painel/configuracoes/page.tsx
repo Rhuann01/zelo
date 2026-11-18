@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getPainelContext } from "@/lib/painel/get-painel-context";
 import {
   parseSuperAdminAllowlist,
@@ -9,6 +10,7 @@ import { ConfiguracoesForm } from "@/components/configuracoes-form";
 export default async function ConfiguracoesPage() {
   const ctx = await getPainelContext("/painel/configuracoes");
   const supabase = await createClient();
+  const admin = createAdminClient();
 
   const [
     { data: prof },
@@ -17,13 +19,13 @@ export default async function ConfiguracoesPage() {
       data: { user },
     },
   ] = await Promise.all([
-    supabase
+    admin
       .from("profissionais")
       .select("id, chave_pix")
       .eq("loja_id", ctx.lojaAtual.id)
       .eq("user_id", ctx.userId)
       .maybeSingle(),
-    supabase
+    admin
       .from("perfis")
       .select("seguranca_pin_hash")
       .eq("id", ctx.userId)

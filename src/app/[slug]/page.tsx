@@ -27,6 +27,12 @@ export async function generateMetadata({
   return {
     title,
     description,
+    manifest: `/${data.loja.slug}/manifest.webmanifest`,
+    appleWebApp: {
+      capable: true,
+      title: data.loja.nome,
+      statusBarStyle: "default",
+    },
     alternates: {
       canonical: `/${data.loja.slug}`,
     },

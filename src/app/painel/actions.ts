@@ -1,7 +1,10 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { formatBrDataHora, notifyUserPrioritizingPush } from "@/lib/notifications/dispatch";
 import {
   atualizarStatusAgendamentoSchema,
@@ -23,9 +26,10 @@ export async function criarEncaixeManualAction(raw: unknown) {
   if (!user) return { error: "Sessão expirada." };
 
   const input = parsed.data;
+  const admin = createAdminClient();
 
   const [{ data: prof }, { data: servicos }] = await Promise.all([
-    supabase
+    admin
       .from("profissionais")
       .select("id, comissao_percentual")
       .eq("id", input.profissional_id)
@@ -265,9 +269,19 @@ export async function savePushSubscriptionAction(raw: unknown) {
     auth: parsed.data.keys.auth,
   });
 
-  if (error) {
-    return { error: "Não foi possível salvar assinatura Push." };
-  }
+  return { ok: true };
+}
 
+export async function selecionarLojaAtivaAction(lojaId: string) {
+  const parsed = z.string().uuid().safeParse(lojaId);
+  if (!parsed.success) return { ok: false };
+  const cookieStore = await cookies();
+  cookieStore.set("zelo_loja_id", parsed.data, {
+    path: "/",
+    maxAge: 2592000,
+    sameSite: "lax",
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+  });
   return { ok: true };
 }

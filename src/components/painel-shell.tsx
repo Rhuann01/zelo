@@ -17,6 +17,7 @@ import {
 import { ZeloLogo } from "@/components/zelo-logo";
 import { ZeloToastViewport } from "@/components/zelo-toast";
 import { PwaInstallBanner } from "@/components/pwa-install-banner";
+import { selecionarLojaAtivaAction } from "@/app/painel/actions";
 import type { LojaResumo } from "@/lib/painel/get-painel-context";
 
 interface PainelShellProps {
@@ -47,12 +48,12 @@ export function PainelShell({
   const pathname = usePathname();
   const router = useRouter();
 
-  function handleStoreSwitch(lojaId: string) {
+  async function handleStoreSwitch(lojaId: string) {
     if (lojaId === "__new__") {
       router.push("/onboarding");
       return;
     }
-    document.cookie = `zelo_loja_id=${lojaId}; path=/; max-age=2592000; SameSite=Lax`;
+    await selecionarLojaAtivaAction(lojaId);
     router.refresh();
   }
 
